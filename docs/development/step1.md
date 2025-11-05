@@ -1,0 +1,202 @@
+## ステップ1: 基本的な部屋機能とポーリング
+
+### 目標
+URLを発行して複数人で見積もりができる最小限の機能を実装
+
+### 実装する機能
+- [ ] 部屋（見積もりセッション）の作成
+- [ ] ニックネーム入力での参加
+- [ ] 共有URL生成
+- [ ] カード選択UI（ポーカー風）
+- [ ] ポーリングによるリアルタイム更新
+- [ ] 公開/非公開切り替え
+- [ ] 工数確定機能
+
+### データベーススキーマ（Step 1）
+
+```prisma
+// schema.prisma
+model EstimationSession {
+  id            String         @id @default(cuid())
+  shareToken    String         @unique
+  isRevealed    Boolean        @default(false)
+  status        SessionStatus  @default(ACTIVE)
+  finalEstimate Float?         // 確定工数
+  createdAt     DateTime       @default(now())
+
+  estimates     Estimate[]
+}
+
+enum SessionStatus {
+  ACTIVE      // アクティブ
+  FINALIZED   // 工数確定済み
+}
+
+model Estimate {
+  id            String            @id @default(cuid())
+  sessionId     String
+  session       EstimationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  nickname      String            // 参加者のニックネーム
+  value         Float             // 工数（日数）
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([sessionId, nickname])
+}
+```
+
+### API設計（Step 1）
+
+```typescript
+// POST /api/sessions
+// 部屋を作成
+{
+  "nickname": "山田太郎"
+}
+→ Response: {
+  "sessionId": "clxxx...",
+  "shareToken": "abc123xyz",
+  "shareUrl": "https://app.com/estimate/abc123xyz"
+}
+
+// GET /api/sessions/[shareToken]
+// セッション情報取得（ポーリング用）
+→ Response: {
+  "session": {
+    "id": "clxxx...",
+    "shareToken": "abc123xyz",
+    "isRevealed": false,
+    "status": "ACTIVE",
+    "finalEstimate": null
+  },
+  "estimates": [
+    { "nickname": "山田太郎", "value": 1.0, "updatedAt": "..." },
+    { "nickname": "佐藤花子", "value": 2.0, "updatedAt": "..." }
+  ]
+}
+
+// POST /api/sessions/[shareToken]/estimates
+// 見積もりを投稿
+{
+  "nickname": "山田太郎",
+  "value": 1.5
+}
+
+// PATCH /api/sessions/[shareToken]/reveal
+// 公開/非公開切り替え
+{
+  "isRevealed": true
+}
+
+// POST /api/sessions/[shareToken]/finalize
+// 工数確定
+{
+  "finalEstimate": 2.0
+}
+```
+
+### ファイル構成（Step 1）
+
+```
+app/
+├── page.tsx                          # トップページ（部屋作成）
+├── estimate/
+│   └── [shareToken]/
+│       └── page.tsx                  # 見積もり画面
+├── api/
+│   └── sessions/
+│       ├── route.ts                  # POST: 部屋作成
+│       └── [shareToken]/
+│           ├── route.ts              # GET: セッション情報取得
+│           ├── estimates/
+│           │   └── route.ts          # POST: 見積もり投稿
+│           ├── reveal/
+│           │   └── route.ts          # PATCH: 公開切り替え
+│           └── finalize/
+│               └── route.ts          # POST: 工数確定
+├── components/
+│   ├── PokerCard.tsx                 # カードコンポーネント
+│   ├── CardSelector.tsx              # カード選択UI
+│   ├── ParticipantList.tsx           # 参加者一覧
+│   └── EstimateResult.tsx            # 結果表示
+└── lib/
+    ├── prisma.ts                     # Prismaクライアント
+    └── utils.ts                      # ユーティリティ関数
+```
+
+### 実装タスク（Step 1）
+
+#### 1-1. セットアップ（2時間）
+- [ ] Next.js プロジェクト作成
+- [ ] Prisma セットアップ
+- [ ] データベース接続確認
+- [ ] Tailwind CSS セットアップ
+
+#### 1-2. データベース（1時間）
+- [ ] Prisma スキーマ作成
+- [ ] マイグレーション実行
+- [ ] シードデータ作成（開発用）
+
+#### 1-3. API実装（4時間）
+- [ ] 部屋作成API
+- [ ] セッション情報取得API
+- [ ] 見積もり投稿API
+- [ ] 公開切り替えAPI
+- [ ] 工数確定API
+
+#### 1-4. UI実装（6時間）
+- [ ] トップページ（部屋作成フォーム）
+- [ ] カードコンポーネント
+- [ ] カード選択UI
+- [ ] 参加者一覧
+- [ ] 結果表示エリア
+- [ ] 公開/非公開トグル
+- [ ] 工数確定フォーム
+
+#### 1-5. ポーリング実装（2時間）
+- [ ] useEffectでポーリング実装
+- [ ] 2秒間隔での自動更新
+- [ ] ローディング状態の管理
+
+#### 1-6. テスト（2時間）
+- [ ] 複数ブラウザでの動作確認
+- [ ] 見積もりの同期確認
+- [ ] エッジケースのテスト
+
+**合計見積もり: 17時間（約2〜3日）**
+
+---
+
+## ステップ2: UI/UXの改善
+
+### 目標
+ポーカー風のカードゲームUIを洗練し、使いやすさを向上
+
+### 実装する機能
+- [ ] カードアニメーション
+- [ ] 選択時のフィードバック
+- [ ] トースト通知
+- [ ] ローディング状態の改善
+- [ ] レスポンシブデザイン
+- [ ] カードフリップアニメーション
+- [ ] 参加者アバター表示
+- [ ] 統計情報の表示（平均値・中央値）
+
+### 追加コンポーネント
+
+```
+components/
+├── ui/                               # shadcn/ui コンポーネント
+│   ├── toast.tsx
+│   ├── button.tsx
+│   └── card.tsx
+├── animations/
+│   ├── CardFlip.tsx                  # カードフリップ
+│   └── ParticipantJoin.tsx           # 参加者参加時のアニメーション
+└── stats/
+    └── EstimateStats.tsx             # 統計情報表示
+```
+
+---
+
+## 開発ログ
