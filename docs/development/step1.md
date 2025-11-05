@@ -200,3 +200,95 @@ components/
 ---
 
 ## 開発ログ
+
+### 2025-11-05
+
+#### セットアップ（完了）
+- [x] Prismaのインストールと初期化
+- [x] データベーススキーマの作成（EstimationSession, Estimate, SessionStatus）
+- [x] Prisma Clientライブラリの作成（src/lib/prisma.ts）
+- [x] ユーティリティ関数の作成（src/lib/utils.ts）
+  - shareToken生成関数
+  - 平均値・中央値計算関数
+
+#### データベース
+- [x] Prisma スキーマ作成
+  - EstimationSessionモデル（id, shareToken, isRevealed, status, finalEstimate, createdAt）
+  - Estimateモデル（id, sessionId, nickname, value, createdAt, updatedAt）
+  - SessionStatus enum（ACTIVE, FINALIZED）
+
+#### API実装（完了）
+- [x] POST /api/sessions - 部屋作成API
+  - ニックネーム入力で新規セッション作成
+  - ユニークなshareToken生成
+  - 共有URL返却
+- [x] GET /api/sessions/[shareToken] - セッション情報取得API（ポーリング用）
+  - セッション情報と見積もり一覧を返却
+  - isRevealedがfalseの場合は見積もり値を非表示
+- [x] POST /api/sessions/[shareToken]/estimates - 見積もり投稿API
+  - 見積もりのupsert（作成/更新）
+  - バリデーション付き
+- [x] PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替えAPI
+  - isRevealedフラグの切り替え
+- [x] POST /api/sessions/[shareToken]/finalize - 工数確定API
+  - 確定工数の保存
+  - ステータスをFINALIZEDに変更
+
+#### コンポーネント実装（完了）
+- [x] PokerCard.tsx - カードコンポーネント
+  - ホバーエフェクト
+  - 選択状態の視覚化
+- [x] CardSelector.tsx - カード選択UI
+  - 8種類のプリセットカード（1h, 2h, 4h, 8h, 1d, 1.5d, 2d, 3d）
+  - 自由記述入力機能
+  - 選択状態の管理
+- [x] ParticipantList.tsx - 参加者一覧
+  - 参加者数の表示
+  - 提出済みステータス
+  - 公開時の見積もり値表示
+  - 非公開時のカードアイコン表示
+- [x] EstimateResult.tsx - 結果表示
+  - 平均値・中央値の自動計算
+  - 全見積もりの一覧表示
+  - 確定工数の表示
+
+#### ページ実装（完了）
+- [x] トップページ（src/app/page.tsx）
+  - ニックネーム入力フォーム
+  - 新規セッション作成機能
+  - 使い方ガイド表示
+- [x] 見積もり画面（src/app/estimate/[shareToken]/page.tsx）
+  - ニックネーム入力画面
+  - カード選択UI統合
+  - 参加者一覧表示
+  - 見積もり結果表示
+  - 公開/非公開切り替えボタン
+  - 工数確定フォーム
+  - 共有URLコピー機能
+  - 2秒間隔のポーリング実装
+
+#### ポーリング実装（完了）
+- [x] useEffectでのポーリング実装
+- [x] 2秒間隔での自動更新
+- [x] ローディング状態の管理
+- [x] エラーハンドリング
+
+#### 実装の特徴
+- レスポンシブデザイン対応（モバイル・タブレット・デスクトップ）
+- リアルタイム性の高いUI（2秒ポーリング）
+- プランニングポーカー形式のカードゲームUI
+- Tailwind CSSによる洗練されたデザイン
+- エラーハンドリングとバリデーション
+- 直感的なUX（ホバーエフェクト、アニメーション）
+
+#### 次のステップ
+1. データベース接続設定（.envファイルにSupabase接続文字列を設定）
+2. Prisma Clientの生成（`npx prisma generate`）
+3. データベースマイグレーション実行（`npx prisma migrate dev --name init`）
+4. 開発サーバー起動（`npm run dev`）
+5. 動作確認とテスト
+
+#### 注意事項
+- DATABASE_URLを.envファイルに設定する必要があります
+- Supabaseまたは他のPostgreSQLデータベースへの接続が必要です
+- `npx prisma migrate dev`でマイグレーションを実行してください
