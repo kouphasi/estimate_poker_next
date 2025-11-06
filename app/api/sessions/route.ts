@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     const protocol = request.headers.get('x-forwarded-proto') || 'http'
     const host = request.headers.get('host') || 'localhost:3000'
-    const shareUrl = `${protocol}://${host}/estimate/${shareToken}`
+    const shareUrl = `${protocol}://${host}/estimate/${session.shareToken}`
 
     return NextResponse.json({
       sessionId: session.id,
