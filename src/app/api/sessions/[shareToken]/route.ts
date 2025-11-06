@@ -31,7 +31,7 @@ export async function GET(
     }
 
     // isRevealedがfalseの場合、他の参加者の見積もり値を隠す
-    const estimates = session.estimates.map((estimate) => ({
+    const estimates = session.estimates.map((estimate: { id: string; nickname: string; value: number; updatedAt: Date }) => ({
       id: estimate.id,
       nickname: estimate.nickname,
       value: session.isRevealed ? estimate.value : null,

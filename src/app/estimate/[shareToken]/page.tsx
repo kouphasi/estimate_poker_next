@@ -301,7 +301,7 @@ export default function EstimatePage({
                 disabled={sessionData.session.status === 'FINALIZED'}
                 currentValue={currentUserEstimate?.value}
               />
-              {currentUserEstimate && currentUserEstimate.value > 0 && (
+              {currentUserEstimate && currentUserEstimate.value !== null && currentUserEstimate.value > 0 && (
                 <p className="mt-4 text-center text-green-600 font-medium">
                   選択済み: {currentUserEstimate.value}日
                 </p>
