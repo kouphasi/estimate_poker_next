@@ -199,15 +199,17 @@ npm start
 
 詳細な設定手順は [docs/deployment.md](docs/deployment.md) を参照してください。
 
-#### 必要なGitHub Secrets
+#### 必要なGitHub Secrets（環境ごと）
 
-**Preview環境:**
-- `DATABASE_URL_PREVIEW` - Preview用データベース接続文字列
-- `NEXT_PUBLIC_APP_URL_PREVIEW` - Preview環境のURL
+両環境で同じ変数名を使用し、GitHub Environmentsで環境ごとに異なる値を設定します。
 
-**Production環境:**
-- `DATABASE_URL_PRODUCTION` - Production用データベース接続文字列
-- `NEXT_PUBLIC_APP_URL_PRODUCTION` - Production環境のURL
+**Preview環境 (`preview`):**
+- `DATABASE_URL` - Preview用データベース接続文字列
+- `NEXT_PUBLIC_APP_URL` - Preview環境のURL
+
+**Production環境 (`production`):**
+- `DATABASE_URL` - Production用データベース接続文字列
+- `NEXT_PUBLIC_APP_URL` - Production環境のURL
 
 ## ライセンス
 

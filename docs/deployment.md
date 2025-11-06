@@ -9,28 +9,33 @@
 
 ## GitHub Secretsの設定
 
-### 1. GitHubリポジトリの設定画面を開く
+GitHub Environmentsを使用して、環境ごとに同じ変数名で異なる値を設定します。
 
-1. リポジトリページで `Settings` > `Secrets and variables` > `Actions` を開く
-2. `New repository secret` をクリック
+### 1. GitHub Environmentsの設定画面を開く
+
+1. リポジトリページで `Settings` > `Environments` を開く
+2. 環境を選択（`preview` または `production`）
+3. `Add secret` をクリック
 
 ### 2. Preview環境用のSecrets
 
-以下のSecretsを `preview` 環境に設定します：
+`preview` 環境に以下のSecretsを設定します：
 
 | Secret名 | 説明 | 例 |
 |---------|------|-----|
-| `DATABASE_URL_PREVIEW` | Preview環境のデータベース接続文字列 | `postgresql://user:pass@host:5432/db_preview` |
-| `NEXT_PUBLIC_APP_URL_PREVIEW` | Preview環境のアプリケーションURL | `https://preview.example.com` |
+| `DATABASE_URL` | Preview環境のデータベース接続文字列 | `postgresql://user:pass@host:5432/db_preview` |
+| `NEXT_PUBLIC_APP_URL` | Preview環境のアプリケーションURL | `https://preview.example.com` |
 
 ### 3. Production環境用のSecrets
 
-以下のSecretsを `production` 環境に設定します：
+`production` 環境に以下のSecretsを設定します：
 
 | Secret名 | 説明 | 例 |
 |---------|------|-----|
-| `DATABASE_URL_PRODUCTION` | Production環境のデータベース接続文字列 | `postgresql://user:pass@host:5432/db_production` |
-| `NEXT_PUBLIC_APP_URL_PRODUCTION` | Production環境のアプリケーションURL | `https://app.example.com` |
+| `DATABASE_URL` | Production環境のデータベース接続文字列 | `postgresql://user:pass@host:5432/db_production` |
+| `NEXT_PUBLIC_APP_URL` | Production環境のアプリケーションURL | `https://app.example.com` |
+
+**注意**: 両環境で同じ変数名を使用しますが、GitHub Environmentsの機能により、環境ごとに異なる値が適用されます。
 
 ## Supabaseを使用する場合
 
@@ -39,14 +44,16 @@
 1. [Supabase](https://supabase.com/)で新しいプロジェクトを作成
 2. プロジェクト名: `estimate-poker-preview`
 3. Settings > Database > Connection string > URI をコピー
-4. GitHubの `DATABASE_URL_PREVIEW` に設定
+4. GitHub Settings > Environments > `preview` > Add secret
+5. Secret名: `DATABASE_URL`、値: コピーしたURI
 
 ### Production環境用データベース作成
 
 1. Supabaseで別の新しいプロジェクトを作成
 2. プロジェクト名: `estimate-poker-production`
 3. Settings > Database > Connection string > URI をコピー
-4. GitHubの `DATABASE_URL_PRODUCTION` に設定
+4. GitHub Settings > Environments > `production` > Add secret
+5. Secret名: `DATABASE_URL`、値: コピーしたURI
 
 ## GitHub Environments の設定
 

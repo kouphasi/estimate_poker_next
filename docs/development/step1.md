@@ -310,7 +310,7 @@ GitHub Actionsによる自動デプロイ機能を実装しました。
   - データベースマイグレーション実行
   - アプリケーションビルド
   - デプロイ通知
-- 環境変数: `DATABASE_URL_PREVIEW`, `NEXT_PUBLIC_APP_URL_PREVIEW`
+- 環境変数: `DATABASE_URL`, `NEXT_PUBLIC_APP_URL` (preview環境で設定)
 
 ##### Production環境用ワークフロー（`.github/workflows/deploy-production.yml`）
 - トリガー: mainブランチへのmerge/push、手動実行
@@ -322,7 +322,7 @@ GitHub Actionsによる自動デプロイ機能を実装しました。
   - アプリケーションビルド
   - テスト実行（存在する場合）
   - デプロイ通知
-- 環境変数: `DATABASE_URL_PRODUCTION`, `NEXT_PUBLIC_APP_URL_PRODUCTION`
+- 環境変数: `DATABASE_URL`, `NEXT_PUBLIC_APP_URL` (production環境で設定)
 - 保護設定推奨: レビュアー必須、mainブランチのみ
 
 ##### ドキュメント作成
