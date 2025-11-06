@@ -203,13 +203,27 @@ npm start
 
 両環境で同じ変数名を使用し、GitHub Environmentsで環境ごとに異なる値を設定します。
 
-**Preview環境 (`preview`):**
-- `DATABASE_URL` - Preview用データベース接続文字列
-- `NEXT_PUBLIC_APP_URL` - Preview環境のURL
+**Preview環境 (`preview`) と Production環境 (`production`):**
 
-**Production環境 (`production`):**
-- `DATABASE_URL` - Production用データベース接続文字列
-- `NEXT_PUBLIC_APP_URL` - Production環境のURL
+各環境に以下のSecretsを設定してください：
+
+| Secret名 | 説明 |
+|---------|------|
+| `POSTGRES_URL` | PostgreSQL接続URL |
+| `POSTGRES_PRISMA_URL` | Prisma用接続URL（プーリング対応） |
+| `POSTGRES_URL_NON_POOLING` | 非プーリング接続URL |
+| `POSTGRES_USER` | データベースユーザー名 |
+| `POSTGRES_PASSWORD` | データベースパスワード |
+| `POSTGRES_DATABASE` | データベース名 |
+| `POSTGRES_HOST` | データベースホスト |
+| `SUPABASE_URL` | SupabaseプロジェクトURL |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase URL（公開用） |
+| `SUPABASE_ANON_KEY` | Supabase匿名キー |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase匿名キー（公開用） |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabaseサービスロールキー |
+| `SUPABASE_JWT_SECRET` | Supabase JWT秘密鍵 |
+
+**重要:** Preview環境とProduction環境で**異なるSupabaseプロジェクト**を使用してください。
 
 ## ライセンス
 

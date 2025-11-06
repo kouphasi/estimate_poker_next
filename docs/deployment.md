@@ -17,25 +17,29 @@ GitHub Environmentsを使用して、環境ごとに同じ変数名で異なる�
 2. 環境を選択（`preview` または `production`）
 3. `Add secret` をクリック
 
-### 2. Preview環境用のSecrets
+### 2. 必要なSecrets一覧
 
-`preview` 環境に以下のSecretsを設定します：
+`preview` と `production` 両方の環境に以下のSecretsを設定します：
 
-| Secret名 | 説明 | 例 |
-|---------|------|-----|
-| `DATABASE_URL` | Preview環境のデータベース接続文字列 | `postgresql://user:pass@host:5432/db_preview` |
-| `NEXT_PUBLIC_APP_URL` | Preview環境のアプリケーションURL | `https://preview.example.com` |
+| Secret名 | 説明 | 取得方法 |
+|---------|------|---------|
+| `POSTGRES_URL` | PostgreSQL接続URL | Supabase Settings > Database > Connection string > URI |
+| `POSTGRES_PRISMA_URL` | Prisma用接続URL（プーリング対応） | Supabase Settings > Database > Connection pooling > Transaction mode |
+| `POSTGRES_URL_NON_POOLING` | 非プーリング接続URL | Supabase Settings > Database > Connection string > URI (Direct) |
+| `POSTGRES_USER` | データベースユーザー名 | Supabase Settings > Database > User |
+| `POSTGRES_PASSWORD` | データベースパスワード | Supabaseプロジェクト作成時に設定したパスワード |
+| `POSTGRES_DATABASE` | データベース名 | 通常は `postgres` |
+| `POSTGRES_HOST` | データベースホスト | Supabase Settings > Database > Host |
+| `SUPABASE_URL` | SupabaseプロジェクトURL | Supabase Settings > API > Project URL |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase URL（公開用） | 上記と同じ |
+| `SUPABASE_ANON_KEY` | Supabase匿名キー | Supabase Settings > API > Project API keys > anon public |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase匿名キー（公開用） | 上記と同じ |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabaseサービスロールキー | Supabase Settings > API > Project API keys > service_role |
+| `SUPABASE_JWT_SECRET` | Supabase JWT秘密鍵 | Supabase Settings > API > JWT Settings > JWT Secret |
 
-### 3. Production環境用のSecrets
-
-`production` 環境に以下のSecretsを設定します：
-
-| Secret名 | 説明 | 例 |
-|---------|------|-----|
-| `DATABASE_URL` | Production環境のデータベース接続文字列 | `postgresql://user:pass@host:5432/db_production` |
-| `NEXT_PUBLIC_APP_URL` | Production環境のアプリケーションURL | `https://app.example.com` |
-
-**注意**: 両環境で同じ変数名を使用しますが、GitHub Environmentsの機能により、環境ごとに異なる値が適用されます。
+**重要:**
+- 両環境で同じ変数名を使用しますが、GitHub Environmentsの機能により環境ごとに異なる値が適用されます
+- Preview環境とProduction環境では**必ず異なるSupabaseプロジェクト**を使用してください
 
 ## Supabaseを使用する場合
 
@@ -43,17 +47,31 @@ GitHub Environmentsを使用して、環境ごとに同じ変数名で異なる�
 
 1. [Supabase](https://supabase.com/)で新しいプロジェクトを作成
 2. プロジェクト名: `estimate-poker-preview`
-3. Settings > Database > Connection string > URI をコピー
-4. GitHub Settings > Environments > `preview` > Add secret
-5. Secret名: `DATABASE_URL`、値: コピーしたURI
+3. Supabase Settings画面で以下の情報を取得:
+   - Database タブ:
+     - Connection string (URI) → `POSTGRES_URL`
+     - Connection pooling (Transaction mode) → `POSTGRES_PRISMA_URL`
+     - Connection string (Direct) → `POSTGRES_URL_NON_POOLING`
+     - Host → `POSTGRES_HOST`
+     - User → `POSTGRES_USER`
+     - Database → `POSTGRES_DATABASE`
+     - Password → `POSTGRES_PASSWORD` (プロジェクト作成時に設定したもの)
+   - API タブ:
+     - Project URL → `SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_URL`
+     - Project API keys > anon public → `SUPABASE_ANON_KEY` と `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+     - Project API keys > service_role → `SUPABASE_SERVICE_ROLE_KEY`
+   - API > JWT Settings:
+     - JWT Secret → `SUPABASE_JWT_SECRET`
+4. GitHub Settings > Environments > `preview` で上記すべてのSecretsを追加
 
 ### Production環境用データベース作成
 
-1. Supabaseで別の新しいプロジェクトを作成
+1. Supabaseで**別の**新しいプロジェクトを作成
 2. プロジェクト名: `estimate-poker-production`
-3. Settings > Database > Connection string > URI をコピー
-4. GitHub Settings > Environments > `production` > Add secret
-5. Secret名: `DATABASE_URL`、値: コピーしたURI
+3. Preview環境と同様に、Settings画面ですべての環境変数を取得
+4. GitHub Settings > Environments > `production` で上記すべてのSecretsを追加
+
+**重要:** Preview環境とProduction環境では必ず異なるSupabaseプロジェクトを使用してください。
 
 ## GitHub Environments の設定
 

@@ -310,7 +310,12 @@ GitHub Actionsによる自動デプロイ機能を実装しました。
   - データベースマイグレーション実行
   - アプリケーションビルド
   - デプロイ通知
-- 環境変数: `DATABASE_URL`, `NEXT_PUBLIC_APP_URL` (preview環境で設定)
+- 環境変数: Supabase関連の全環境変数（preview環境で設定）
+  - `POSTGRES_PRISMA_URL`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`
+  - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DATABASE`, `POSTGRES_HOST`
+  - `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`
+  - `SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`
 
 ##### Production環境用ワークフロー（`.github/workflows/deploy-production.yml`）
 - トリガー: mainブランチへのmerge/push、手動実行
@@ -322,7 +327,7 @@ GitHub Actionsによる自動デプロイ機能を実装しました。
   - アプリケーションビルド
   - テスト実行（存在する場合）
   - デプロイ通知
-- 環境変数: `DATABASE_URL`, `NEXT_PUBLIC_APP_URL` (production環境で設定)
+- 環境変数: Supabase関連の全環境変数（production環境で設定）
 - 保護設定推奨: レビュアー必須、mainブランチのみ
 
 ##### ドキュメント作成
