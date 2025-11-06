@@ -56,6 +56,7 @@ jobs:
         env:
           # Use non-pooling URL for migrations (session mode required)
           DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
 
       - name: Verify migration
         run: |
@@ -64,3 +65,4 @@ jobs:
         env:
           # Use non-pooling URL for migrations (session mode required)
           DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
