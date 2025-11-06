@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import CardSelector from '@/app/components/CardSelector'
 import ParticipantList from '@/app/components/ParticipantList'
 import EstimateResult from '@/app/components/EstimateResult'
@@ -228,7 +229,9 @@ export default function EstimatePage() {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">見積もりポーカー</h1>
+            <Link href="/" className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors cursor-pointer">
+              見積もりポーカー
+            </Link>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">参加者: {nickname}</span>
               {session?.status === 'FINALIZED' && (
