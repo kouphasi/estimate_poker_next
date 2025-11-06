@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 // PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替え
 export async function PATCH(
@@ -9,12 +10,38 @@ export async function PATCH(
   try {
     const { shareToken } = await params
     const body = await request.json()
-    const { isRevealed } = body
+    const { isRevealed, ownerToken } = body
 
     if (typeof isRevealed !== 'boolean') {
       return NextResponse.json(
         { error: '無効なリクエストです' },
         { status: 400 }
+      )
+    }
+
+    if (!ownerToken || typeof ownerToken !== 'string') {
+      return NextResponse.json(
+        { error: '認証トークンが必要です' },
+        { status: 401 }
+      )
+    }
+
+    // セッションの存在確認とオーナー認証
+    const existingSession = await prisma.estimationSession.findUnique({
+      where: { shareToken }
+    })
+
+    if (!existingSession) {
+      return NextResponse.json(
+        { error: 'セッションが見つかりません' },
+        { status: 404 }
+      )
+    }
+
+    if (existingSession.ownerToken !== ownerToken) {
+      return NextResponse.json(
+        { error: '操作する権限がありません' },
+        { status: 403 }
       )
     }
 
@@ -35,7 +62,11 @@ export async function PATCH(
       }
     })
   } catch (error) {
-    console.error('Reveal toggle error:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error('Prisma error:', { code: error.code, meta: error.meta })
+    } else {
+      console.error('Unexpected reveal toggle error:', error)
+    }
     return NextResponse.json(
       { error: '公開設定の変更に失敗しました' },
       { status: 500 }

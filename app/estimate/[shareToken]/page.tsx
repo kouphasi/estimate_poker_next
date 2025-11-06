@@ -35,6 +35,8 @@ export default function EstimatePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [shareUrl, setShareUrl] = useState('')
+  const [ownerToken, setOwnerToken] = useState<string | null>(null)
+  const [isOwner, setIsOwner] = useState(false)
 
   // ポーリング：2秒ごとにセッション情報を取得
   useEffect(() => {
@@ -62,12 +64,17 @@ export default function EstimatePage() {
     return () => clearInterval(interval)
   }, [shareToken])
 
-  // 共有URL生成
+  // 共有URL生成とownerToken確認
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && shareToken) {
       setShareUrl(window.location.href.split('?')[0])
+      const token = localStorage.getItem(`ownerToken_${shareToken}`)
+      if (token) {
+        setOwnerToken(token)
+        setIsOwner(true)
+      }
     }
-  }, [])
+  }, [shareToken])
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,7 +108,7 @@ export default function EstimatePage() {
   }
 
   const handleToggleReveal = async () => {
-    if (!session) return
+    if (!session || !ownerToken) return
 
     try {
       const response = await fetch(`/api/sessions/${shareToken}/reveal`, {
@@ -109,11 +116,15 @@ export default function EstimatePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isRevealed: !session.isRevealed }),
+        body: JSON.stringify({
+          isRevealed: !session.isRevealed,
+          ownerToken
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('公開設定の変更に失敗しました')
+        const data = await response.json()
+        throw new Error(data.error || '公開設定の変更に失敗しました')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
@@ -122,6 +133,8 @@ export default function EstimatePage() {
 
   const handleFinalize = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!ownerToken) return
+
     const value = parseFloat(finalEstimateInput)
 
     if (isNaN(value) || value < 0) {
@@ -135,11 +148,15 @@ export default function EstimatePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ finalEstimate: value }),
+        body: JSON.stringify({
+          finalEstimate: value,
+          ownerToken
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('工数の確定に失敗しました')
+        const data = await response.json()
+        throw new Error(data.error || '工数の確定に失敗しました')
       }
 
       setFinalEstimateInput('')
@@ -271,36 +288,42 @@ export default function EstimatePage() {
               )}
             </div>
 
-            {/* コントロールボタン */}
-            <div className="mt-6 space-y-3">
-              <button
-                onClick={handleToggleReveal}
-                disabled={session?.status === 'FINALIZED'}
-                className="w-full py-3 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {session?.isRevealed ? 'カードを隠す' : 'カードを公開'}
-              </button>
+            {/* コントロールボタン（オーナーのみ） */}
+            {isOwner && (
+              <div className="mt-6 space-y-3">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
+                  <p className="text-sm text-blue-800 font-medium">あなたはこのセッションのオーナーです</p>
+                </div>
 
-              {session?.status !== 'FINALIZED' && (
-                <form onSubmit={handleFinalize} className="space-y-2">
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={finalEstimateInput}
-                    onChange={(e) => setFinalEstimateInput(e.target.value)}
-                    placeholder="確定工数を入力（日数）"
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    工数を確定
-                  </button>
-                </form>
-              )}
-            </div>
+                <button
+                  onClick={handleToggleReveal}
+                  disabled={session?.status === 'FINALIZED'}
+                  className="w-full py-3 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {session?.isRevealed ? 'カードを隠す' : 'カードを公開'}
+                </button>
+
+                {session?.status !== 'FINALIZED' && (
+                  <form onSubmit={handleFinalize} className="space-y-2">
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      value={finalEstimateInput}
+                      onChange={(e) => setFinalEstimateInput(e.target.value)}
+                      placeholder="確定工数を入力（日数）"
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
+                    >
+                      工数を確定
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 右サイド：結果表示 */}

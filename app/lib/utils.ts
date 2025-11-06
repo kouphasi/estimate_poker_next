@@ -1,9 +1,11 @@
-// 共有トークン生成（URL安全な文字のみ使用）
+import { randomBytes } from 'crypto'
+
+// 共有トークン生成（暗号学的に安全な16文字）
 export function generateShareToken(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let token = ''
-  for (let i = 0; i < 12; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return token
+  return randomBytes(12).toString('base64url').substring(0, 16)
+}
+
+// オーナートークン生成（セッション所有者認証用）
+export function generateOwnerToken(): string {
+  return randomBytes(32).toString('base64url')
 }

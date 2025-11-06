@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
-import { generateShareToken } from '@/app/lib/utils'
+import { generateShareToken, generateOwnerToken } from '@/app/lib/utils'
+import { Prisma } from '@prisma/client'
 
 // POST /api/sessions - 部屋を作成
 export async function POST(request: NextRequest) {
@@ -15,38 +16,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ユニークなshareTokenを生成
-    let shareToken = generateShareToken()
-    let attempts = 0
-    const maxAttempts = 5
-
-    // shareTokenの重複チェック
-    while (attempts < maxAttempts) {
-      const existing = await prisma.estimationSession.findUnique({
-        where: { shareToken }
-      })
-
-      if (!existing) break
-
-      shareToken = generateShareToken()
-      attempts++
-    }
-
-    if (attempts === maxAttempts) {
-      return NextResponse.json(
-        { error: 'トークン生成に失敗しました' },
-        { status: 500 }
-      )
-    }
-
-    // セッション作成
-    const session = await prisma.estimationSession.create({
-      data: {
-        shareToken,
-        isRevealed: false,
-        status: 'ACTIVE'
-      }
-    })
+    // セッション作成（トークン衝突時は自動リトライ）
+    const session = await createSessionWithRetry({
+      shareToken: generateShareToken(),
+      ownerToken: generateOwnerToken(),
+      isRevealed: false,
+      status: 'ACTIVE'
+    }, 5)
 
     // 作成者の見積もりエントリを作成
     await prisma.estimate.create({
@@ -64,13 +40,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       sessionId: session.id,
       shareToken: session.shareToken,
+      ownerToken: session.ownerToken,
       shareUrl
     })
   } catch (error) {
-    console.error('Session creation error:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error('Prisma error:', { code: error.code, meta: error.meta })
+      return NextResponse.json(
+        { error: 'データベースエラーが発生しました' },
+        { status: 500 }
+      )
+    }
+    console.error('Unexpected session creation error:', error)
     return NextResponse.json(
       { error: 'セッションの作成に失敗しました' },
       { status: 500 }
     )
+  }
+}
+
+// トークン衝突時の再試行ロジック
+async function createSessionWithRetry(
+  data: Prisma.EstimationSessionCreateInput,
+  maxAttempts: number
+): Promise<any> {
+  try {
+    return await prisma.estimationSession.create({ data })
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' &&
+      maxAttempts > 0
+    ) {
+      // ユニーク制約違反の場合、新しいトークンで再試行
+      return createSessionWithRetry(
+        {
+          ...data,
+          shareToken: generateShareToken(),
+          ownerToken: generateOwnerToken()
+        },
+        maxAttempts - 1
+      )
+    }
+    throw error
   }
 }

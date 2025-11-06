@@ -35,6 +35,11 @@ export default function Home() {
         throw new Error(data.error || 'セッションの作成に失敗しました')
       }
 
+      // ownerTokenをlocalStorageに保存
+      if (data.ownerToken) {
+        localStorage.setItem(`ownerToken_${data.shareToken}`, data.ownerToken)
+      }
+
       // セッション画面に遷移
       router.push(`/estimate/${data.shareToken}?nickname=${encodeURIComponent(nickname.trim())}`)
     } catch (err) {

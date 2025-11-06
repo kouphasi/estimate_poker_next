@@ -23,6 +23,7 @@ model User {
 model EstimationSession {
   id            String         @id @default(cuid())
   shareToken    String         @unique
+  ownerToken    String         @unique // セッション所有者の認証トークン
   isRevealed    Boolean        @default(false)
   status        SessionStatus  @default(ACTIVE)
   finalEstimate Float?         // 確定工数
