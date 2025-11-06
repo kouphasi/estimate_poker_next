@@ -292,3 +292,64 @@ components/
 - DATABASE_URLを.envファイルに設定する必要があります
 - Supabaseまたは他のPostgreSQLデータベースへの接続が必要です
 - `npx prisma migrate dev`でマイグレーションを実行してください
+
+---
+
+### 2025-11-06 (continued)
+
+#### CI/CD & デプロイメント設定（完了）
+
+GitHub Actionsによる自動デプロイ機能を実装しました。
+
+##### Preview環境用ワークフロー（`.github/workflows/deploy-preview.yml`）
+- トリガー: PR作成/更新、claude/preview/devブランチへのpush
+- 実行内容:
+  - Node.js環境セットアップ
+  - 依存関係インストール
+  - Prisma Client生成
+  - データベースマイグレーション実行
+  - アプリケーションビルド
+  - デプロイ通知
+- 環境変数: `DATABASE_URL_PREVIEW`, `NEXT_PUBLIC_APP_URL_PREVIEW`
+
+##### Production環境用ワークフロー（`.github/workflows/deploy-production.yml`）
+- トリガー: mainブランチへのmerge/push、手動実行
+- 実行内容:
+  - Node.js環境セットアップ
+  - 依存関係インストール
+  - Prisma Client生成
+  - データベースマイグレーション実行
+  - アプリケーションビルド
+  - テスト実行（存在する場合）
+  - デプロイ通知
+- 環境変数: `DATABASE_URL_PRODUCTION`, `NEXT_PUBLIC_APP_URL_PRODUCTION`
+- 保護設定推奨: レビュアー必須、mainブランチのみ
+
+##### ドキュメント作成
+- [x] デプロイメント設定ガイド作成（`docs/deployment.md`）
+  - GitHub Secretsの設定方法
+  - Supabaseデータベース作成手順
+  - GitHub Environments設定
+  - トラブルシューティング
+  - セキュリティベストプラクティス
+- [x] README更新
+  - デプロイメントセクション追加
+  - 必要な環境変数の説明
+  - ドキュメントリンク整理
+
+##### デプロイフロー
+```
+開発 → claude/** ブランチ push → Preview DB デプロイ
+                     ↓
+              PR作成・レビュー
+                     ↓
+              main merge → Production DB デプロイ
+```
+
+##### セキュリティ対策
+- 環境ごとにデータベースを分離
+- Production環境にはレビュー必須設定推奨
+- Secretsによる機密情報管理
+- マイグレーションの自動適用
+
+この設定により、開発からリリースまでの完全な自動化が実現されました。

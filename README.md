@@ -179,10 +179,42 @@ npm start
 - [ ] プロジェクト・タスク管理
 - [ ] 見積もり履歴
 
+## デプロイメント
+
+### 自動デプロイ（GitHub Actions）
+
+このプロジェクトはGitHub Actionsで自動デプロイに対応しています。
+
+#### Preview環境
+- **トリガー**: PR作成/更新、`claude/**`, `preview/**`, `dev/**` ブランチへのpush
+- **データベース**: Preview用データベース
+- **用途**: 開発中の機能の確認・テスト
+
+#### Production環境
+- **トリガー**: `main` ブランチへのmerge/push
+- **データベース**: Production用データベース
+- **用途**: 本番環境
+
+### デプロイ設定方法
+
+詳細な設定手順は [docs/deployment.md](docs/deployment.md) を参照してください。
+
+#### 必要なGitHub Secrets
+
+**Preview環境:**
+- `DATABASE_URL_PREVIEW` - Preview用データベース接続文字列
+- `NEXT_PUBLIC_APP_URL_PREVIEW` - Preview環境のURL
+
+**Production環境:**
+- `DATABASE_URL_PRODUCTION` - Production用データベース接続文字列
+- `NEXT_PUBLIC_APP_URL_PRODUCTION` - Production環境のURL
+
 ## ライセンス
 
 MIT
 
-## 開発ログ
+## ドキュメント
 
-詳細な開発ログは [docs/development/step1.md](docs/development/step1.md) を参照してください。
+- [開発ログ (Step 1)](docs/development/step1.md) - 実装の詳細
+- [デプロイメント設定](docs/deployment.md) - CI/CDの設定方法
+- [要件定義](docs/requirements.md) - プロジェクト全体の要件
