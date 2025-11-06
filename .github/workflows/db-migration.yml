@@ -34,16 +34,19 @@ jobs:
             echo "DATABASE_URL prefix: ${DATABASE_URL:0:20}..."
           fi
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Use non-pooling URL for migrations (session mode required)
+          DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
 
       - name: Run Prisma migrations
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Use non-pooling URL for migrations (session mode required)
+          DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
 
       - name: Verify migration
         run: |
           echo "Migration completed successfully"
           npx prisma migrate status
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Use non-pooling URL for migrations (session mode required)
+          DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
