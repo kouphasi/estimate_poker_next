@@ -19,3 +19,35 @@ model User {
 
   @@map("users")
 }
+
+model EstimationSession {
+  id            String         @id @default(cuid())
+  shareToken    String         @unique
+  ownerToken    String         @unique // セッション所有者の認証トークン
+  isRevealed    Boolean        @default(false)
+  status        SessionStatus  @default(ACTIVE)
+  finalEstimate Float?         // 確定工数
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  estimates     Estimate[]
+
+  @@map("estimation_sessions")
+}
+
+enum SessionStatus {
+  ACTIVE      // アクティブ
+  FINALIZED   // 工数確定済み
+}
+
+model Estimate {
+  id            String            @id @default(cuid())
+  sessionId     String            @map("session_id")
+  session       EstimationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  nickname      String            // 参加者のニックネーム
+  value         Float             // 工数（日数）
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@unique([sessionId, nickname])
+  @@map("estimates")
+}
