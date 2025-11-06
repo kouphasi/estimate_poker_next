@@ -200,3 +200,74 @@ components/
 ---
 
 ## 開発ログ
+
+### 2025-11-06: 基本的な部屋機能とポーリングの実装
+
+#### 完了した作業
+
+1. **Prismaスキーマの更新**
+   - EstimationSessionモデルを追加（id, shareToken, isRevealed, status, finalEstimate, createdAt）
+   - Estimateモデルを追加（id, sessionId, nickname, value, createdAt, updatedAt）
+   - SessionStatus enumを追加（ACTIVE, FINALIZED）
+   - マイグレーションファイルを作成（20251106143400_add_estimation_session_models）
+
+2. **API実装**
+   - ✅ POST /api/sessions - 部屋作成API
+   - ✅ GET /api/sessions/[shareToken] - セッション情報取得API（ポーリング用）
+   - ✅ POST /api/sessions/[shareToken]/estimates - 見積もり投稿API
+   - ✅ PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替えAPI
+   - ✅ POST /api/sessions/[shareToken]/finalize - 工数確定API
+
+3. **ユーティリティ実装**
+   - app/lib/prisma.ts - Prismaクライアントのセットアップ
+   - app/lib/utils.ts - 共有トークン生成関数
+
+4. **UIコンポーネント実装**
+   - ✅ PokerCard.tsx - カードコンポーネント
+   - ✅ CardSelector.tsx - カード選択UI（1h, 2h, 4h, 8h, 1d, 1.5d, 2d, 3d + 自由記述）
+   - ✅ ParticipantList.tsx - 参加者一覧表示
+   - ✅ EstimateResult.tsx - 結果表示（平均値・中央値・個別見積もり）
+
+5. **ページ実装**
+   - ✅ app/page.tsx - トップページ（部屋作成フォーム）
+   - ✅ app/estimate/[shareToken]/page.tsx - 見積もり画面
+     - ニックネーム入力フォーム
+     - カード選択UI
+     - 参加者一覧
+     - 見積もり結果表示
+     - 公開/非公開トグルボタン
+     - 工数確定フォーム
+     - 共有URLコピー機能
+
+6. **ポーリング機能**
+   - ✅ useEffectで2秒間隔のポーリング実装
+   - ✅ セッション情報と見積もりのリアルタイム更新
+   - ✅ 非公開モード時の見積もり値の隠蔽（-1で「提出済み」を表示）
+
+7. **設定ファイル**
+   - tsconfig.jsonのパスエイリアス修正（@/* -> ./*）
+   - app/layout.tsx作成
+   - app/globals.css作成（Tailwind CSS設定）
+
+#### 技術的な実装詳細
+
+- **共有トークン生成**: 英数字12文字のランダム文字列
+- **見積もり状態管理**:
+  - 0 = 未提出
+  - -1 = 提出済み（非公開モード時）
+  - 0以上の数値 = 実際の見積もり値（公開モード時）
+- **見積もり投稿**: upsertで作成・更新を同時処理
+- **ポーリング間隔**: 2秒（step1の要件通り）
+
+#### 既知の問題
+
+- Prismaエンジンのダウンロードが403エラーで失敗
+  - ローカル環境の制限によるもの
+  - CI/CD環境では正常に動作する見込み
+
+#### 次のステップ
+
+- [ ] データベースマイグレーションの実行（CI環境）
+- [ ] 複数ブラウザでの動作確認
+- [ ] エッジケースのテスト
+- [ ] UI/UXの改善（Step 2へ）
