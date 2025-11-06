@@ -358,3 +358,42 @@ GitHub Actionsによる自動デプロイ機能を実装しました。
 - マイグレーションの自動適用
 
 この設定により、開発からリリースまでの完全な自動化が実現されました。
+
+---
+
+### 2025-11-06 (continued - CI/CD修正)
+
+#### マイグレーションタイムアウト問題の修正（完了）
+
+**問題:**
+- GitHub Actionsでマイグレーションが8分以上経っても終了しない
+- ログに `at "...pooler.supabase.com:6543"` と表示（プーリング接続使用）
+
+**原因:**
+- Prisma Migrateはコネクションプーリング（PgBouncer）と互換性がない
+- マイグレーション時に`POSTGRES_PRISMA_URL`（ポート6543）を使用していた
+- 直接データベース接続（ポート5432）が必要
+
+**修正内容:**
+1. GitHub Actionsワークフローを更新
+   - マイグレーション時: `POSTGRES_URL_NON_POOLING`を使用（ポート5432）
+   - ビルド時: `POSTGRES_PRISMA_URL`を使用（ポート6543、効率的）
+
+2. 環境変数の使い分け
+```yaml
+# Prisma Client生成 & マイグレーション
+DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL }}
+
+# アプリケーションビルド
+DATABASE_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL }}
+```
+
+3. ドキュメント更新
+   - トラブルシューティングセクションに詳細説明を追加
+   - マイグレーションがハングする原因と解決方法を記載
+   - README.mdに`POSTGRES_URL_NON_POOLING`が必須であることを明記
+
+**効果:**
+- マイグレーションが数秒で完了するようになった
+- アプリケーションは効率的なコネクションプーリングを利用可能
+- デプロイプロセスの信頼性が向上

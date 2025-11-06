@@ -211,7 +211,7 @@ npm start
 |---------|------|
 | `POSTGRES_URL` | PostgreSQL接続URL |
 | `POSTGRES_PRISMA_URL` | Prisma用接続URL（プーリング対応） |
-| `POSTGRES_URL_NON_POOLING` | 非プーリング接続URL |
+| `POSTGRES_URL_NON_POOLING` | 非プーリング接続URL（**マイグレーションに必須**） |
 | `POSTGRES_USER` | データベースユーザー名 |
 | `POSTGRES_PASSWORD` | データベースパスワード |
 | `POSTGRES_DATABASE` | データベース名 |

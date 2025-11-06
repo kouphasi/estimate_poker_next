@@ -188,9 +188,41 @@ GitHub Actionsでは `npm ci` の後に自動的に `prisma generate` が実行�
 4. 環境変数を保存後、ワークフローを再実行
 
 **フォールバック動作:**
-- ワークフローは `POSTGRES_PRISMA_URL` を優先的に使用
-- `POSTGRES_PRISMA_URL` が設定されていない場合は `POSTGRES_URL` にフォールバック
-- どちらも設定されていない場合はエラーになります
+- ビルド時は `POSTGRES_PRISMA_URL` を優先的に使用（アプリケーション実行用）
+- マイグレーション時は `POSTGRES_URL_NON_POOLING` を使用（直接接続が必要）
+- どちらも設定されていない場合は `POSTGRES_URL` にフォールバック
+
+### マイグレーションがタイムアウト・ハングする場合
+
+**症状:**
+- `npx prisma migrate deploy` が8分以上経っても終了しない
+- ログに `Datasource "db": PostgreSQL database ... at "...pooler.supabase.com:6543"` と表示される
+
+**原因:**
+- **Prisma Migrateはコネクションプーリング（PgBouncer）と互換性がありません**
+- ポート6543（Supabaseのプーリング接続）を使用している
+- マイグレーションには直接データベース接続（ポート5432）が必要
+
+**解決方法:**
+1. `POSTGRES_URL_NON_POOLING` が正しく設定されているか確認
+   - Supabase Settings > Database > Connection string > URI (Direct)
+   - ポート5432を使用する接続文字列
+   - 例: `postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres`
+
+2. GitHub Settings > Environments > [preview/production] で設定
+
+3. ワークフローを再実行
+
+**重要な違い:**
+```
+マイグレーション実行時:
+  DATABASE_URL = POSTGRES_URL_NON_POOLING (ポート5432、直接接続)
+
+アプリケーション実行時（ビルド時）:
+  DATABASE_URL = POSTGRES_PRISMA_URL (ポート6543、プーリング接続)
+```
+
+この分離により、マイグレーションは確実に実行され、アプリケーションは効率的なコネクションプーリングを利用できます。
 
 ## セキュリティのベストプラクティス
 
