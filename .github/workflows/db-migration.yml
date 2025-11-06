@@ -22,6 +22,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Debug POSTGRES_URL_NON_POOLING
+        run: |
+          echo "POSTGRES_URL_NON_POOLING length: ${#POSTGRES_URL_NON_POOLING}"
+          if [ -z "$POSTGRES_URL_NON_POOLING" ]; then
+            echo "ERROR: POSTGRES_URL_NON_POOLING is empty or not set"
+            exit 1
+          else
+            echo "POSTGRES_URL_NON_POOLING is set (length: ${#POSTGRES_URL_NON_POOLING})"
+            # Show first 20 characters for verification (without exposing full credentials)
+            echo "POSTGRES_URL_NON_POOLING prefix: ${POSTGRES_URL_NON_POOLING:0:20}..."
+          fi
+        env:
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+
       - name: Debug DATABASE_URL
         run: |
           echo "DATABASE_URL length: ${#DATABASE_URL}"
