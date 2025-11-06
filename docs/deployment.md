@@ -171,6 +171,27 @@ DATABASE_URL="your_preview_db_url" npx prisma migrate deploy
 GitHub Actionsでは `npm ci` の後に自動的に `prisma generate` が実行されます（`postinstall` スクリプト）。
 エラーが発生する場合は、package.jsonの `postinstall` スクリプトを確認してください。
 
+### DATABASE_URL関連のエラー
+
+**エラー:** `the URL must start with the protocol postgresql://`
+
+**原因:**
+- GitHub Secretsで `POSTGRES_PRISMA_URL` または `POSTGRES_URL` が設定されていない
+- 環境変数の値が空文字列または無効な形式
+
+**解決方法:**
+1. GitHub Settings > Environments > [preview/production] を開く
+2. 以下の環境変数が正しく設定されているか確認:
+   - `POSTGRES_PRISMA_URL`: Supabase Settings > Database > Connection pooling > Transaction mode
+   - `POSTGRES_URL`: Supabase Settings > Database > Connection string > URI
+3. 値が `postgresql://` で始まる正しい接続文字列であることを確認
+4. 環境変数を保存後、ワークフローを再実行
+
+**フォールバック動作:**
+- ワークフローは `POSTGRES_PRISMA_URL` を優先的に使用
+- `POSTGRES_PRISMA_URL` が設定されていない場合は `POSTGRES_URL` にフォールバック
+- どちらも設定されていない場合はエラーになります
+
 ## セキュリティのベストプラクティス
 
 1. **Secrets の管理**
