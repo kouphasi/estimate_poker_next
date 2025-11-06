@@ -5,7 +5,7 @@ import PokerCard from './PokerCard'
 
 interface CardSelectorProps {
   selectedValue: number
-  onSelect: (value: number, label: string) => void
+  onSelect: (value: number) => void
   disabled?: boolean
 }
 
@@ -27,7 +27,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
   const handleCustomSubmit = () => {
     const value = parseFloat(customValue)
     if (!isNaN(value) && value > 0) {
-      onSelect(value, `${value}d`)
+      onSelect(value)
       setShowCustomInput(false)
       setCustomValue('')
     }
@@ -42,7 +42,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
             label={option.label}
             value={option.value}
             isSelected={selectedValue === option.value}
-            onClick={() => !disabled && onSelect(option.value, option.label)}
+            onClick={() => !disabled && onSelect(option.value)}
           />
         ))}
       </div>

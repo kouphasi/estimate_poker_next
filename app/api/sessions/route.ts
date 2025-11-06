@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 async function createSessionWithRetry(
   data: Prisma.EstimationSessionCreateInput,
   maxAttempts: number
-): Promise<any> {
+): Promise<{ id: string; shareToken: string; ownerToken: string; isRevealed: boolean; status: string; finalEstimate: number | null; createdAt: Date }> {
   try {
     return await prisma.estimationSession.create({ data })
   } catch (error) {

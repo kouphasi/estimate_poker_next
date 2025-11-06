@@ -85,7 +85,7 @@ export default function EstimatePage() {
     setShowNicknameForm(false)
   }
 
-  const handleCardSelect = async (value: number, label: string) => {
+  const handleCardSelect = async (value: number) => {
     if (!nickname) return
 
     try {

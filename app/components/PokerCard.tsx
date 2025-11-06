@@ -2,12 +2,12 @@
 
 interface PokerCardProps {
   label: string
-  value: number
+  value?: number
   isSelected?: boolean
   onClick?: () => void
 }
 
-export default function PokerCard({ label, value, isSelected = false, onClick }: PokerCardProps) {
+export default function PokerCard({ label, isSelected = false, onClick }: PokerCardProps) {
   return (
     <button
       onClick={onClick}
