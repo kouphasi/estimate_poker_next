@@ -1,4 +1,4 @@
-name: ESLint Check
+name: Lint and Type Check
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
       - develop
 
 jobs:
-  eslint:
+  lint-and-type-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,3 +29,6 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+
+      - name: Run TypeScript type check
+        run: npm run type-check
