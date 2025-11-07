@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/app/lib/prisma'
+import { prisma } from '@/lib/prisma'
 
 // POST /api/sessions/[shareToken]/estimates - 見積もりを投稿
 export async function POST(

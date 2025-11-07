@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/app/lib/prisma'
-import { generateShareToken, generateOwnerToken } from '@/app/lib/utils'
+import { prisma } from '@/lib/prisma'
+import { generateShareToken, generateOwnerToken } from '@/lib/utils'
 import { Prisma } from '@prisma/client'
 
 // POST /api/sessions - 部屋を作成

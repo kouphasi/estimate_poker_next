@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/app/lib/prisma'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/sessions/[shareToken] - セッション情報取得（ポーリング用）
 export async function GET(
