@@ -52,7 +52,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
           <button
             onClick={() => setShowCustomInput(true)}
             disabled={disabled}
-            className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             自由記述
           </button>
@@ -72,7 +72,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
               <button
                 onClick={handleCustomSubmit}
                 disabled={disabled}
-                className="flex-1 sm:flex-none px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 sm:flex-none px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 決定
               </button>
@@ -82,7 +82,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
                   setCustomValue('')
                 }}
                 disabled={disabled}
-                className="flex-1 sm:flex-none px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex-1 sm:flex-none px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 キャンセル
               </button>
