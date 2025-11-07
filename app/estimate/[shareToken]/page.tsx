@@ -6,6 +6,8 @@ import Link from 'next/link'
 import CardSelector from '@/app/components/CardSelector'
 import ParticipantList from '@/app/components/ParticipantList'
 import EstimateResult from '@/app/components/EstimateResult'
+import LoadingSpinner from '@/app/components/LoadingSpinner'
+import { useToast } from '@/app/components/Toast'
 
 interface Session {
   id: string
@@ -26,6 +28,7 @@ export default function EstimatePage() {
   const searchParams = useSearchParams()
   const shareToken = params.shareToken as string
   const nicknameFromUrl = searchParams.get('nickname')
+  const { showToast } = useToast()
 
   const [nickname, setNickname] = useState(nicknameFromUrl || '')
   const [showNicknameForm, setShowNicknameForm] = useState(!nicknameFromUrl)
@@ -103,8 +106,11 @@ export default function EstimatePage() {
       }
 
       setSelectedValue(value)
+      showToast('見積もりを送信しました', 'success')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラーが発生しました')
+      const message = err instanceof Error ? err.message : 'エラーが発生しました'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
@@ -127,8 +133,15 @@ export default function EstimatePage() {
         const data = await response.json()
         throw new Error(data.error || '公開設定の変更に失敗しました')
       }
+
+      showToast(
+        !session.isRevealed ? 'カードを公開しました' : 'カードを非公開にしました',
+        'success'
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラーが発生しました')
+      const message = err instanceof Error ? err.message : 'エラーが発生しました'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
@@ -139,7 +152,9 @@ export default function EstimatePage() {
     const value = parseFloat(finalEstimateInput)
 
     if (isNaN(value) || value < 0) {
-      setError('有効な工数を入力してください')
+      const message = '有効な工数を入力してください'
+      setError(message)
+      showToast(message, 'warning')
       return
     }
 
@@ -161,20 +176,24 @@ export default function EstimatePage() {
       }
 
       setFinalEstimateInput('')
+      showToast('工数を確定しました', 'success')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラーが発生しました')
+      const message = err instanceof Error ? err.message : 'エラーが発生しました'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
   const copyShareUrl = () => {
     navigator.clipboard.writeText(shareUrl)
-    alert('URLをコピーしました')
+    showToast('URLをコピーしました', 'success')
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl">読み込み中...</div>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+        <LoadingSpinner size="large" />
+        <div className="text-xl text-gray-600">読み込み中...</div>
       </div>
     )
   }
