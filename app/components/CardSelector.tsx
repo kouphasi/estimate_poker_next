@@ -13,7 +13,6 @@ const CARD_OPTIONS = [
   { label: '1h', value: 1/8 },    // 1時間 = 0.125日
   { label: '2h', value: 2/8 },    // 2時間 = 0.25日
   { label: '4h', value: 4/8 },    // 4時間 = 0.5日
-  { label: '8h', value: 1 },      // 8時間 = 1日
   { label: '1d', value: 1 },
   { label: '1.5d', value: 1.5 },
   { label: '2d', value: 2 },
