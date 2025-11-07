@@ -45,7 +45,17 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Prisma error:', { code: error.code, meta: error.meta })
+      console.error('Prisma error:', { code: error.code, meta: error.meta, message: error.message })
+
+      // Prepared statement エラーの場合は再接続を試みる
+      if (error.message?.includes('prepared statement')) {
+        try {
+          await prisma.$disconnect()
+        } catch (disconnectError) {
+          console.error('Disconnect error:', disconnectError)
+        }
+      }
+
       return NextResponse.json(
         { error: 'データベースエラーが発生しました' },
         { status: 500 }
