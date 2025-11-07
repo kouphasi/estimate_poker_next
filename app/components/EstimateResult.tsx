@@ -28,6 +28,14 @@ export default function EstimateResult({ estimates, isRevealed, finalEstimate }:
       : sorted[mid].value
   })()
 
+  const max = validEstimates.length > 0
+    ? Math.max(...validEstimates.map(e => e.value))
+    : 0
+
+  const min = validEstimates.length > 0
+    ? Math.min(...validEstimates.map(e => e.value))
+    : 0
+
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <h2 className="text-xl font-bold mb-4">見積もり結果</h2>
@@ -41,13 +49,25 @@ export default function EstimateResult({ estimates, isRevealed, finalEstimate }:
 
       {isRevealed && validEstimates.length > 0 ? (
         <div className="space-y-3">
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600">平均値</p>
-            <p className="text-xl font-bold text-blue-800">{average.toFixed(2)}日</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-gray-600">平均値</p>
+              <p className="text-xl font-bold text-blue-800">{average.toFixed(2)}日</p>
+            </div>
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <p className="text-sm text-gray-600">中央値</p>
+              <p className="text-xl font-bold text-purple-800">{median.toFixed(2)}日</p>
+            </div>
           </div>
-          <div className="p-3 bg-purple-50 rounded-lg">
-            <p className="text-sm text-gray-600">中央値</p>
-            <p className="text-xl font-bold text-purple-800">{median.toFixed(2)}日</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-red-50 rounded-lg">
+              <p className="text-sm text-gray-600">最大値</p>
+              <p className="text-xl font-bold text-red-800">{max.toFixed(2)}日</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <p className="text-sm text-gray-600">最小値</p>
+              <p className="text-xl font-bold text-green-800">{min.toFixed(2)}日</p>
+            </div>
           </div>
           <div className="p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600 mb-2">全員の見積もり</p>

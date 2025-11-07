@@ -35,7 +35,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {CARD_OPTIONS.map((option) => (
           <PokerCard
             key={option.label}
@@ -57,7 +57,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
             自由記述
           </button>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="number"
               step="0.5"
@@ -68,23 +68,25 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
               disabled={disabled}
               className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
             />
-            <button
-              onClick={handleCustomSubmit}
-              disabled={disabled}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              決定
-            </button>
-            <button
-              onClick={() => {
-                setShowCustomInput(false)
-                setCustomValue('')
-              }}
-              disabled={disabled}
-              className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              キャンセル
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCustomSubmit}
+                disabled={disabled}
+                className="flex-1 sm:flex-none px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                決定
+              </button>
+              <button
+                onClick={() => {
+                  setShowCustomInput(false)
+                  setCustomValue('')
+                }}
+                disabled={disabled}
+                className="flex-1 sm:flex-none px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                キャンセル
+              </button>
+            </div>
           </div>
         )}
       </div>
