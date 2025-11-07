@@ -4,21 +4,32 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// DATABASE_URL に pgbouncer=true を追加して prepared statements を無効化
+// DATABASE_URL を取得（直接接続を優先して prepared statements エラーを回避）
 function getDatabaseUrl() {
+  // POSTGRES_URL_NON_POOLING がある場合は優先（直接接続、prepared statements 対応）
+  // Vercel では自動的に設定されている
+  if (process.env.POSTGRES_URL_NON_POOLING) {
+    console.log('[Prisma] Using POSTGRES_URL_NON_POOLING (direct connection, supports prepared statements)')
+    return process.env.POSTGRES_URL_NON_POOLING
+  }
+
+  // フォールバック：DATABASE_URL を使用
   const url = process.env.DATABASE_URL
   if (!url) {
-    throw new Error('DATABASE_URL is not defined')
+    throw new Error('DATABASE_URL or POSTGRES_URL_NON_POOLING is required')
   }
 
-  // すでに pgbouncer パラメータが含まれている場合はそのまま返す
-  if (url.includes('pgbouncer=')) {
-    return url
+  console.log('[Prisma] Using DATABASE_URL (pooled connection)')
+
+  // pgbouncer パラメータが含まれていない場合は追加
+  if (!url.includes('pgbouncer=')) {
+    const separator = url.includes('?') ? '&' : '?'
+    const modifiedUrl = `${url}${separator}pgbouncer=true`
+    console.log('[Prisma] Added pgbouncer=true to DATABASE_URL')
+    return modifiedUrl
   }
 
-  // pgbouncer=true を追加（prepared statements を無効化）
-  const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}pgbouncer=true`
+  return url
 }
 
 export const prisma =
