@@ -30,8 +30,17 @@ export default function EstimatePage() {
   const nicknameFromUrl = searchParams.get('nickname')
   const { showToast } = useToast()
 
-  const [nickname, setNickname] = useState(nicknameFromUrl || '')
-  const [showNicknameForm, setShowNicknameForm] = useState(!nicknameFromUrl)
+  // ニックネームの初期値を取得（優先順位: URLクエリパラメータ > localStorage）
+  const getInitialNickname = () => {
+    if (nicknameFromUrl) return nicknameFromUrl
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`nickname_${shareToken}`) || ''
+    }
+    return ''
+  }
+
+  const [nickname, setNickname] = useState(getInitialNickname())
+  const [showNicknameForm, setShowNicknameForm] = useState(!getInitialNickname())
   const [session, setSession] = useState<Session | null>(null)
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [selectedValue, setSelectedValue] = useState(0)
@@ -55,6 +64,15 @@ export default function EstimatePage() {
         const data = await response.json()
         setSession(data.session)
         setEstimates(data.estimates)
+
+        // 自分の見積もりがあればselectedValueを復元
+        if (nickname) {
+          const myEstimate = data.estimates.find((e: Estimate) => e.nickname === nickname)
+          if (myEstimate && myEstimate.value > 0) {
+            setSelectedValue(myEstimate.value)
+          }
+        }
+
         setLoading(false)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'エラーが発生しました')
@@ -66,7 +84,7 @@ export default function EstimatePage() {
     const interval = setInterval(fetchSession, 2000) // 2秒ごとにポーリング
 
     return () => clearInterval(interval)
-  }, [shareToken])
+  }, [shareToken, nickname])
 
   // 共有URL生成とownerToken確認
   useEffect(() => {
@@ -85,6 +103,10 @@ export default function EstimatePage() {
     if (!nickname.trim()) {
       setError('ニックネームを入力してください')
       return
+    }
+    // ニックネームをlocalStorageに保存
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`nickname_${shareToken}`, nickname.trim())
     }
     setShowNicknameForm(false)
   }
