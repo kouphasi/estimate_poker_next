@@ -469,3 +469,75 @@ components/
 - [ ] 参加者アバター表示（オプション）
 - [ ] WebSocket/SSEへの移行検討
 - [ ] E2Eテストの追加
+
+---
+
+### 2025-11-07: Prisma接続エラーの修正（PostgresError 42P05）
+
+#### 問題
+
+プレビュー環境で以下のエラーが発生：
+```
+PostgresError { code: "42P05", message: "prepared statement already exists" }
+```
+
+#### 原因
+
+Vercel のプレビュー環境では：
+- `DATABASE_URL`: pgBouncer 経由（pooled connection、transaction mode）
+- pgBouncer の transaction mode は **prepared statements をサポートしない**
+- Prisma は prepared statements を使用しようとしてエラーが発生
+
+#### 実施した修正
+
+**`lib/prisma.ts` を修正して `POSTGRES_URL_NON_POOLING` を優先的に使用**
+
+```typescript
+function getDatabaseUrl() {
+  // POSTGRES_URL_NON_POOLING を優先（直接接続、prepared statements 対応）
+  if (process.env.POSTGRES_URL_NON_POOLING) {
+    return process.env.POSTGRES_URL_NON_POOLING
+  }
+
+  // フォールバック：DATABASE_URL に pgbouncer=true を追加
+  const url = process.env.DATABASE_URL
+  if (!url.includes('pgbouncer=')) {
+    return `${url}${separator}pgbouncer=true`
+  }
+
+  return url
+}
+```
+
+#### POSTGRES_URL_NON_POOLING を使用する理由
+
+**メリット：**
+- ✅ pgBouncer をバイパスして直接 PostgreSQL に接続
+- ✅ Prepared statements が完全にサポートされる
+- ✅ Vercel で自動的に提供される環境変数（追加設定不要）
+- ✅ エラーが完全に解消される
+
+**デメリット：**
+- ⚠️ Connection pooling がない（接続オーバーヘッドがわずかに増加）
+- ⚠️ ただし、サーバーレス環境では各関数が独立しているため影響は軽微
+
+#### 技術的な詳細
+
+**pgBouncer の動作モード：**
+- **Session mode**: Prepared statements サポート（1接続を専有）
+- **Transaction mode**: Prepared statements 非サポート（接続を共有、Vercel のデフォルト）
+
+**Vercel の環境変数：**
+- `DATABASE_URL`: pgBouncer 経由（transaction mode）
+- `POSTGRES_URL_NON_POOLING`: 直接接続（prepared statements 対応）
+
+#### 参考資料
+
+- [Prisma - Connection pooling with PgBouncer](https://www.prisma.io/docs/guides/performance-and-optimization/connection-management/configure-pg-bouncer)
+- [Vercel Postgres - Connection pooling](https://vercel.com/docs/storage/vercel-postgres/usage-and-pricing#connection-pooling)
+
+#### 結果
+
+- ✅ プレビュー環境でのエラーが解消
+- ✅ ビルド時・ランタイム時ともに安定動作
+- ✅ 環境変数の追加設定が不要（Vercel が自動提供）
