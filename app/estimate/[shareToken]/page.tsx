@@ -227,7 +227,7 @@ export default function EstimatePage() {
             )}
             <button
               type="submit"
-              className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
+              className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
             >
               参加する
             </button>
@@ -274,7 +274,7 @@ export default function EstimatePage() {
             />
             <button
               onClick={copyShareUrl}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
             >
               コピー
             </button>
@@ -315,7 +315,7 @@ export default function EstimatePage() {
                 <button
                   onClick={handleToggleReveal}
                   disabled={session?.status === 'FINALIZED'}
-                  className="w-full py-3 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {session?.isRevealed ? 'カードを隠す' : 'カードを公開'}
                 </button>
@@ -333,7 +333,7 @@ export default function EstimatePage() {
                     />
                     <button
                       type="submit"
-                      className="w-full py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
+                      className="w-full py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors cursor-pointer"
                     >
                       工数を確定
                     </button>
