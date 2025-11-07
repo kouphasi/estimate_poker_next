@@ -109,7 +109,6 @@ export default function EstimatePage() {
       showToast('見積もりを送信しました', 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'エラーが発生しました'
-      setError(message)
       showToast(message, 'error')
     }
   }
@@ -140,7 +139,6 @@ export default function EstimatePage() {
       )
     } catch (err) {
       const message = err instanceof Error ? err.message : 'エラーが発生しました'
-      setError(message)
       showToast(message, 'error')
     }
   }
@@ -152,9 +150,7 @@ export default function EstimatePage() {
     const value = parseFloat(finalEstimateInput)
 
     if (isNaN(value) || value < 0) {
-      const message = '有効な工数を入力してください'
-      setError(message)
-      showToast(message, 'warning')
+      showToast('有効な工数を入力してください', 'warning')
       return
     }
 
@@ -179,7 +175,6 @@ export default function EstimatePage() {
       showToast('工数を確定しました', 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'エラーが発生しました'
-      setError(message)
       showToast(message, 'error')
     }
   }
@@ -357,12 +352,6 @@ export default function EstimatePage() {
             />
           </div>
         </div>
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
       </main>
     </div>
   )

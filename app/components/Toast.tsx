@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode, useRef } from 'react'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 
@@ -26,22 +26,30 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
-  const [nextId, setNextId] = useState(0)
+  const nextIdRef = useRef(0)
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
-    const id = nextId
-    setNextId(id + 1)
+    const id = nextIdRef.current
+    nextIdRef.current += 1
     setToasts(prev => [...prev, { id, message, type }])
+  }, [])
 
-    // 3秒後に自動削除
-    setTimeout(() => {
-      setToasts(prev => prev.filter(toast => toast.id !== id))
-    }, 3000)
-  }, [nextId])
-
-  const removeToast = (id: number) => {
+  const removeToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
-  }
+  }, [])
+
+  // 自動削除タイマーを管理
+  useEffect(() => {
+    if (toasts.length === 0) return
+
+    const timers = toasts.map(toast =>
+      setTimeout(() => removeToast(toast.id), 3000)
+    )
+
+    return () => {
+      timers.forEach(clearTimeout)
+    }
+  }, [toasts, removeToast])
 
   const getToastStyles = (type: ToastType) => {
     switch (type) {

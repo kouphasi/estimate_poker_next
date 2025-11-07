@@ -45,8 +45,8 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-// Graceful shutdown
-if (typeof window === 'undefined') {
+// Graceful shutdown (本番環境のみ、ビルド時を除外)
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
   const shutdown = async () => {
     await prisma.$disconnect()
   }

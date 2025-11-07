@@ -35,7 +35,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {CARD_OPTIONS.map((option) => (
           <PokerCard
             key={option.label}
