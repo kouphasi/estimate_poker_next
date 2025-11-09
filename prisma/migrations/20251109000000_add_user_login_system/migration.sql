@@ -1,25 +1,34 @@
--- Step 1: Rename old users table if it exists
+-- Step 1: Handle existing users table and users_old table
 DO $$
 BEGIN
+    -- Case 1: users_old already exists (from previous failed migration)
+    -- Do nothing, we'll use it later
+
+    -- Case 2: users table exists with old structure (user_ids column)
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        -- Check if the old users table has the old structure (user_ids column)
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'user_ids') THEN
-            ALTER TABLE "users" RENAME TO "users_old";
+            -- Old structure detected, rename to users_old (if not already exists)
+            IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users_old') THEN
+                ALTER TABLE "users" RENAME TO "users_old";
+            ELSE
+                -- Both exist somehow, drop the old users table
+                DROP TABLE "users" CASCADE;
+            END IF;
         END IF;
     END IF;
-END $$;
 
--- Step 1.5: Drop users_pkey constraint if it exists (from partial migration)
-DO $$
-BEGIN
-    -- Only drop the constraint if the users table exists AND has the constraint
+    -- Case 3: users table exists with new structure but has orphaned constraints
+    -- (from partial migration failure) - drop constraint if needed
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        IF EXISTS (
-            SELECT 1 FROM pg_constraint c
-            JOIN pg_class t ON c.conrelid = t.oid
-            WHERE c.conname = 'users_pkey' AND t.relname = 'users'
-        ) THEN
-            ALTER TABLE "users" DROP CONSTRAINT "users_pkey";
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'user_ids') THEN
+            -- New structure detected, drop old constraint if it exists
+            IF EXISTS (
+                SELECT 1 FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.conname = 'users_pkey' AND t.relname = 'users'
+            ) THEN
+                ALTER TABLE "users" DROP CONSTRAINT "users_pkey";
+            END IF;
         END IF;
     END IF;
 END $$;
