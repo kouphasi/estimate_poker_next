@@ -176,6 +176,8 @@ model EstimationSession {
   - 31b878a - feat: Implement basic login functionality (Step 3)
   - 8e604c6 - docs: Update step3.md with implementation completion status
   - 34321e3 - fix: Update APIs for new User schema and fix TypeScript errors
+  - abb3d35 - docs: Update step3.md with build error fixes documentation
+  - 5d147bd - improve: Enhance error handling with detailed server-side logging
 - プッシュ完了
 
 #### ビルドエラー修正（2025-11-09）
@@ -196,6 +198,28 @@ model EstimationSession {
 - ✅ TypeScript: エラーなし (`npm run type-check`)
 - ✅ ESLint: エラーなし (`npm run lint`)
 - ✅ Vercelでのビルド成功を期待
+
+#### エラーハンドリング改善（2025-11-09）
+コードレビューのフィードバックに基づき、エラーハンドリングを改善：
+
+**改善内容:**
+- サーバー側で詳細なエラー情報をログに記録（エラーメッセージ、スタックトレース、コンテキスト情報）
+- クライアント側には汎用的なエラーメッセージのみ返却（情報漏洩防止）
+- 構造化ログでデバッグ性向上（shareToken, userId等のコンテキスト情報を含む）
+
+**対象API:**
+- POST /api/sessions - セッション作成
+- DELETE /api/sessions/[shareToken] - セッション削除
+- POST /api/sessions/[shareToken]/estimates - 見積もり投稿
+- POST /api/sessions/[shareToken]/finalize - 工数確定
+- PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替え
+- POST /api/users - ユーザー作成
+- GET /api/users/[userId]/sessions - ユーザーのセッション一覧
+
+**メリット:**
+- 本番環境でのトラブルシューティングが容易
+- セキュリティ面での情報漏洩リスク低減
+- 全API統一されたエラーハンドリングパターン
 
 #### 次のステップ
 現在、基本的なログイン機能は完成しました：
