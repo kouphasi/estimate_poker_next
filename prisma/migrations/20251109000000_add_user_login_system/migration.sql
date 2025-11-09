@@ -1,5 +1,8 @@
+-- Drop the old users table if it exists (with old structure)
+DROP TABLE IF EXISTS "users" CASCADE;
+
 -- CreateTable
-CREATE TABLE IF NOT EXISTS "users" (
+CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "nickname" TEXT NOT NULL,
     "isGuest" BOOLEAN NOT NULL DEFAULT true,
@@ -15,41 +18,15 @@ ALTER TABLE "estimation_sessions" ADD COLUMN IF NOT EXISTS "ownerId" TEXT;
 ALTER TABLE "estimates" ADD COLUMN IF NOT EXISTS "user_id" TEXT;
 
 -- AddForeignKey
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'estimation_sessions_ownerId_fkey'
-    ) THEN
-        ALTER TABLE "estimation_sessions" ADD CONSTRAINT "estimation_sessions_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE "estimation_sessions" DROP CONSTRAINT IF EXISTS "estimation_sessions_ownerId_fkey";
+ALTER TABLE "estimation_sessions" ADD CONSTRAINT "estimation_sessions_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'estimates_user_id_fkey'
-    ) THEN
-        ALTER TABLE "estimates" ADD CONSTRAINT "estimates_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE "estimates" DROP CONSTRAINT IF EXISTS "estimates_user_id_fkey";
+ALTER TABLE "estimates" ADD CONSTRAINT "estimates_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- DropIndex
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM pg_indexes WHERE indexname = 'estimates_session_id_nickname_key'
-    ) THEN
-        DROP INDEX "estimates_session_id_nickname_key";
-    END IF;
-END $$;
+DROP INDEX IF EXISTS "estimates_session_id_nickname_key";
 
 -- CreateIndex
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_indexes WHERE indexname = 'estimates_session_id_user_id_key'
-    ) THEN
-        CREATE UNIQUE INDEX "estimates_session_id_user_id_key" ON "estimates"("session_id", "user_id");
-    END IF;
-END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS "estimates_session_id_user_id_key" ON "estimates"("session_id", "user_id");
