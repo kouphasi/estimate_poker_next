@@ -8,6 +8,7 @@ import ParticipantList from '@/app/components/ParticipantList'
 import EstimateResult from '@/app/components/EstimateResult'
 import LoadingSpinner from '@/app/components/LoadingSpinner'
 import { useToast } from '@/app/components/Toast'
+import { useUser } from '@/contexts/UserContext'
 
 interface Session {
   id: string
@@ -30,9 +31,11 @@ export default function EstimatePage() {
   const shareToken = params.shareToken as string
   const nicknameFromUrl = searchParams.get('nickname')
   const { showToast } = useToast()
+  const { user, isLoading: userLoading } = useUser()
 
-  // ニックネームの初期値を取得（優先順位: URLクエリパラメータ > localStorage）
+  // ニックネームの初期値を取得（優先順位: ログインユーザー > URLクエリパラメータ > localStorage）
   const getInitialNickname = () => {
+    if (user?.nickname) return user.nickname
     if (nicknameFromUrl) return nicknameFromUrl
     if (typeof window !== 'undefined') {
       return localStorage.getItem(`nickname_${shareToken}`) || ''
@@ -60,6 +63,14 @@ export default function EstimatePage() {
   const [shareUrl, setShareUrl] = useState('')
   const [ownerToken, setOwnerToken] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
+
+  // ログインユーザーのニックネームを自動的に設定
+  useEffect(() => {
+    if (user?.nickname) {
+      setNickname(user.nickname)
+      setShowNicknameForm(false)
+    }
+  }, [user])
 
   // ポーリング：2秒ごとにセッション情報を取得
   useEffect(() => {
@@ -224,7 +235,7 @@ export default function EstimatePage() {
     showToast('URLをコピーしました', 'success')
   }
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
         <LoadingSpinner size="large" />
