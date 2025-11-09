@@ -89,3 +89,70 @@ model EstimationSession {
 ---
 
 ## 開発ログ
+
+### 2025-11-09 開発開始
+#### 現在の状況確認
+- 既存のPrismaスキーマを確認
+  - Userモデルは存在するが、構造が要件と異なる（userId: Int vs id: String）
+  - EstimationSessionにownerIdフィールドが存在しない
+  - EstimateモデルにuserIdとのリレーションが存在しない
+- API routesはまだ作成されていない
+
+#### 実装方針
+1. Userモデルを要件に合わせて更新（id: String, nickname, isGuest）
+2. EstimationSessionにownerIdを追加してUserとリレーション
+3. EstimateモデルにuserIdを追加してUserとリレーション
+4. 必要なAPI routesを作成
+5. フロントエンド実装（ログイン画面、マイページ）
+
+#### データベーススキーマ更新
+- Userモデルを要件に合わせて更新
+  - id: String (cuid)
+  - nickname: String
+  - isGuest: Boolean (default: true)
+  - createdAt: DateTime
+- EstimationSessionにownerId追加（Userとのリレーション）
+- EstimateモデルにuserId追加（Userとのリレーション）
+- マイグレーションファイルを手動作成（Prismaエンジンのダウンロード問題のため）
+
+#### API実装完了
+1. **POST /api/users** - ユーザー作成API
+   - ニックネームを受け取り、新しいゲストユーザーを作成
+   - userId と nickname を返却
+
+2. **GET /api/users/[userId]/sessions** - 部屋一覧取得API
+   - ユーザーが作成した部屋一覧を取得
+   - 作成日時の降順でソート
+
+3. **DELETE /api/sessions/[shareToken]** - 部屋削除API
+   - オーナー権限チェック実装
+   - x-user-id ヘッダーでユーザー認証
+
+#### フロントエンド実装完了
+1. **ユーザーコンテキスト** (src/contexts/UserContext.tsx)
+   - ローカルストレージでユーザー情報を永続化
+   - login/logout機能
+   - グローバルなユーザー状態管理
+
+2. **ログイン画面** (src/app/page.tsx)
+   - ニックネーム入力フォーム
+   - 簡易ログイン機能
+   - ログイン済みの場合、自動的にマイページへリダイレクト
+
+3. **マイページ** (src/app/mypage/page.tsx)
+   - 作成した部屋一覧表示
+   - 部屋の削除機能
+   - ログアウト機能
+   - 未ログインの場合、トップページへリダイレクト
+
+#### 実装したファイル一覧
+- prisma/schema.prisma (更新)
+- prisma/migrations/20251109000000_add_user_login_system/migration.sql (新規)
+- src/lib/prisma.ts (新規)
+- src/app/api/users/route.ts (新規)
+- src/app/api/users/[userId]/sessions/route.ts (新規)
+- src/app/api/sessions/[shareToken]/route.ts (新規)
+- src/contexts/UserContext.tsx (新規)
+- src/app/layout.tsx (更新)
+- src/app/page.tsx (更新)
+- src/app/mypage/page.tsx (新規)
