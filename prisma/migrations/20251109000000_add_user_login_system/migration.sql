@@ -1,28 +1,18 @@
--- Step 1: Rename old users table if it exists
+-- Step 1: Rename old users table if it exists and handle constraints
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
         -- Check if the old users table has the old structure (user_ids column)
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'user_ids') THEN
+            -- Drop the primary key constraint before renaming to avoid orphaned constraints
+            IF EXISTS (
+                SELECT 1 FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.conname = 'users_pkey' AND t.relname = 'users'
+            ) THEN
+                ALTER TABLE "users" DROP CONSTRAINT "users_pkey";
+            END IF;
             ALTER TABLE "users" RENAME TO "users_old";
-        END IF;
-    END IF;
-END $$;
-
--- Step 1.5: Drop users_pkey constraint if it exists (from partial migration)
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM pg_constraint
-        WHERE conname = 'users_pkey'
-    ) THEN
-        -- Check if constraint is on users table
-        IF EXISTS (
-            SELECT 1 FROM pg_constraint c
-            JOIN pg_class t ON c.conrelid = t.oid
-            WHERE c.conname = 'users_pkey' AND t.relname = 'users'
-        ) THEN
-            ALTER TABLE "users" DROP CONSTRAINT "users_pkey";
         END IF;
     END IF;
 END $$;
