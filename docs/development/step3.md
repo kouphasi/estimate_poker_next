@@ -172,13 +172,35 @@ model EstimationSession {
 
 #### Git情報
 - ブランチ: claude/implement-basic-login-011CUwu9K6cUC3quUW69eXKD
-- コミット: 31b878a - feat: Implement basic login functionality (Step 3)
+- コミット:
+  - 31b878a - feat: Implement basic login functionality (Step 3)
+  - 8e604c6 - docs: Update step3.md with implementation completion status
+  - 34321e3 - fix: Update APIs for new User schema and fix TypeScript errors
 - プッシュ完了
 
+#### ビルドエラー修正（2025-11-09）
+初回のVercelビルドでTypeScriptエラーが発生したため、以下を修正：
+
+**問題:**
+- 既存APIが古いスキーマ（`sessionId_nickname`）を参照していた
+- Prismaのエラーハンドリングが旧バージョンの形式だった
+- ディレクトリ構造が`src/app`と`app/`で混在していた
+
+**修正内容:**
+1. **estimates/route.ts** - userId対応、自動ユーザー作成機能追加
+2. **sessions/route.ts** - ownerId追加、ユーザー自動作成
+3. **reveal/finalize routes** - Prismaエラーハンドリング簡素化
+4. **ディレクトリ統一** - `src/`を削除し、すべて`app/`, `lib/`, `contexts/`に統一
+
+**検証結果:**
+- ✅ TypeScript: エラーなし (`npm run type-check`)
+- ✅ ESLint: エラーなし (`npm run lint`)
+- ✅ Vercelでのビルド成功を期待
+
 #### 次のステップ
-現在、基本的なログイン機能は完成しましたが、以下の点は未実装です：
-1. 既存の部屋作成フローにユーザー情報を連携（現在部屋作成APIが存在しないため保留）
-2. 実際のデプロイ環境での動作確認（マイグレーションの適用含む）
+現在、基本的なログイン機能は完成しました：
+1. ✅ 既存の部屋作成フローにユーザー情報を連携（完了）
+2. ⏳ 実際のデプロイ環境での動作確認（マイグレーションの適用含む）
 
 Step 3の完了条件を確認：
 - [x] ニックネームでログイン可能
