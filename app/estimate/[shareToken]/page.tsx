@@ -269,6 +269,14 @@ export default function EstimatePage() {
               見積もりポーカー
             </Link>
             <div className="flex items-center gap-4">
+              {isOwner && (
+                <Link
+                  href="/mypage"
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                >
+                  ← 部屋一覧に戻る
+                </Link>
+              )}
               <span className="text-sm text-gray-600">参加者: {nickname}</span>
               {session?.status === 'FINALIZED' && (
                 <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
