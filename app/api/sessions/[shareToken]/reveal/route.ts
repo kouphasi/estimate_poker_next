@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
 
 // PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替え
 export async function PATCH(
@@ -62,11 +61,7 @@ export async function PATCH(
       }
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Prisma error:', { code: error.code, meta: error.meta })
-    } else {
-      console.error('Unexpected reveal toggle error:', error)
-    }
+    console.error('Reveal toggle error:', error)
     return NextResponse.json(
       { error: '公開設定の変更に失敗しました' },
       { status: 500 }

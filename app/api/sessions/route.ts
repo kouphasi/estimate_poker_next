@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateShareToken, generateOwnerToken } from '@/lib/utils'
-import { Prisma } from '@prisma/client'
 
 // POST /api/sessions - 部屋を作成
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { nickname } = body
+    const { nickname, userId } = body
 
     if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
       return NextResponse.json(
@@ -16,10 +15,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ユーザーIDが提供されていない場合、新規ユーザーを作成
+    let actualUserId = userId
+    if (!actualUserId) {
+      const user = await prisma.user.create({
+        data: {
+          nickname: nickname.trim(),
+          isGuest: true
+        }
+      })
+      actualUserId = user.id
+    }
+
     // セッション作成（トークン衝突時は自動リトライ）
     const session = await createSessionWithRetry({
       shareToken: generateShareToken(),
       ownerToken: generateOwnerToken(),
+      ownerId: actualUserId,
       isRevealed: false,
       status: 'ACTIVE'
     }, 5)
@@ -28,6 +40,7 @@ export async function POST(request: NextRequest) {
     await prisma.estimate.create({
       data: {
         sessionId: session.id,
+        userId: actualUserId,
         nickname: nickname.trim(),
         value: 0 // 初期値
       }
@@ -41,27 +54,11 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
       shareToken: session.shareToken,
       ownerToken: session.ownerToken,
-      shareUrl
+      shareUrl,
+      userId: actualUserId
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Prisma error:', { code: error.code, meta: error.meta, message: error.message })
-
-      // Prepared statement エラーの場合は再接続を試みる
-      if (error.message?.includes('prepared statement')) {
-        try {
-          await prisma.$disconnect()
-        } catch (disconnectError) {
-          console.error('Disconnect error:', disconnectError)
-        }
-      }
-
-      return NextResponse.json(
-        { error: 'データベースエラーが発生しました' },
-        { status: 500 }
-      )
-    }
-    console.error('Unexpected session creation error:', error)
+    console.error('Session creation error:', error)
     return NextResponse.json(
       { error: 'セッションの作成に失敗しました' },
       { status: 500 }
@@ -70,19 +67,24 @@ export async function POST(request: NextRequest) {
 }
 
 // トークン衝突時の再試行ロジック
+interface SessionCreateData {
+  shareToken: string
+  ownerToken: string
+  ownerId: string
+  isRevealed: boolean
+  status: 'ACTIVE' | 'FINALIZED'
+}
+
 async function createSessionWithRetry(
-  data: Prisma.EstimationSessionCreateInput,
+  data: SessionCreateData,
   maxAttempts: number
 ): Promise<{ id: string; shareToken: string; ownerToken: string; isRevealed: boolean; status: string; finalEstimate: number | null; createdAt: Date }> {
   try {
     return await prisma.estimationSession.create({ data })
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002' &&
-      maxAttempts > 0
-    ) {
-      // ユニーク制約違反の場合、新しいトークンで再試行
+    console.error('Create session attempt failed:', error)
+    if (maxAttempts > 0) {
+      // ユニーク制約違反の可能性がある場合、新しいトークンで再試行
       return createSessionWithRetry(
         {
           ...data,

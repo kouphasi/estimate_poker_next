@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
 
 // POST /api/sessions/[shareToken]/finalize - 工数確定
 export async function POST(
@@ -66,11 +65,7 @@ export async function POST(
       }
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Prisma error:', { code: error.code, meta: error.meta })
-    } else {
-      console.error('Unexpected finalize error:', error)
-    }
+    console.error('Finalize error:', error)
     return NextResponse.json(
       { error: '工数の確定に失敗しました' },
       { status: 500 }
