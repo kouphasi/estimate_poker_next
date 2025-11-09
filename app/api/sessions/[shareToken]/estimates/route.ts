@@ -9,6 +9,8 @@ export async function POST(
   try {
     const { shareToken } = await params
     const body = await request.json()
+    // TODO: セキュリティ改善 - userIdはリクエストボディから来るため改ざん可能
+    // 将来的にはサーバー側セッション管理（HttpOnly Cookie等）で認証を行う
     const { nickname, value, userId } = body
 
     if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {

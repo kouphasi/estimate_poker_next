@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateShareToken, generateOwnerToken } from '@/lib/utils'
+import { isPrismaError } from '@/lib/prisma-errors'
 
 // POST /api/sessions - 部屋を作成
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    // TODO: セキュリティ改善 - userIdはリクエストボディから来るため改ざん可能
+    // 将来的にはサーバー側セッション管理（HttpOnly Cookie等）で認証を行う
     const { nickname, userId } = body
 
     if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
@@ -94,10 +97,12 @@ async function createSessionWithRetry(
       error,
       remainingAttempts: maxAttempts,
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorCode: isPrismaError(error) ? error.code : undefined,
     })
 
-    if (maxAttempts > 0) {
-      // ユニーク制約違反の可能性がある場合、新しいトークンで再試行
+    // P2002: ユニーク制約違反エラーの場合のみ再試行
+    if (isPrismaError(error) && error.code === 'P2002' && maxAttempts > 0) {
+      console.log('Unique constraint violation detected, retrying with new tokens...')
       return createSessionWithRetry(
         {
           ...data,
@@ -107,6 +112,8 @@ async function createSessionWithRetry(
         maxAttempts - 1
       )
     }
+
+    // それ以外のエラーは即座にスロー
     throw error
   }
 }
