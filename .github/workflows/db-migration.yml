@@ -51,6 +51,25 @@ jobs:
           # Use non-pooling URL for migrations (session mode required)
           DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
 
+      - name: Check migration status
+        id: migration_status
+        run: |
+          echo "Checking migration status..."
+          npx prisma migrate status || echo "MIGRATION_FAILED=true" >> $GITHUB_OUTPUT
+        env:
+          DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+        continue-on-error: true
+
+      - name: Resolve failed migration if needed
+        if: steps.migration_status.outputs.MIGRATION_FAILED == 'true'
+        run: |
+          echo "Attempting to resolve failed migration..."
+          npx prisma migrate resolve --rolled-back 20251109000000_add_user_login_system || true
+        env:
+          DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
+
       - name: Run Prisma migrations
         run: npx prisma migrate deploy
         env:
