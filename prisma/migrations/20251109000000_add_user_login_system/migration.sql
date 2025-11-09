@@ -9,15 +9,69 @@ BEGIN
     END IF;
 END $$;
 
--- Step 2: Create new users table
-CREATE TABLE IF NOT EXISTS "users" (
-    "id" TEXT NOT NULL,
-    "nickname" TEXT NOT NULL,
-    "isGuest" BOOLEAN NOT NULL DEFAULT true,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- Step 1.5: Drop users_pkey constraint if it exists (from partial migration)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'users_pkey'
+    ) THEN
+        -- Check if constraint is on users table
+        IF EXISTS (
+            SELECT 1 FROM pg_constraint c
+            JOIN pg_class t ON c.conrelid = t.oid
+            WHERE c.conname = 'users_pkey' AND t.relname = 'users'
+        ) THEN
+            ALTER TABLE "users" DROP CONSTRAINT "users_pkey";
+        END IF;
+    END IF;
+END $$;
 
-    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
-);
+-- Step 2: Create new users table
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+        CREATE TABLE "users" (
+            "id" TEXT NOT NULL,
+            "nickname" TEXT NOT NULL,
+            "isGuest" BOOLEAN NOT NULL DEFAULT true,
+            "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+        );
+    ELSE
+        -- Table exists, ensure it has the right structure
+        -- Add missing columns if needed
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'id') THEN
+            ALTER TABLE "users" ADD COLUMN "id" TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'nickname') THEN
+            ALTER TABLE "users" ADD COLUMN "nickname" TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'isGuest') THEN
+            ALTER TABLE "users" ADD COLUMN "isGuest" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'created_at') THEN
+            ALTER TABLE "users" ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+        END IF;
+
+        -- Add primary key constraint if it doesn't exist
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint c
+            JOIN pg_class t ON c.conrelid = t.oid
+            WHERE c.conname = 'users_pkey' AND t.relname = 'users'
+        ) THEN
+            -- Make id NOT NULL if it isn't already
+            ALTER TABLE "users" ALTER COLUMN "id" SET NOT NULL;
+            ALTER TABLE "users" ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id");
+        END IF;
+
+        -- Make nickname NOT NULL if it isn't already
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'nickname' AND is_nullable = 'YES') THEN
+            UPDATE "users" SET "nickname" = 'User' WHERE "nickname" IS NULL;
+            ALTER TABLE "users" ALTER COLUMN "nickname" SET NOT NULL;
+        END IF;
+    END IF;
+END $$;
 
 -- Step 3: Add ownerId column to estimation_sessions
 ALTER TABLE "estimation_sessions" ADD COLUMN IF NOT EXISTS "ownerId" TEXT;
