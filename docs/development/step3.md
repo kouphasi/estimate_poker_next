@@ -173,11 +173,13 @@ model EstimationSession {
 #### Git情報
 - ブランチ: claude/implement-basic-login-011CUwu9K6cUC3quUW69eXKD
 - コミット:
-  - 31b878a - feat: Implement basic login functionality (Step 3)
-  - 8e604c6 - docs: Update step3.md with implementation completion status
-  - 34321e3 - fix: Update APIs for new User schema and fix TypeScript errors
-  - abb3d35 - docs: Update step3.md with build error fixes documentation
+  - 314efa1 - improve: Fix token retry logic and add security documentation
+  - 0540d0a - docs: Update step3.md with error handling improvements
   - 5d147bd - improve: Enhance error handling with detailed server-side logging
+  - abb3d35 - docs: Update step3.md with build error fixes documentation
+  - 34321e3 - fix: Update APIs for new User schema and fix TypeScript errors
+  - 8e604c6 - docs: Update step3.md with implementation completion status
+  - 31b878a - feat: Implement basic login functionality (Step 3)
 - プッシュ完了
 
 #### ビルドエラー修正（2025-11-09）
@@ -220,6 +222,34 @@ model EstimationSession {
 - 本番環境でのトラブルシューティングが容易
 - セキュリティ面での情報漏洩リスク低減
 - 全API統一されたエラーハンドリングパターン
+
+#### トークン再試行ロジックとセキュリティ文書化（2025-11-09）
+2回目のコードレビューフィードバックに基づき、以下を改善：
+
+**改善内容:**
+1. **型安全なPrismaエラーハンドリング** (lib/prisma-errors.ts)
+   - PrismaErrorインターフェースを定義
+   - isPrismaError型ガード関数を実装
+   - TypeScript型推論により安全なエラーコードチェック
+
+2. **トークン再試行ロジックの改善** (app/api/sessions/route.ts)
+   - すべてのエラーで再試行していた問題を修正
+   - P2002（ユニーク制約違反）のみ再試行するよう変更
+   - 他のエラー（ネットワーク、DB接続等）は即座にスロー
+
+3. **セキュリティ懸念の文書化**
+   - userIdがクライアント側から送信される問題をTODOコメントで記録
+   - 将来的な改善方向（HttpOnly Cookie、サーバー側セッション）を明記
+   - 対象API: sessions/route.ts, estimates/route.ts
+
+**修正の背景:**
+- 不必要な再試行によるパフォーマンス低下を防止
+- エラータイプに応じた適切な処理を実現
+- セキュリティ上の既知の制約を将来の改善のために記録
+
+**検証結果:**
+- ✅ TypeScript: エラーなし (`npm run type-check`)
+- ✅ コミット: 314efa1 - improve: Fix token retry logic and add security documentation
 
 #### 次のステップ
 現在、基本的なログイン機能は完成しました：
