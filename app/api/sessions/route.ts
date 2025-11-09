@@ -58,7 +58,14 @@ export async function POST(request: NextRequest) {
       userId: actualUserId
     })
   } catch (error) {
-    console.error('Session creation error:', error)
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Session creation error:', {
+      error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+      errorName: error instanceof Error ? error.name : undefined,
+    })
+
     return NextResponse.json(
       { error: 'セッションの作成に失敗しました' },
       { status: 500 }
@@ -82,7 +89,13 @@ async function createSessionWithRetry(
   try {
     return await prisma.estimationSession.create({ data })
   } catch (error) {
-    console.error('Create session attempt failed:', error)
+    // リトライのための詳細ログ
+    console.error('Create session attempt failed:', {
+      error,
+      remainingAttempts: maxAttempts,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+    })
+
     if (maxAttempts > 0) {
       // ユニーク制約違反の可能性がある場合、新しいトークンで再試行
       return createSessionWithRetry(

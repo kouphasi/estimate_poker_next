@@ -65,7 +65,14 @@ export async function POST(
       }
     })
   } catch (error) {
-    console.error('Finalize error:', error)
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Finalize error:', {
+      error,
+      shareToken: (await params).shareToken,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    })
+
     return NextResponse.json(
       { error: '工数の確定に失敗しました' },
       { status: 500 }

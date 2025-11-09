@@ -86,7 +86,14 @@ export async function POST(
       userId: actualUserId
     })
   } catch (error) {
-    console.error('Estimate submission error:', error)
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Estimate submission error:', {
+      error,
+      shareToken: (await params).shareToken,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    })
+
     return NextResponse.json(
       { error: '見積もりの投稿に失敗しました' },
       { status: 500 }

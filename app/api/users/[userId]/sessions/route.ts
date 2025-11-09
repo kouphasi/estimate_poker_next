@@ -36,7 +36,14 @@ export async function GET(
 
     return NextResponse.json({ sessions });
   } catch (error) {
-    console.error('Error fetching user sessions:', error);
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Error fetching user sessions:', {
+      error,
+      userId: (await params).userId,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+
     return NextResponse.json(
       { error: 'Failed to fetch sessions' },
       { status: 500 }

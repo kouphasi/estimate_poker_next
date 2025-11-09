@@ -47,7 +47,14 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting session:', error);
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Error deleting session:', {
+      error,
+      shareToken: (await params).shareToken,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+
     return NextResponse.json(
       { error: 'Failed to delete session' },
       { status: 500 }

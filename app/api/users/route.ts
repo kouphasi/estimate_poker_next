@@ -25,7 +25,13 @@ export async function POST(request: NextRequest) {
       nickname: user.nickname,
     });
   } catch (error) {
-    console.error('Error creating user:', error);
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Error creating user:', {
+      error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+
     return NextResponse.json(
       { error: 'Failed to create user' },
       { status: 500 }

@@ -61,7 +61,14 @@ export async function PATCH(
       }
     })
   } catch (error) {
-    console.error('Reveal toggle error:', error)
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Reveal toggle error:', {
+      error,
+      shareToken: (await params).shareToken,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    })
+
     return NextResponse.json(
       { error: '公開設定の変更に失敗しました' },
       { status: 500 }
