@@ -9,7 +9,9 @@ export async function POST(
   try {
     const { shareToken } = await params
     const body = await request.json()
-    const { nickname, value } = body
+    // TODO: セキュリティ改善 - userIdはリクエストボディから来るため改ざん可能
+    // 将来的にはサーバー側セッション管理（HttpOnly Cookie等）で認証を行う
+    const { nickname, value, userId } = body
 
     if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
       return NextResponse.json(
@@ -44,19 +46,33 @@ export async function POST(
       )
     }
 
+    // ユーザーIDが提供されていない場合、新規ユーザーを作成
+    let actualUserId = userId
+    if (!actualUserId) {
+      const user = await prisma.user.create({
+        data: {
+          nickname: nickname.trim(),
+          isGuest: true
+        }
+      })
+      actualUserId = user.id
+    }
+
     // upsert で見積もりを作成または更新
     const estimate = await prisma.estimate.upsert({
       where: {
-        sessionId_nickname: {
+        sessionId_userId: {
           sessionId: session.id,
-          nickname: nickname.trim()
+          userId: actualUserId
         }
       },
       update: {
-        value
+        value,
+        nickname: nickname.trim()
       },
       create: {
         sessionId: session.id,
+        userId: actualUserId,
         nickname: nickname.trim(),
         value
       }
@@ -68,10 +84,18 @@ export async function POST(
         nickname: estimate.nickname,
         value: estimate.value,
         updatedAt: estimate.updatedAt
-      }
+      },
+      userId: actualUserId
     })
   } catch (error) {
-    console.error('Estimate submission error:', error)
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Estimate submission error:', {
+      error,
+      shareToken: (await params).shareToken,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    })
+
     return NextResponse.json(
       { error: '見積もりの投稿に失敗しました' },
       { status: 500 }

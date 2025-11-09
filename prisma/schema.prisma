@@ -12,10 +12,13 @@ datasource db {
 }
 
 model User {
-  userId    Int      @id @default(autoincrement()) @map("user_ids")
-  name      String   @db.VarChar(255)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id            String    @id @default(cuid())
+  nickname      String
+  isGuest       Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  sessions      EstimationSession[]
+  estimates     Estimate[]
 
   @@map("users")
 }
@@ -24,6 +27,8 @@ model EstimationSession {
   id            String         @id @default(cuid())
   shareToken    String         @unique
   ownerToken    String         @unique // セッション所有者の認証トークン
+  ownerId       String?
+  owner         User?          @relation(fields: [ownerId], references: [id])
   isRevealed    Boolean        @default(false)
   status        SessionStatus  @default(ACTIVE)
   finalEstimate Float?         // 確定工数
@@ -43,11 +48,13 @@ model Estimate {
   id            String            @id @default(cuid())
   sessionId     String            @map("session_id")
   session       EstimationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  nickname      String            // 参加者のニックネーム
+  userId        String            @map("user_id")
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nickname      String            // セッション参加時のニックネーム
   value         Float             // 工数（日数）
   createdAt     DateTime          @default(now()) @map("created_at")
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
-  @@unique([sessionId, nickname])
+  @@unique([sessionId, userId])
   @@map("estimates")
 }

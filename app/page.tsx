@@ -1,109 +1,100 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import LoadingSpinner from './components/LoadingSpinner'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/contexts/UserContext';
 
 export default function Home() {
-  const router = useRouter()
-  const [nickname, setNickname] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [nickname, setNickname] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { user, login, isLoading: userLoading } = useUser();
+  const router = useRouter();
 
-  const handleCreateSession = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  // 既にログイン済みならマイページへリダイレクト
+  useEffect(() => {
+    if (!userLoading && user) {
+      router.push('/mypage');
+    }
+  }, [user, userLoading, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
     if (!nickname.trim()) {
-      setError('ニックネームを入力してください')
-      return
+      setError('ニックネームを入力してください');
+      return;
     }
 
-    setLoading(true)
-
+    setIsLoading(true);
     try {
-      const response = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ nickname: nickname.trim() }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'セッションの作成に失敗しました')
-      }
-
-      // ownerTokenをlocalStorageに保存
-      if (data.ownerToken) {
-        localStorage.setItem(`ownerToken_${data.shareToken}`, data.ownerToken)
-      }
-
-      // セッション画面に遷移
-      router.push(`/estimate/${data.shareToken}?nickname=${encodeURIComponent(nickname.trim())}`)
+      await login(nickname);
+      router.push('/mypage');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラーが発生しました')
-      setLoading(false)
+      setError('ログインに失敗しました。もう一度お試しください。');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  if (userLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <div className="text-lg text-zinc-600">読み込み中...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            見積もりポーカー
-          </h1>
-          <p className="text-gray-600">
-            プランニングポーカー形式で工数見積もりを行います
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-zinc-900">Estimate Poker</h1>
+          <p className="mt-2 text-sm text-zinc-600">
+            プログラミング工数見積もりアプリケーション
           </p>
         </div>
 
-        <form onSubmit={handleCreateSession} className="space-y-6">
+        <form onSubmit={handleLogin} className="mt-8 space-y-6">
           <div>
-            <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="nickname"
+              className="block text-sm font-medium text-zinc-700"
+            >
               ニックネーム
             </label>
             <input
-              type="text"
               id="nickname"
+              type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+              className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
               placeholder="山田太郎"
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
 
           {error && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
               {error}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+            disabled={isLoading}
+            className="w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            {loading && <LoadingSpinner size="small" />}
-            {loading ? '作成中...' : '部屋を作成'}
+            {isLoading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">使い方</h2>
-          <ol className="space-y-2 text-sm text-gray-600">
-            <li>1. ニックネームを入力して部屋を作成</li>
-            <li>2. 共有URLを参加者に送信</li>
-            <li>3. 各自でカードを選択</li>
-            <li>4. 全員の選択後に結果を公開</li>
-            <li>5. 議論して最終工数を確定</li>
-          </ol>
+        <div className="mt-4 text-center text-xs text-zinc-500">
+          ※ ニックネームのみで簡易ログインできます
         </div>
       </div>
     </div>
-  )
+  );
 }

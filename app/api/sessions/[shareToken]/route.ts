@@ -1,60 +1,63 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-// GET /api/sessions/[shareToken] - セッション情報取得（ポーリング用）
-export async function GET(
+export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ shareToken: string }> }
 ) {
   try {
-    const { shareToken } = await params
+    const { shareToken } = await params;
+    const userId = request.headers.get('x-user-id');
 
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 401 }
+      );
+    }
+
+    // セッションを取得してオーナーか確認
     const session = await prisma.estimationSession.findUnique({
       where: { shareToken },
-      include: {
-        estimates: {
-          orderBy: {
-            createdAt: 'asc'
-          }
-        }
-      }
-    })
+      select: {
+        id: true,
+        ownerId: true,
+      },
+    });
 
     if (!session) {
       return NextResponse.json(
-        { error: 'セッションが見つかりません' },
+        { error: 'Session not found' },
         { status: 404 }
-      )
+      );
     }
 
-    // 公開モードでない場合は、見積もり値を隠す
-    const estimates = session.isRevealed
-      ? session.estimates.map((e: { nickname: string; value: number; updatedAt: Date }) => ({
-          nickname: e.nickname,
-          value: e.value,
-          updatedAt: e.updatedAt
-        }))
-      : session.estimates.map((e: { nickname: string; value: number; updatedAt: Date }) => ({
-          nickname: e.nickname,
-          value: e.value > 0 ? -1 : 0, // -1は「提出済み」を示す
-          updatedAt: e.updatedAt
-        }))
+    // オーナーのみ削除可能
+    if (session.ownerId !== userId) {
+      return NextResponse.json(
+        { error: 'Only the owner can delete this session' },
+        { status: 403 }
+      );
+    }
 
-    return NextResponse.json({
-      session: {
-        id: session.id,
-        shareToken: session.shareToken,
-        isRevealed: session.isRevealed,
-        status: session.status,
-        finalEstimate: session.finalEstimate
-      },
-      estimates
-    })
+    // セッション削除
+    await prisma.estimationSession.delete({
+      where: { shareToken },
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Session fetch error:', error)
+    // 詳細なエラー情報をサーバーログに記録
+    console.error('Error deleting session:', {
+      error,
+      shareToken: (await params).shareToken,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+
     return NextResponse.json(
-      { error: 'セッション情報の取得に失敗しました' },
+      { error: 'Failed to delete session' },
       { status: 500 }
-    )
+    );
   }
 }

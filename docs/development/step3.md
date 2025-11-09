@@ -89,3 +89,177 @@ model EstimationSession {
 ---
 
 ## 開発ログ
+
+### 2025-11-09 開発開始
+#### 現在の状況確認
+- 既存のPrismaスキーマを確認
+  - Userモデルは存在するが、構造が要件と異なる（userId: Int vs id: String）
+  - EstimationSessionにownerIdフィールドが存在しない
+  - EstimateモデルにuserIdとのリレーションが存在しない
+- API routesはまだ作成されていない
+
+#### 実装方針
+1. Userモデルを要件に合わせて更新（id: String, nickname, isGuest）
+2. EstimationSessionにownerIdを追加してUserとリレーション
+3. EstimateモデルにuserIdを追加してUserとリレーション
+4. 必要なAPI routesを作成
+5. フロントエンド実装（ログイン画面、マイページ）
+
+#### データベーススキーマ更新
+- Userモデルを要件に合わせて更新
+  - id: String (cuid)
+  - nickname: String
+  - isGuest: Boolean (default: true)
+  - createdAt: DateTime
+- EstimationSessionにownerId追加（Userとのリレーション）
+- EstimateモデルにuserId追加（Userとのリレーション）
+- マイグレーションファイルを手動作成（Prismaエンジンのダウンロード問題のため）
+
+#### API実装完了
+1. **POST /api/users** - ユーザー作成API
+   - ニックネームを受け取り、新しいゲストユーザーを作成
+   - userId と nickname を返却
+
+2. **GET /api/users/[userId]/sessions** - 部屋一覧取得API
+   - ユーザーが作成した部屋一覧を取得
+   - 作成日時の降順でソート
+
+3. **DELETE /api/sessions/[shareToken]** - 部屋削除API
+   - オーナー権限チェック実装
+   - x-user-id ヘッダーでユーザー認証
+
+#### フロントエンド実装完了
+1. **ユーザーコンテキスト** (src/contexts/UserContext.tsx)
+   - ローカルストレージでユーザー情報を永続化
+   - login/logout機能
+   - グローバルなユーザー状態管理
+
+2. **ログイン画面** (src/app/page.tsx)
+   - ニックネーム入力フォーム
+   - 簡易ログイン機能
+   - ログイン済みの場合、自動的にマイページへリダイレクト
+
+3. **マイページ** (src/app/mypage/page.tsx)
+   - 作成した部屋一覧表示
+   - 部屋の削除機能
+   - ログアウト機能
+   - 未ログインの場合、トップページへリダイレクト
+
+#### 実装したファイル一覧
+- prisma/schema.prisma (更新)
+- prisma/migrations/20251109000000_add_user_login_system/migration.sql (新規)
+- src/lib/prisma.ts (新規)
+- src/app/api/users/route.ts (新規)
+- src/app/api/users/[userId]/sessions/route.ts (新規)
+- src/app/api/sessions/[shareToken]/route.ts (新規)
+- src/contexts/UserContext.tsx (新規)
+- src/app/layout.tsx (更新)
+- src/app/page.tsx (更新)
+- src/app/mypage/page.tsx (新規)
+
+#### 完了したタスク
+- [x] User テーブル追加
+- [x] ユーザー作成API
+- [x] ローカルストレージでユーザーID保存
+- [x] ユーザーコンテキスト作成
+- [x] マイページ作成
+- [x] 作成した部屋一覧表示
+- [x] 部屋への遷移
+- [x] 部屋削除機能
+- [x] オーナー判定ロジック
+- [x] オーナー専用UI表示
+- [x] 権限チェックミドルウェア（API）
+
+#### Git情報
+- ブランチ: claude/implement-basic-login-011CUwu9K6cUC3quUW69eXKD
+- コミット:
+  - 314efa1 - improve: Fix token retry logic and add security documentation
+  - 0540d0a - docs: Update step3.md with error handling improvements
+  - 5d147bd - improve: Enhance error handling with detailed server-side logging
+  - abb3d35 - docs: Update step3.md with build error fixes documentation
+  - 34321e3 - fix: Update APIs for new User schema and fix TypeScript errors
+  - 8e604c6 - docs: Update step3.md with implementation completion status
+  - 31b878a - feat: Implement basic login functionality (Step 3)
+- プッシュ完了
+
+#### ビルドエラー修正（2025-11-09）
+初回のVercelビルドでTypeScriptエラーが発生したため、以下を修正：
+
+**問題:**
+- 既存APIが古いスキーマ（`sessionId_nickname`）を参照していた
+- Prismaのエラーハンドリングが旧バージョンの形式だった
+- ディレクトリ構造が`src/app`と`app/`で混在していた
+
+**修正内容:**
+1. **estimates/route.ts** - userId対応、自動ユーザー作成機能追加
+2. **sessions/route.ts** - ownerId追加、ユーザー自動作成
+3. **reveal/finalize routes** - Prismaエラーハンドリング簡素化
+4. **ディレクトリ統一** - `src/`を削除し、すべて`app/`, `lib/`, `contexts/`に統一
+
+**検証結果:**
+- ✅ TypeScript: エラーなし (`npm run type-check`)
+- ✅ ESLint: エラーなし (`npm run lint`)
+- ✅ Vercelでのビルド成功を期待
+
+#### エラーハンドリング改善（2025-11-09）
+コードレビューのフィードバックに基づき、エラーハンドリングを改善：
+
+**改善内容:**
+- サーバー側で詳細なエラー情報をログに記録（エラーメッセージ、スタックトレース、コンテキスト情報）
+- クライアント側には汎用的なエラーメッセージのみ返却（情報漏洩防止）
+- 構造化ログでデバッグ性向上（shareToken, userId等のコンテキスト情報を含む）
+
+**対象API:**
+- POST /api/sessions - セッション作成
+- DELETE /api/sessions/[shareToken] - セッション削除
+- POST /api/sessions/[shareToken]/estimates - 見積もり投稿
+- POST /api/sessions/[shareToken]/finalize - 工数確定
+- PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替え
+- POST /api/users - ユーザー作成
+- GET /api/users/[userId]/sessions - ユーザーのセッション一覧
+
+**メリット:**
+- 本番環境でのトラブルシューティングが容易
+- セキュリティ面での情報漏洩リスク低減
+- 全API統一されたエラーハンドリングパターン
+
+#### トークン再試行ロジックとセキュリティ文書化（2025-11-09）
+2回目のコードレビューフィードバックに基づき、以下を改善：
+
+**改善内容:**
+1. **型安全なPrismaエラーハンドリング** (lib/prisma-errors.ts)
+   - PrismaErrorインターフェースを定義
+   - isPrismaError型ガード関数を実装
+   - TypeScript型推論により安全なエラーコードチェック
+
+2. **トークン再試行ロジックの改善** (app/api/sessions/route.ts)
+   - すべてのエラーで再試行していた問題を修正
+   - P2002（ユニーク制約違反）のみ再試行するよう変更
+   - 他のエラー（ネットワーク、DB接続等）は即座にスロー
+
+3. **セキュリティ懸念の文書化**
+   - userIdがクライアント側から送信される問題をTODOコメントで記録
+   - 将来的な改善方向（HttpOnly Cookie、サーバー側セッション）を明記
+   - 対象API: sessions/route.ts, estimates/route.ts
+
+**修正の背景:**
+- 不必要な再試行によるパフォーマンス低下を防止
+- エラータイプに応じた適切な処理を実現
+- セキュリティ上の既知の制約を将来の改善のために記録
+
+**検証結果:**
+- ✅ TypeScript: エラーなし (`npm run type-check`)
+- ✅ コミット: 314efa1 - improve: Fix token retry logic and add security documentation
+
+#### 次のステップ
+現在、基本的なログイン機能は完成しました：
+1. ✅ 既存の部屋作成フローにユーザー情報を連携（完了）
+2. ⏳ 実際のデプロイ環境での動作確認（マイグレーションの適用含む）
+
+Step 3の完了条件を確認：
+- [x] ニックネームでログイン可能
+- [x] 自分の部屋一覧が見れる
+- [x] 部屋の削除ができる
+- [x] ローカルストレージでセッション維持
+
+**Step 3 は基本機能として完成しました！**
