@@ -1,65 +1,115 @@
--- Step 1: Rename old users table if it exists and handle constraints
+-- Step 1 & 2: Rename old users table and create new one (combined in one block)
 DO $$
+DECLARE
+    has_users_table BOOLEAN;
+    has_user_ids_column BOOLEAN;
+    has_users_pkey BOOLEAN;
+    has_id_column BOOLEAN;
+    has_nickname_column BOOLEAN;
+    has_isGuest_column BOOLEAN;
+    has_created_at_column BOOLEAN;
+    is_nickname_nullable BOOLEAN;
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+    -- Check if users table exists
+    SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users')
+    INTO has_users_table;
+
+    IF has_users_table THEN
         -- Check if the old users table has the old structure (user_ids column)
-        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'user_ids') THEN
-            -- Drop the primary key constraint before renaming to avoid orphaned constraints
-            IF EXISTS (
+        SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'user_ids')
+        INTO has_user_ids_column;
+
+        IF has_user_ids_column THEN
+            -- This is the old structure, rename it
+            -- Check if users_pkey constraint exists
+            SELECT EXISTS (
                 SELECT 1 FROM pg_constraint c
                 JOIN pg_class t ON c.conrelid = t.oid
                 WHERE c.conname = 'users_pkey' AND t.relname = 'users'
-            ) THEN
-                ALTER TABLE "users" DROP CONSTRAINT "users_pkey";
-            END IF;
-            ALTER TABLE "users" RENAME TO "users_old";
-        END IF;
-    END IF;
-END $$;
+            ) INTO has_users_pkey;
 
--- Step 2: Create new users table
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        CREATE TABLE "users" (
+            -- Drop the primary key constraint before renaming
+            IF has_users_pkey THEN
+                EXECUTE 'ALTER TABLE "users" DROP CONSTRAINT "users_pkey"';
+            END IF;
+
+            -- Rename the old table
+            EXECUTE 'ALTER TABLE "users" RENAME TO "users_old"';
+
+            -- Now create the new users table (we know it doesn't exist after rename)
+            EXECUTE 'CREATE TABLE "users" (
+                "id" TEXT NOT NULL,
+                "nickname" TEXT NOT NULL,
+                "isGuest" BOOLEAN NOT NULL DEFAULT true,
+                "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+            )';
+        ELSE
+            -- New structure already exists, ensure it has all required columns
+            SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'id')
+            INTO has_id_column;
+
+            SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'nickname')
+            INTO has_nickname_column;
+
+            SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'isGuest')
+            INTO has_isGuest_column;
+
+            SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'created_at')
+            INTO has_created_at_column;
+
+            -- Add missing columns if needed
+            IF NOT has_id_column THEN
+                EXECUTE 'ALTER TABLE "users" ADD COLUMN "id" TEXT';
+            END IF;
+
+            IF NOT has_nickname_column THEN
+                EXECUTE 'ALTER TABLE "users" ADD COLUMN "nickname" TEXT';
+            END IF;
+
+            IF NOT has_isGuest_column THEN
+                EXECUTE 'ALTER TABLE "users" ADD COLUMN "isGuest" BOOLEAN NOT NULL DEFAULT true';
+            END IF;
+
+            IF NOT has_created_at_column THEN
+                EXECUTE 'ALTER TABLE "users" ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP';
+            END IF;
+
+            -- Check if primary key constraint exists
+            SELECT EXISTS (
+                SELECT 1 FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.conname = 'users_pkey' AND t.relname = 'users'
+            ) INTO has_users_pkey;
+
+            -- Add primary key constraint if it doesn't exist
+            IF NOT has_users_pkey THEN
+                -- Make id NOT NULL if it isn't already
+                EXECUTE 'ALTER TABLE "users" ALTER COLUMN "id" SET NOT NULL';
+                EXECUTE 'ALTER TABLE "users" ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id")';
+            END IF;
+
+            -- Check if nickname is nullable
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'users' AND column_name = 'nickname' AND is_nullable = 'YES'
+            ) INTO is_nickname_nullable;
+
+            -- Make nickname NOT NULL if it isn't already
+            IF is_nickname_nullable THEN
+                EXECUTE 'UPDATE "users" SET "nickname" = ''User'' WHERE "nickname" IS NULL';
+                EXECUTE 'ALTER TABLE "users" ALTER COLUMN "nickname" SET NOT NULL';
+            END IF;
+        END IF;
+    ELSE
+        -- No users table exists, create it
+        EXECUTE 'CREATE TABLE "users" (
             "id" TEXT NOT NULL,
             "nickname" TEXT NOT NULL,
             "isGuest" BOOLEAN NOT NULL DEFAULT true,
             "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT "users_pkey" PRIMARY KEY ("id")
-        );
-    ELSE
-        -- Table exists, ensure it has the right structure
-        -- Add missing columns if needed
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'id') THEN
-            ALTER TABLE "users" ADD COLUMN "id" TEXT;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'nickname') THEN
-            ALTER TABLE "users" ADD COLUMN "nickname" TEXT;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'isGuest') THEN
-            ALTER TABLE "users" ADD COLUMN "isGuest" BOOLEAN NOT NULL DEFAULT true;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'created_at') THEN
-            ALTER TABLE "users" ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
-        END IF;
-
-        -- Add primary key constraint if it doesn't exist
-        IF NOT EXISTS (
-            SELECT 1 FROM pg_constraint c
-            JOIN pg_class t ON c.conrelid = t.oid
-            WHERE c.conname = 'users_pkey' AND t.relname = 'users'
-        ) THEN
-            -- Make id NOT NULL if it isn't already
-            ALTER TABLE "users" ALTER COLUMN "id" SET NOT NULL;
-            ALTER TABLE "users" ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id");
-        END IF;
-
-        -- Make nickname NOT NULL if it isn't already
-        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'nickname' AND is_nullable = 'YES') THEN
-            UPDATE "users" SET "nickname" = 'User' WHERE "nickname" IS NULL;
-            ALTER TABLE "users" ALTER COLUMN "nickname" SET NOT NULL;
-        END IF;
+        )';
     END IF;
 END $$;
 
@@ -73,15 +123,24 @@ ALTER TABLE "estimates" ADD COLUMN IF NOT EXISTS "user_id" TEXT;
 DO $$
 DECLARE
     guest_user_id TEXT := 'guest_default_user';
+    has_null_user_estimates BOOLEAN;
 BEGIN
-    -- Insert default guest user if there are estimates without user_id
-    IF EXISTS (SELECT 1 FROM "estimates" WHERE "user_id" IS NULL) THEN
-        INSERT INTO "users" ("id", "nickname", "isGuest", "created_at")
-        VALUES (guest_user_id, 'Guest User', true, CURRENT_TIMESTAMP)
-        ON CONFLICT ("id") DO NOTHING;
+    -- Check if there are estimates without user_id
+    SELECT EXISTS (SELECT 1 FROM "estimates" WHERE "user_id" IS NULL)
+    INTO has_null_user_estimates;
 
-        -- Update existing estimates to reference the guest user
-        UPDATE "estimates" SET "user_id" = guest_user_id WHERE "user_id" IS NULL;
+    IF has_null_user_estimates THEN
+        -- Insert default guest user using EXECUTE
+        EXECUTE format(
+            'INSERT INTO "users" ("id", "nickname", "isGuest", "created_at") VALUES (%L, %L, %L, CURRENT_TIMESTAMP) ON CONFLICT ("id") DO NOTHING',
+            guest_user_id, 'Guest User', true
+        );
+
+        -- Update existing estimates to reference the guest user using EXECUTE
+        EXECUTE format(
+            'UPDATE "estimates" SET "user_id" = %L WHERE "user_id" IS NULL',
+            guest_user_id
+        );
     END IF;
 END $$;
 
