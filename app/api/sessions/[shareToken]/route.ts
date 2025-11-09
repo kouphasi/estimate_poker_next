@@ -1,6 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// GET /api/sessions/[shareToken] - セッション情報と見積もり一覧を取得
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ shareToken: string }> }
+) {
+  try {
+    const { shareToken } = await params;
+
+    // セッション情報を取得
+    const session = await prisma.estimationSession.findUnique({
+      where: { shareToken },
+      select: {
+        id: true,
+        shareToken: true,
+        isRevealed: true,
+        status: true,
+        finalEstimate: true,
+      },
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Session not found' },
+        { status: 404 }
+      );
+    }
+
+    // 見積もり一覧を取得
+    const estimates = await prisma.estimate.findMany({
+      where: { sessionId: session.id },
+      select: {
+        nickname: true,
+        value: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    return NextResponse.json({
+      session,
+      estimates,
+    });
+  } catch (error) {
+    console.error('Error fetching session:', {
+      error,
+      shareToken: (await params).shareToken,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return NextResponse.json(
+      { error: 'Failed to fetch session' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ shareToken: string }> }
