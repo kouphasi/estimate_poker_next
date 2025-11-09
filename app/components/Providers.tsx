@@ -1,11 +1,14 @@
-'use client'
+'use client';
 
-import { ToastProvider } from './Toast'
+import { UserProvider } from '@/contexts/UserContext';
+import { ToastProvider } from './Toast';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ToastProvider>
-      {children}
-    </ToastProvider>
-  )
+    <UserProvider>
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    </UserProvider>
+  );
 }
