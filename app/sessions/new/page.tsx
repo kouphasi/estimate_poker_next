@@ -44,9 +44,10 @@ export default function NewSessionPage() {
 
         const data = await response.json();
 
-        // ownerTokenをlocalStorageに保存
+        // ownerTokenとuserIdをlocalStorageに保存
         if (typeof window !== 'undefined') {
           localStorage.setItem(`ownerToken_${data.shareToken}`, data.ownerToken);
+          localStorage.setItem(`userId_${data.shareToken}`, data.userId);
         }
 
         // 作成した部屋にリダイレクト
