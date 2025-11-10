@@ -32,6 +32,7 @@ export async function GET(
     const estimates = await prisma.estimate.findMany({
       where: { sessionId: session.id },
       select: {
+        userId: true,
         nickname: true,
         value: true,
         updatedAt: true,

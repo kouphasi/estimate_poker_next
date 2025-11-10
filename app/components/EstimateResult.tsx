@@ -1,6 +1,7 @@
 'use client'
 
 interface Estimate {
+  userId: string
   nickname: string
   value: number
   updatedAt: string
@@ -73,7 +74,7 @@ export default function EstimateResult({ estimates, isRevealed, finalEstimate }:
             <p className="text-sm text-gray-600 mb-2">全員の見積もり</p>
             <div className="space-y-1">
               {validEstimates.map((estimate) => (
-                <div key={estimate.nickname} className="flex justify-between text-sm">
+                <div key={estimate.userId} className="flex justify-between text-sm">
                   <span>{estimate.nickname}</span>
                   <span className="font-medium">{estimate.value}日</span>
                 </div>

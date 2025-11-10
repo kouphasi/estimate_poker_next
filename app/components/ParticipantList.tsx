@@ -1,6 +1,7 @@
 'use client'
 
 interface Estimate {
+  userId: string
   nickname: string
   value: number
   updatedAt: string
@@ -18,7 +19,7 @@ export default function ParticipantList({ estimates, isRevealed }: ParticipantLi
       <div className="space-y-2">
         {estimates.map((estimate) => (
           <div
-            key={estimate.nickname}
+            key={estimate.userId}
             className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
           >
             <span className="font-medium">{estimate.nickname}</span>
