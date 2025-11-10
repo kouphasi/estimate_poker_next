@@ -21,6 +21,7 @@ interface Estimate {
   nickname: string
   value: number
   updatedAt: string
+  userId: string
 }
 
 export default function EstimatePage() {
@@ -39,7 +40,16 @@ export default function EstimatePage() {
     return ''
   }
 
+  // userIdの初期値を取得
+  const getInitialUserId = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`userId_${shareToken}`) || null
+    }
+    return null
+  }
+
   const [nickname, setNickname] = useState(getInitialNickname())
+  const [userId, setUserId] = useState<string | null>(getInitialUserId())
   const [showNicknameForm, setShowNicknameForm] = useState(!getInitialNickname())
   const [session, setSession] = useState<Session | null>(null)
   const [estimates, setEstimates] = useState<Estimate[]>([])
@@ -120,11 +130,19 @@ export default function EstimatePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nickname, value }),
+        body: JSON.stringify({ nickname, value, userId }),
       })
 
       if (!response.ok) {
         throw new Error('見積もりの投稿に失敗しました')
+      }
+
+      const data = await response.json()
+
+      // userIdをlocalStorageに保存
+      if (data.userId && typeof window !== 'undefined') {
+        localStorage.setItem(`userId_${shareToken}`, data.userId)
+        setUserId(data.userId)
       }
 
       setSelectedValue(value)
