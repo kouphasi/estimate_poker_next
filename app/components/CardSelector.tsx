@@ -26,7 +26,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
 
   const handleCustomSubmit = () => {
     const value = parseFloat(customValue)
-    if (!isNaN(value) && value > 0) {
+    if (!isNaN(value) && value > 0 && value <= 30) {
       onSelect(value)
       setShowCustomInput(false)
       setCustomValue('')
@@ -62,6 +62,7 @@ export default function CardSelector({ selectedValue, onSelect, disabled = false
               type="number"
               step="0.5"
               min="0"
+              max="30"
               value={customValue}
               onChange={(e) => setCustomValue(e.target.value)}
               placeholder="日数を入力"
