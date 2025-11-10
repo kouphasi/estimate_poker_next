@@ -18,35 +18,6 @@ const channel = supabase
   .subscribe()
 ```
 
-**オプション2**: Socket.io
-```typescript
-// server
-io.on('connection', (socket) => {
-  socket.on('join-session', (sessionId) => {
-    socket.join(sessionId)
-  })
-
-  socket.on('submit-estimate', (data) => {
-    io.to(data.sessionId).emit('estimate-updated', data)
-  })
-})
-
-// client
-socket.emit('submit-estimate', { sessionId, value })
-socket.on('estimate-updated', (data) => {
-  // 更新処理
-})
-```
-
-**オプション3**: Pusher
-```typescript
-const pusher = new Pusher(appKey, { cluster })
-const channel = pusher.subscribe(`session-${sessionId}`)
-channel.bind('estimate-updated', (data) => {
-  // 更新処理
-})
-```
-
 ### 実装タスク（Step 5）
 
 #### 5-1. 技術選定と設計（2時間）
