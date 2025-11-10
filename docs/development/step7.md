@@ -1,94 +1,98 @@
-## ステップ7: リアルタイム通信への移行
+## ステップ7: プロジェクト管理
 
 ### 目標
-ポーリングからWebSocketベースのリアルタイム通信に移行
+プロジェクトを作成し、その配下にタスクを管理
 
-### 技術選定
+### 実装する機能
+- [ ] プロジェクト作成機能
+- [ ] プロジェクト一覧表示
+- [ ] プロジェクト詳細画面
+- [ ] プロジェクト配下のタスク管理
+- [ ] プロジェクト統計情報
 
-**オプション1**: Supabase Realtime
-```typescript
-const channel = supabase
-  .channel('estimation-session')
-  .on('postgres_changes',
-    { event: '*', schema: 'public', table: 'Estimate' },
-    (payload) => {
-      // リアルタイム更新処理
-    }
-  )
-  .subscribe()
+### データベーススキーマ追加（Step 7）
+
+```prisma
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tasks         Task[]
+}
+
+model Task {
+  // 既存のフィールド...
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id])
+}
 ```
 
-**オプション2**: Socket.io
-```typescript
-// server
-io.on('connection', (socket) => {
-  socket.on('join-session', (sessionId) => {
-    socket.join(sessionId)
-  })
+### ファイル構成追加（Step 7）
 
-  socket.on('submit-estimate', (data) => {
-    io.to(data.sessionId).emit('estimate-updated', data)
-  })
-})
-
-// client
-socket.emit('submit-estimate', { sessionId, value })
-socket.on('estimate-updated', (data) => {
-  // 更新処理
-})
 ```
-
-**オプション3**: Pusher
-```typescript
-const pusher = new Pusher(appKey, { cluster })
-const channel = pusher.subscribe(`session-${sessionId}`)
-channel.bind('estimate-updated', (data) => {
-  // 更新処理
-})
+app/
+├── projects/
+│   ├── page.tsx                      # プロジェクト一覧
+│   ├── new/
+│   │   └── page.tsx                  # プロジェクト作成
+│   └── [projectId]/
+│       ├── page.tsx                  # プロジェクト詳細
+│       └── tasks/
+│           └── new/
+│               └── page.tsx          # タスク作成
+└── api/
+    └── projects/
+        ├── route.ts                  # GET: 一覧, POST: 作成
+        ├── [projectId]/
+        │   ├── route.ts              # GET: 詳細, PATCH: 更新, DELETE: 削除
+        │   └── tasks/
+        │       └── route.ts          # GET: タスク一覧, POST: タスク作成
 ```
 
 ### 実装タスク（Step 7）
 
-#### 7-1. 技術選定と設計（2時間）
-- [ ] リアルタイム通信ライブラリの比較
-- [ ] アーキテクチャ設計
-- [ ] コスト試算
+#### 7-1. データベース（1時間）
+- [ ] Project テーブル追加
+- [ ] リレーション設定
+- [ ] マイグレーション
 
-#### 7-2. セットアップ（3時間）
-- [ ] ライブラリインストール
-- [ ] 環境変数設定
-- [ ] 接続確認
+#### 7-2. プロジェクトAPI（3時間）
+- [ ] プロジェクト作成API
+- [ ] プロジェクト一覧取得API
+- [ ] プロジェクト詳細取得API
+- [ ] プロジェクト更新API
+- [ ] プロジェクト削除API
 
-#### 7-3. サーバーサイド実装（4時間）
-- [ ] WebSocketサーバー構築
-- [ ] イベントハンドラ実装
-- [ ] ルーム管理
-- [ ] 切断処理
+#### 7-3. プロジェクトUI（5時間）
+- [ ] プロジェクト一覧画面
+- [ ] プロジェクト作成フォーム
+- [ ] プロジェクト詳細画面
+- [ ] プロジェクト編集フォーム
 
-#### 7-4. クライアントサイド実装（4時間）
-- [ ] WebSocket接続
-- [ ] イベントリスナー
-- [ ] リトライロジック
-- [ ] フォールバック処理（ポーリング）
+#### 7-4. 統計情報（3時間）
+- [ ] プロジェクト全体の工数合計
+- [ ] タスク完了率
+- [ ] プログレスバー表示
+- [ ] ダッシュボード機能
 
-#### 7-5. 移行とテスト（3時間）
-- [ ] 既存コードからの移行
-- [ ] パフォーマンステスト
-- [ ] 負荷テスト
-- [ ] フォールバック動作確認
+#### 7-5. ナビゲーション改善（2時間）
+- [ ] パンくずリスト
+- [ ] グローバルナビゲーション
+- [ ] サイドバー追加
 
-#### 7-6. 最適化（2時間）
-- [ ] 接続プール管理
-- [ ] メモリリーク対策
-- [ ] エラーハンドリング強化
-
+**合計見積もり: 14時間（約2日）**
 ---
 ## 完了条件
 ### Step 7
-- [ ] WebSocketで即座に更新される
-- [ ] 接続が切れても自動再接続
-- [ ] ポーリングからの移行が完了
-- [ ] パフォーマンスが改善される
+- [ ] プロジェクト作成ができる
+- [ ] プロジェクト配下にタスクを追加できる
+- [ ] プロジェクトの統計が表示される
+- [ ] 階層構造が正しく動作する
 ---
 
 ## 開発ログ

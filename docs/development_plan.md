@@ -328,7 +328,95 @@ model EstimationSession {
 
 ---
 
-## ステップ4: タスクとの紐付け
+## ステップ4: リアルタイム通信への移行
+
+### 目標
+ポーリングからWebSocketベースのリアルタイム通信に移行
+
+### 技術選定
+
+**オプション1**: Supabase Realtime
+```typescript
+const channel = supabase
+  .channel('estimation-session')
+  .on('postgres_changes',
+    { event: '*', schema: 'public', table: 'Estimate' },
+    (payload) => {
+      // リアルタイム更新処理
+    }
+  )
+  .subscribe()
+```
+
+**オプション2**: Socket.io
+```typescript
+// server
+io.on('connection', (socket) => {
+  socket.on('join-session', (sessionId) => {
+    socket.join(sessionId)
+  })
+
+  socket.on('submit-estimate', (data) => {
+    io.to(data.sessionId).emit('estimate-updated', data)
+  })
+})
+
+// client
+socket.emit('submit-estimate', { sessionId, value })
+socket.on('estimate-updated', (data) => {
+  // 更新処理
+})
+```
+
+**オプション3**: Pusher
+```typescript
+const pusher = new Pusher(appKey, { cluster })
+const channel = pusher.subscribe(`session-${sessionId}`)
+channel.bind('estimate-updated', (data) => {
+  // 更新処理
+})
+```
+
+### 実装タスク（Step 4）
+
+#### 4-1. 技術選定と設計（2時間）
+- [ ] リアルタイム通信ライブラリの比較
+- [ ] アーキテクチャ設計
+- [ ] コスト試算
+
+#### 4-2. セットアップ（3時間）
+- [ ] ライブラリインストール
+- [ ] 環境変数設定
+- [ ] 接続確認
+
+#### 4-3. サーバーサイド実装（4時間）
+- [ ] WebSocketサーバー構築
+- [ ] イベントハンドラ実装
+- [ ] ルーム管理
+- [ ] 切断処理
+
+#### 4-4. クライアントサイド実装（4時間）
+- [ ] WebSocket接続
+- [ ] イベントリスナー
+- [ ] リトライロジック
+- [ ] フォールバック処理（ポーリング）
+
+#### 4-5. 移行とテスト（3時間）
+- [ ] 既存コードからの移行
+- [ ] パフォーマンステスト
+- [ ] 負荷テスト
+- [ ] フォールバック動作確認
+
+#### 4-6. 最適化（2時間）
+- [ ] 接続プール管理
+- [ ] メモリリーク対策
+- [ ] エラーハンドリング強化
+
+**合計見積もり: 18時間（約2〜3日）**
+
+---
+
+## ステップ5: タスクとの紐付け
 
 ### 目標
 タスクを作成し、そのタスクに対して部屋を作成できる
@@ -340,7 +428,7 @@ model EstimationSession {
 - [ ] タスクへの工数記録
 - [ ] タスク詳細画面
 
-### データベーススキーマ追加（Step 4）
+### データベーススキーマ追加（Step 5）
 
 ```prisma
 model Task {
@@ -363,7 +451,7 @@ model EstimationSession {
 }
 ```
 
-### ファイル構成追加（Step 4）
+### ファイル構成追加（Step 5）
 
 ```
 app/
@@ -385,124 +473,33 @@ app/
         │       └── route.ts          # POST: 部屋作成
 ```
 
-### 実装タスク（Step 4）
+### 実装タスク（Step 5）
 
-#### 4-1. データベース（1時間）
+#### 5-1. データベース（1時間）
 - [ ] Task テーブル追加
 - [ ] リレーション設定
 - [ ] マイグレーション
 
-#### 4-2. タスクAPI（3時間）
+#### 5-2. タスクAPI（3時間）
 - [ ] タスク作成API
 - [ ] タスク一覧取得API
 - [ ] タスク詳細取得API
 - [ ] タスク更新API
 - [ ] タスク削除API
 
-#### 4-3. タスクUI（5時間）
+#### 5-3. タスクUI（5時間）
 - [ ] タスク一覧画面
 - [ ] タスク作成フォーム
 - [ ] タスク詳細画面
 - [ ] タスク編集フォーム
 - [ ] 部屋一覧（タスク配下）
 
-#### 4-4. 紐付け処理（2時間）
+#### 5-4. 紐付け処理（2時間）
 - [ ] タスクから部屋作成
 - [ ] 確定工数のタスクへの反映
 - [ ] タスク詳細での部屋履歴表示
 
 **合計見積もり: 11時間（約1.5日）**
-
----
-
-## ステップ5: プロジェクト管理
-
-### 目標
-プロジェクトを作成し、その配下にタスクを管理
-
-### 実装する機能
-- [ ] プロジェクト作成機能
-- [ ] プロジェクト一覧表示
-- [ ] プロジェクト詳細画面
-- [ ] プロジェクト配下のタスク管理
-- [ ] プロジェクト統計情報
-
-### データベーススキーマ追加（Step 5）
-
-```prisma
-model Project {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?
-  ownerId       String
-  owner         User      @relation(fields: [ownerId], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  tasks         Task[]
-}
-
-model Task {
-  // 既存のフィールド...
-  projectId     String
-  project       Project   @relation(fields: [projectId], references: [id])
-}
-```
-
-### ファイル構成追加（Step 5）
-
-```
-app/
-├── projects/
-│   ├── page.tsx                      # プロジェクト一覧
-│   ├── new/
-│   │   └── page.tsx                  # プロジェクト作成
-│   └── [projectId]/
-│       ├── page.tsx                  # プロジェクト詳細
-│       └── tasks/
-│           └── new/
-│               └── page.tsx          # タスク作成
-└── api/
-    └── projects/
-        ├── route.ts                  # GET: 一覧, POST: 作成
-        ├── [projectId]/
-        │   ├── route.ts              # GET: 詳細, PATCH: 更新, DELETE: 削除
-        │   └── tasks/
-        │       └── route.ts          # GET: タスク一覧, POST: タスク作成
-```
-
-### 実装タスク（Step 5）
-
-#### 5-1. データベース（1時間）
-- [ ] Project テーブル追加
-- [ ] リレーション設定
-- [ ] マイグレーション
-
-#### 5-2. プロジェクトAPI（3時間）
-- [ ] プロジェクト作成API
-- [ ] プロジェクト一覧取得API
-- [ ] プロジェクト詳細取得API
-- [ ] プロジェクト更新API
-- [ ] プロジェクト削除API
-
-#### 5-3. プロジェクトUI（5時間）
-- [ ] プロジェクト一覧画面
-- [ ] プロジェクト作成フォーム
-- [ ] プロジェクト詳細画面
-- [ ] プロジェクト編集フォーム
-
-#### 5-4. 統計情報（3時間）
-- [ ] プロジェクト全体の工数合計
-- [ ] タスク完了率
-- [ ] プログレスバー表示
-- [ ] ダッシュボード機能
-
-#### 5-5. ナビゲーション改善（2時間）
-- [ ] パンくずリスト
-- [ ] グローバルナビゲーション
-- [ ] サイドバー追加
-
-**合計見積もり: 14時間（約2日）**
 
 ---
 
@@ -661,91 +658,94 @@ app/
 
 ---
 
-## ステップ7: リアルタイム通信への移行
+## ステップ7: プロジェクト管理
 
 ### 目標
-ポーリングからWebSocketベースのリアルタイム通信に移行
+プロジェクトを作成し、その配下にタスクを管理
 
-### 技術選定
+### 実装する機能
+- [ ] プロジェクト作成機能
+- [ ] プロジェクト一覧表示
+- [ ] プロジェクト詳細画面
+- [ ] プロジェクト配下のタスク管理
+- [ ] プロジェクト統計情報
 
-**オプション1**: Supabase Realtime
-```typescript
-const channel = supabase
-  .channel('estimation-session')
-  .on('postgres_changes',
-    { event: '*', schema: 'public', table: 'Estimate' },
-    (payload) => {
-      // リアルタイム更新処理
-    }
-  )
-  .subscribe()
+### データベーススキーマ追加（Step 7）
+
+```prisma
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tasks         Task[]
+}
+
+model Task {
+  // 既存のフィールド...
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id])
+}
 ```
 
-**オプション2**: Socket.io
-```typescript
-// server
-io.on('connection', (socket) => {
-  socket.on('join-session', (sessionId) => {
-    socket.join(sessionId)
-  })
+### ファイル構成追加（Step 7）
 
-  socket.on('submit-estimate', (data) => {
-    io.to(data.sessionId).emit('estimate-updated', data)
-  })
-})
-
-// client
-socket.emit('submit-estimate', { sessionId, value })
-socket.on('estimate-updated', (data) => {
-  // 更新処理
-})
 ```
-
-**オプション3**: Pusher
-```typescript
-const pusher = new Pusher(appKey, { cluster })
-const channel = pusher.subscribe(`session-${sessionId}`)
-channel.bind('estimate-updated', (data) => {
-  // 更新処理
-})
+app/
+├── projects/
+│   ├── page.tsx                      # プロジェクト一覧
+│   ├── new/
+│   │   └── page.tsx                  # プロジェクト作成
+│   └── [projectId]/
+│       ├── page.tsx                  # プロジェクト詳細
+│       └── tasks/
+│           └── new/
+│               └── page.tsx          # タスク作成
+└── api/
+    └── projects/
+        ├── route.ts                  # GET: 一覧, POST: 作成
+        ├── [projectId]/
+        │   ├── route.ts              # GET: 詳細, PATCH: 更新, DELETE: 削除
+        │   └── tasks/
+        │       └── route.ts          # GET: タスク一覧, POST: タスク作成
 ```
 
 ### 実装タスク（Step 7）
 
-#### 7-1. 技術選定と設計（2時間）
-- [ ] リアルタイム通信ライブラリの比較
-- [ ] アーキテクチャ設計
-- [ ] コスト試算
+#### 7-1. データベース（1時間）
+- [ ] Project テーブル追加
+- [ ] リレーション設定
+- [ ] マイグレーション
 
-#### 7-2. セットアップ（3時間）
-- [ ] ライブラリインストール
-- [ ] 環境変数設定
-- [ ] 接続確認
+#### 7-2. プロジェクトAPI（3時間）
+- [ ] プロジェクト作成API
+- [ ] プロジェクト一覧取得API
+- [ ] プロジェクト詳細取得API
+- [ ] プロジェクト更新API
+- [ ] プロジェクト削除API
 
-#### 7-3. サーバーサイド実装（4時間）
-- [ ] WebSocketサーバー構築
-- [ ] イベントハンドラ実装
-- [ ] ルーム管理
-- [ ] 切断処理
+#### 7-3. プロジェクトUI（5時間）
+- [ ] プロジェクト一覧画面
+- [ ] プロジェクト作成フォーム
+- [ ] プロジェクト詳細画面
+- [ ] プロジェクト編集フォーム
 
-#### 7-4. クライアントサイド実装（4時間）
-- [ ] WebSocket接続
-- [ ] イベントリスナー
-- [ ] リトライロジック
-- [ ] フォールバック処理（ポーリング）
+#### 7-4. 統計情報（3時間）
+- [ ] プロジェクト全体の工数合計
+- [ ] タスク完了率
+- [ ] プログレスバー表示
+- [ ] ダッシュボード機能
 
-#### 7-5. 移行とテスト（3時間）
-- [ ] 既存コードからの移行
-- [ ] パフォーマンステスト
-- [ ] 負荷テスト
-- [ ] フォールバック動作確認
+#### 7-5. ナビゲーション改善（2時間）
+- [ ] パンくずリスト
+- [ ] グローバルナビゲーション
+- [ ] サイドバー追加
 
-#### 7-6. 最適化（2時間）
-- [ ] 接続プール管理
-- [ ] メモリリーク対策
-- [ ] エラーハンドリング強化
-
-**合計見積もり: 18時間（約2〜3日）**
+**合計見積もり: 14時間（約2日）**
 
 ---
 
@@ -756,10 +756,10 @@ channel.bind('estimate-updated', (data) => {
 | Step 1 | 基本的な部屋機能とポーリング | 17時間 | 17時間 |
 | Step 2 | UI/UXの改善 | 16時間 | 33時間 |
 | Step 3 | 簡易ログイン機能 | 9時間 | 42時間 |
-| Step 4 | タスクとの紐付け | 11時間 | 53時間 |
-| Step 5 | プロジェクト管理 | 14時間 | 67時間 |
-| Step 6 | 本格的な認証機能 | 16時間 | 83時間 |
-| Step 7 | リアルタイム通信への移行 | 18時間 | 101時間 |
+| Step 4 | リアルタイム通信への移行 | 18時間 | 60時間 |
+| Step 5 | タスクとの紐付け | 11時間 | 71時間 |
+| Step 6 | 本格的な認証機能 | 16時間 | 87時間 |
+| Step 7 | プロジェクト管理 | 14時間 | 101時間 |
 
 **合計: 約101時間（約13日）**
 
@@ -788,16 +788,16 @@ channel.bind('estimate-updated', (data) => {
 - [ ] ローカルストレージでセッション維持
 
 ### Step 4
+- [ ] WebSocketで即座に更新される
+- [ ] 接続が切れても自動再接続
+- [ ] ポーリングからの移行が完了
+- [ ] パフォーマンスが改善される
+
+### Step 5
 - [ ] タスク作成ができる
 - [ ] タスクから部屋を作成できる
 - [ ] 確定工数がタスクに反映される
 - [ ] タスク一覧が表示される
-
-### Step 5
-- [ ] プロジェクト作成ができる
-- [ ] プロジェクト配下にタスクを追加できる
-- [ ] プロジェクトの統計が表示される
-- [ ] 階層構造が正しく動作する
 
 ### Step 6
 - [ ] メールアドレスで登録できる
@@ -806,10 +806,10 @@ channel.bind('estimate-updated', (data) => {
 - [ ] パスワードリセットができる
 
 ### Step 7
-- [ ] WebSocketで即座に更新される
-- [ ] 接続が切れても自動再接続
-- [ ] ポーリングからの移行が完了
-- [ ] パフォーマンスが改善される
+- [ ] プロジェクト作成ができる
+- [ ] プロジェクト配下にタスクを追加できる
+- [ ] プロジェクトの統計が表示される
+- [ ] 階層構造が正しく動作する
 
 ---
 
@@ -832,7 +832,7 @@ main (本番環境)
 
 ### 3. マイルストーン設定
 - Step 1-3: MVP（2週間）
-- Step 4-5: フル機能版（2週間）
+- Step 4-5: 認証機能版（2週間）
 - Step 6-7: エンタープライズ版（2週間）
 
 ### 4. テストとドキュメント
