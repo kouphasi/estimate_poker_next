@@ -113,7 +113,7 @@ export default function MyPage() {
             </div>
             <button
               onClick={handleLogout}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+              className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
             >
               ログアウト
             </button>
@@ -128,7 +128,7 @@ export default function MyPage() {
           </h2>
           <button
             onClick={() => router.push('/sessions/new')}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
+            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
           >
             新しい部屋を作成
           </button>
@@ -185,13 +185,13 @@ export default function MyPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => router.push(`/estimate/${session.shareToken}`)}
-                      className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                      className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
                     >
                       開く
                     </button>
                     <button
                       onClick={() => handleDeleteSession(session.shareToken)}
-                      className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                      className="cursor-pointer rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
                     >
                       削除
                     </button>
