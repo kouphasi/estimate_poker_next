@@ -81,7 +81,7 @@ export default function NewSessionPage() {
             </div>
             <button
               onClick={() => router.push('/mypage')}
-              className="mt-6 w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800"
+              className="cursor-pointer mt-6 w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800"
             >
               マイページに戻る
             </button>

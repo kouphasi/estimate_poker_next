@@ -98,7 +98,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <span className="flex-1">{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-white hover:opacity-80 transition-opacity"
+              className="cursor-pointer text-white hover:opacity-80 transition-opacity"
             >
               ✕
             </button>
