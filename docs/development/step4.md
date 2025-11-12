@@ -158,3 +158,75 @@ app/
 ---
 
 ## 開発ログ
+
+### 2025-11-10: 基本的なログイン機能の実装
+
+#### 1. パッケージのインストール
+- next-auth@latest
+- bcryptjs と @types/bcryptjs
+- @next-auth/prisma-adapter
+
+#### 2. Prismaスキーマの更新
+- Userモデルに以下のフィールドを追加:
+  - email (String?, unique)
+  - passwordHash (String?)
+  - updatedAt (DateTime)
+- Next-Auth用のモデルを追加:
+  - Account (OAuth用アカウント情報)
+  - Session (セッション管理)
+  - VerificationToken (メール認証トークン)
+
+#### 3. データベースマイグレーション
+- マイグレーションファイルを作成: `prisma/migrations/20251110000000_add_next_auth_models/migration.sql`
+- スキーマ変更:
+  - usersテーブルにemail、password_hash、updated_atカラムを追加
+  - accounts、sessions、verification_tokensテーブルを作成
+
+#### 4. 環境変数の設定
+- .env.exampleファイルを作成
+- NEXTAUTH_URL と NEXTAUTH_SECRET を定義
+
+#### 5. Next-Auth設定
+- lib/auth/auth-options.ts: Next-Authの設定ファイルを作成
+  - CredentialsProviderを使用したメール/パスワード認証
+  - bcryptによるパスワード検証
+  - JWT戦略でセッション管理
+- app/api/auth/[...nextauth]/route.ts: Next-Auth APIルートを作成
+- types/next-auth.d.ts: TypeScript型定義を拡張
+
+#### 6. 認証API
+- app/api/auth/register/route.ts: ユーザー登録APIを作成
+  - メールアドレスとパスワードのバリデーション
+  - bcryptによるパスワードハッシュ化
+  - 重複メールアドレスのチェック
+
+#### 7. UIコンポーネント
+- app/components/auth/LoginForm.tsx: ログインフォーム
+- app/components/auth/RegisterForm.tsx: 登録フォーム
+- app/login/page.tsx: ログインページ
+- app/register/page.tsx: 登録ページ
+
+#### 8. 認証ガードの実装
+- app/components/Providers.tsx: SessionProviderを追加
+- middleware.ts: 認証が必要なページ(/mypage/*など)を保護
+- lib/auth/auth-helpers.ts: 認証ヘルパー関数を作成
+
+#### 完了した機能
+- [x] ユーザー登録
+- [x] ログイン/ログアウト
+- [x] セッション管理
+- [x] 認証ガード
+- [ ] パスワードリセット (未実装)
+- [ ] プロフィール編集 (未実装)
+
+#### 技術的な決定事項
+- 認証ライブラリ: Next-Auth v5 (Auth.js)
+- パスワードハッシュ化: bcryptjs (ソルトラウンド: 10)
+- セッション戦略: JWT (データベースセッションではなくトークンベース)
+- 認証プロバイダー: Credentials (メール/パスワード)
+
+#### 次のステップ
+1. パスワードリセット機能の実装
+2. プロフィール編集機能の実装
+3. 既存のゲストユーザーシステムとの統合
+4. メール認証機能の追加 (オプション)
