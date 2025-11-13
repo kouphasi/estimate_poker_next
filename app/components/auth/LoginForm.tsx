@@ -29,9 +29,9 @@ export default function LoginForm() {
         setError(result.error);
         setIsLoading(false);
       } else if (result?.ok) {
-        // セッション確立を待つために少し待機してからリダイレクト
-        await new Promise(resolve => setTimeout(resolve, 500));
-        window.location.href = "/mypage";
+        // セッション確立後にリダイレクト
+        // location.replaceを使うことでブラウザの履歴をクリーンに保つ
+        window.location.replace("/mypage");
       }
     } catch (error) {
       setError("ログイン中にエラーが発生しました");
