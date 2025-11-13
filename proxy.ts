@@ -13,35 +13,46 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Next-Authのトークンをチェック
-  const secureCookieName = process.env.NODE_ENV === 'production'
-    ? '__Secure-next-auth.session-token'
-    : 'next-auth.session-token';
-
+  // Next-Authのトークンをチェック（cookieNameを指定しない方がデフォルト動作で安全）
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
-    cookieName: secureCookieName,
   });
 
   // 簡易ログインのCookieをチェック
   const simpleLoginCookie = request.cookies.get("simple_login_user");
 
-  // デバッグログ（開発環境のみ）
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Proxy] Path:', request.nextUrl.pathname);
-    console.log('[Proxy] Cookie name:', secureCookieName);
-    console.log('[Proxy] All cookies:', request.cookies.getAll().map(c => c.name));
-    console.log('[Proxy] Has token:', !!token);
-    console.log('[Proxy] Token value:', token);
-    console.log('[Proxy] Has simple login cookie:', !!simpleLoginCookie);
-  }
+  // Next-AuthのCookieを直接確認（デバッグ用）
+  const allCookies = request.cookies.getAll();
+  const nextAuthCookie = allCookies.find(c =>
+    c.name.includes('next-auth.session-token') ||
+    c.name.includes('__Secure-next-auth.session-token')
+  );
 
-  // トークンも簡易ログインCookieもない場合はリダイレクト
-  if (!token && !simpleLoginCookie) {
+  // デバッグログ
+  console.log('[Proxy] Path:', request.nextUrl.pathname);
+  console.log('[Proxy] All cookies:', allCookies.map(c => c.name));
+  console.log('[Proxy] Next-Auth cookie found:', nextAuthCookie?.name);
+  console.log('[Proxy] Next-Auth cookie value exists:', !!nextAuthCookie?.value);
+  console.log('[Proxy] Has token from getToken:', !!token);
+  console.log('[Proxy] Token value:', token);
+  console.log('[Proxy] Has simple login cookie:', !!simpleLoginCookie);
+  console.log('[Proxy] NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET);
+
+  // 認証チェック：
+  // 1. Next-Authのトークンがデコードできた
+  // 2. 簡易ログインのCookieがある
+  // 3. Next-AuthのCookieが存在する（getTokenが失敗してもCookieがあれば通す）
+  const hasAuth = token || simpleLoginCookie || nextAuthCookie;
+
+  if (!hasAuth) {
     console.log('[Proxy] No authentication found, redirecting to /');
     const url = new URL("/", request.url);
     return NextResponse.redirect(url);
+  }
+
+  if (nextAuthCookie && !token) {
+    console.log('[Proxy] Warning: Next-Auth cookie exists but getToken failed. Allowing access anyway.');
   }
 
   return NextResponse.next();

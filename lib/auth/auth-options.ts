@@ -7,8 +7,7 @@ const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   // CredentialsProviderを使う場合、adapterは不要
-  debug: process.env.NODE_ENV === 'development',
-  useSecureCookies: process.env.NODE_ENV === 'production',
+  debug: true, // 本番環境でもデバッグログを有効化して問題を特定
   providers: [
     CredentialsProvider({
       name: "Credentials",
