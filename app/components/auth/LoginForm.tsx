@@ -27,13 +27,14 @@ export default function LoginForm() {
 
       if (result?.error) {
         setError(result.error);
+        setIsLoading(false);
       } else if (result?.ok) {
-        // セッションを確立してからページ遷移（完全なリロードを使用）
+        // セッション確立を待つために少し待機してからリダイレクト
+        await new Promise(resolve => setTimeout(resolve, 500));
         window.location.href = "/mypage";
       }
     } catch (error) {
       setError("ログイン中にエラーが発生しました");
-    } finally {
       setIsLoading(false);
     }
   };
