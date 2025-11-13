@@ -28,8 +28,8 @@ export default function LoginForm() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.ok) {
-        router.push("/mypage");
-        router.refresh();
+        // セッションを確立してからページ遷移（完全なリロードを使用）
+        window.location.href = "/mypage";
       }
     } catch (error) {
       setError("ログイン中にエラーが発生しました");
