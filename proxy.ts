@@ -7,16 +7,18 @@ export async function proxy(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
+  // 簡易ログインのCookieをチェック
+  const simpleLoginCookie = request.cookies.get("simple_login_user");
+
   // 認証が必要なパス
   const protectedPaths = ["/mypage"];
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
 
-  // 認証が必要なパスにアクセスしようとしているが、トークンがない場合
-  if (isProtectedPath && !token) {
-    const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", request.nextUrl.pathname);
+  // 認証が必要なパスにアクセスしようとしているが、トークンも簡易ログインCookieもない場合
+  if (isProtectedPath && !token && !simpleLoginCookie) {
+    const url = new URL("/", request.url);
     return NextResponse.redirect(url);
   }
 
