@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
+import Link from 'next/link';
 
 export default function Home() {
-  const [nickname, setNickname] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { user, login, isLoading: userLoading } = useUser();
+  const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
 
   // 既にログイン済みならマイページへリダイレクト
@@ -17,27 +15,6 @@ export default function Home() {
       router.push('/mypage');
     }
   }, [user, userLoading, router]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!nickname.trim()) {
-      setError('ニックネームを入力してください');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await login(nickname);
-      router.push('/mypage');
-    } catch (err) {
-      setError('ログインに失敗しました。もう一度お試しください。');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (userLoading) {
     return (
@@ -57,42 +34,32 @@ export default function Home() {
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="mt-8 space-y-6">
-          <div>
-            <label
-              htmlFor="nickname"
-              className="block text-sm font-medium text-zinc-700"
-            >
-              ニックネーム
-            </label>
-            <input
-              id="nickname"
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-              placeholder="山田太郎"
-              disabled={isLoading}
-            />
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="cursor-pointer w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50"
+        <div className="mt-8 space-y-4">
+          <Link
+            href="/simple-login"
+            className="block w-full rounded-md bg-zinc-900 px-4 py-3 text-center text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 transition-colors"
           >
-            {isLoading ? 'ログイン中...' : 'ログイン'}
-          </button>
-        </form>
+            簡易ログイン
+          </Link>
 
-        <div className="mt-4 text-center text-xs text-zinc-500">
-          ※ ニックネームのみで簡易ログインできます
+          <Link
+            href="/login"
+            className="block w-full rounded-md border-2 border-zinc-900 bg-white px-4 py-3 text-center text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 transition-colors"
+          >
+            アカウントでログイン
+          </Link>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-xs text-zinc-500">
+            アカウントをお持ちでない方は
+          </p>
+          <Link
+            href="/register"
+            className="text-sm font-medium text-zinc-700 hover:text-zinc-900 underline"
+          >
+            新規登録はこちら
+          </Link>
         </div>
       </div>
     </div>
