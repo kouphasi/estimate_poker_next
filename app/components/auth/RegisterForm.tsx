@@ -53,7 +53,7 @@ export default function RegisterForm() {
 
       // 登録成功後、ログインページにリダイレクト
       router.push("/login?registered=true");
-    } catch (error) {
+    } catch {
       setError("登録中にエラーが発生しました");
     } finally {
       setIsLoading(false);

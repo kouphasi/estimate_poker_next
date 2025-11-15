@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -27,13 +25,14 @@ export default function LoginForm() {
 
       if (result?.error) {
         setError(result.error);
+        setIsLoading(false);
       } else if (result?.ok) {
-        router.push("/mypage");
-        router.refresh();
+        // セッション確立後にリダイレクト
+        // location.replaceを使うことでブラウザの履歴をクリーンに保つ
+        window.location.replace("/mypage");
       }
-    } catch (error) {
+    } catch {
       setError("ログイン中にエラーが発生しました");
-    } finally {
       setIsLoading(false);
     }
   };
