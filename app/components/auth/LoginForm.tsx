@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -33,7 +31,7 @@ export default function LoginForm() {
         // location.replaceを使うことでブラウザの履歴をクリーンに保つ
         window.location.replace("/mypage");
       }
-    } catch (error) {
+    } catch {
       setError("ログイン中にエラーが発生しました");
       setIsLoading(false);
     }
