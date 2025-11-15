@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-export default async function proxy(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   // 認証が必要なパス
   const protectedPaths = ["/mypage"];
   const isProtectedPath = protectedPaths.some((path) =>
@@ -30,14 +30,14 @@ export default async function proxy(request: NextRequest) {
   );
 
   // デバッグログ
-  console.log('[Proxy] Path:', request.nextUrl.pathname);
-  console.log('[Proxy] All cookies:', allCookies.map(c => c.name));
-  console.log('[Proxy] Next-Auth cookie found:', nextAuthCookie?.name);
-  console.log('[Proxy] Next-Auth cookie value exists:', !!nextAuthCookie?.value);
-  console.log('[Proxy] Has token from getToken:', !!token);
-  console.log('[Proxy] Token value:', token);
-  console.log('[Proxy] Has simple login cookie:', !!simpleLoginCookie);
-  console.log('[Proxy] NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET);
+  console.log('[Middleware] Path:', request.nextUrl.pathname);
+  console.log('[Middleware] All cookies:', allCookies.map(c => c.name));
+  console.log('[Middleware] Next-Auth cookie found:', nextAuthCookie?.name);
+  console.log('[Middleware] Next-Auth cookie value exists:', !!nextAuthCookie?.value);
+  console.log('[Middleware] Has token from getToken:', !!token);
+  console.log('[Middleware] Token value:', token);
+  console.log('[Middleware] Has simple login cookie:', !!simpleLoginCookie);
+  console.log('[Middleware] NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET);
 
   // 認証チェック：
   // 1. Next-Authのトークンがデコードできた
@@ -46,13 +46,13 @@ export default async function proxy(request: NextRequest) {
   const hasAuth = token || simpleLoginCookie || nextAuthCookie;
 
   if (!hasAuth) {
-    console.log('[Proxy] No authentication found, redirecting to /');
+    console.log('[Middleware] No authentication found, redirecting to /');
     const url = new URL("/", request.url);
     return NextResponse.redirect(url);
   }
 
   if (nextAuthCookie && !token) {
-    console.log('[Proxy] Warning: Next-Auth cookie exists but getToken failed. Allowing access anyway.');
+    console.log('[Middleware] Warning: Next-Auth cookie exists but getToken failed. Allowing access anyway.');
   }
 
   return NextResponse.next();

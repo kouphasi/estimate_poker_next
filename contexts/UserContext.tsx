@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 interface User {
   userId: string;
@@ -44,9 +45,28 @@ function deleteCookie(name: string) {
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { data: session, status } = useSession();
 
-  // ローカルストレージとCookieからユーザー情報を読み込む
+  // Next-Authセッションまたはローカルストレージからユーザー情報を読み込む
   useEffect(() => {
+    // Next-Authのセッション読み込み中は待機
+    if (status === 'loading') {
+      setIsLoading(true);
+      return;
+    }
+
+    // Next-Authのセッションがある場合はそれを使用
+    if (session?.user) {
+      const userData: User = {
+        userId: (session.user as any).id || '',
+        nickname: session.user.name || session.user.email || '',
+      };
+      setUser(userData);
+      setIsLoading(false);
+      return;
+    }
+
+    // Next-Authセッションがない場合は簡易ログインを確認
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
     if (storedUser) {
       try {
@@ -61,7 +81,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [session, status]);
 
   // ユーザー情報をローカルストレージとCookieに保存
   const saveUser = (userData: User) => {
@@ -96,9 +116,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // ログアウト
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    deleteCookie(USER_COOKIE_KEY);
+    // Next-Authセッションがある場合はNext-Authのサインアウトを使用
+    if (session) {
+      signOut({ callbackUrl: '/' });
+    } else {
+      // 簡易ログインの場合
+      setUser(null);
+      localStorage.removeItem(USER_STORAGE_KEY);
+      deleteCookie(USER_COOKIE_KEY);
+    }
   };
 
   return (
