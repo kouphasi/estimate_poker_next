@@ -42,11 +42,22 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      await signIn("github", {
+      const result = await signIn("github", {
         callbackUrl: "/mypage",
+        redirect: false,
       });
-    } catch {
-      setError("GitHubログイン中にエラーが発生しました");
+
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+      }
+      // 成功時はGitHubにリダイレクトされるため、ここには到達しない
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "GitHubログイン中にエラーが発生しました";
+      setError(errorMessage);
       setIsLoading(false);
     }
   };

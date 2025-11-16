@@ -5,30 +5,61 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+// GitHub プロファイルの型定義
+interface GitHubProfile {
+  id: number;
+  login: string;
+  name: string | null;
+  email: string | null;
+  avatar_url: string;
+}
+
+// 環境変数のバリデーション
+function getGitHubCredentials() {
+  const clientId = process.env.GITHUB_ID;
+  const clientSecret = process.env.GITHUB_SECRET;
+
+  if (!clientId || !clientSecret) {
+    console.warn(
+      "GitHub OAuth credentials are not set. GitHub login will not be available."
+    );
+    return null;
+  }
+
+  return { clientId, clientSecret };
+}
+
+const githubCredentials = getGitHubCredentials();
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  debug: true, // 本番環境でもデバッグログを有効化して問題を特定
+  debug: process.env.NODE_ENV === "development",
   providers: [
-    GitHubProvider({
-      clientId: process.env.GITHUB_ID || "",
-      clientSecret: process.env.GITHUB_SECRET || "",
-      profile(profile) {
-        return {
-          id: profile.id.toString(),
-          name: profile.name || profile.login,
-          email: profile.email,
-          image: profile.avatar_url,
-          // GitHub ユーザーは isGuest: false
-          isGuest: false,
-          nickname: profile.name || profile.login,
-        };
-      },
-    }),
+    // GitHub Provider (環境変数が設定されている場合のみ有効)
+    ...(githubCredentials
+      ? [
+          GitHubProvider({
+            clientId: githubCredentials.clientId,
+            clientSecret: githubCredentials.clientSecret,
+            profile(profile: GitHubProfile) {
+              return {
+                id: profile.id.toString(),
+                name: profile.name || profile.login,
+                email: profile.email,
+                image: profile.avatar_url,
+                // GitHub ユーザーは isGuest: false
+                isGuest: false,
+                nickname: profile.name || profile.login,
+              };
+            },
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -36,11 +67,13 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email },
         });
 
         if (!user || !user.passwordHash) {
-          throw new Error("メールアドレスまたはパスワードが正しくありません");
+          throw new Error(
+            "メールアドレスまたはパスワードが正しくありません"
+          );
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -49,7 +82,9 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error("メールアドレスまたはパスワードが正しくありません");
+          throw new Error(
+            "メールアドレスまたはパスワードが正しくありません"
+          );
         }
 
         return {
@@ -57,8 +92,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.nickname,
         };
-      }
-    })
+      },
+    }),
   ],
   session: {
     strategy: "jwt",
@@ -89,18 +124,16 @@ export const authOptions: NextAuthOptions = {
       // GitHubログインの場合、Userレコードの更新
       if (account?.provider === "github" && user.email) {
         try {
-          // GitHubプロファイルのloginプロパティを取得
-          const githubLogin =
-            (profile && typeof profile === 'object' && 'login' in profile)
-              ? String(profile.login)
-              : undefined;
+          // GitHubプロファイルからログイン名を取得
+          const githubProfile = profile as GitHubProfile;
+          const nickname = user.name || githubProfile.login || "GitHub User";
 
           // GitHubログインの場合、isGuestをfalseに設定
           await prisma.user.update({
             where: { id: user.id },
             data: {
               isGuest: false,
-              nickname: user.name || githubLogin || "GitHub User",
+              nickname,
             },
           });
         } catch (error) {
