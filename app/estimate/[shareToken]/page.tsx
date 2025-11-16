@@ -9,21 +9,7 @@ import EstimateResult from '@/app/components/EstimateResult'
 import LoadingSpinner from '@/app/components/LoadingSpinner'
 import { useToast } from '@/app/components/Toast'
 import { useUser } from '@/contexts/UserContext'
-
-interface Session {
-  id: string
-  shareToken: string
-  isRevealed: boolean
-  status: 'ACTIVE' | 'FINALIZED'
-  finalEstimate: number | null
-}
-
-interface Estimate {
-  nickname: string
-  value: number
-  updatedAt: string
-  userId: string
-}
+import { useRealtimeSession } from '@/hooks/useRealtimeSession'
 
 export default function EstimatePage() {
   const params = useParams()
@@ -54,15 +40,17 @@ export default function EstimatePage() {
   const [nickname, setNickname] = useState(getInitialNickname())
   const [userId, setUserId] = useState<string | null>(getInitialUserId())
   const [showNicknameForm, setShowNicknameForm] = useState(!getInitialNickname())
-  const [session, setSession] = useState<Session | null>(null)
-  const [estimates, setEstimates] = useState<Estimate[]>([])
   const [selectedValue, setSelectedValue] = useState(0)
   const [finalEstimateInput, setFinalEstimateInput] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [shareUrl, setShareUrl] = useState('')
   const [ownerToken, setOwnerToken] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
+
+  // Use realtime hook for session data
+  const { session, estimates, loading, error, isRealtimeConnected } = useRealtimeSession({
+    shareToken,
+    enabled: !showNicknameForm,
+  })
 
   // ログインユーザーのニックネームを自動的に設定
   useEffect(() => {
@@ -72,40 +60,15 @@ export default function EstimatePage() {
     }
   }, [user])
 
-  // ポーリング：2秒ごとにセッション情報を取得
+  // 自分の見積もりがあればselectedValueを復元
   useEffect(() => {
-    if (!shareToken) return
-
-    const fetchSession = async () => {
-      try {
-        const response = await fetch(`/api/sessions/${shareToken}`)
-        if (!response.ok) {
-          throw new Error('セッションが見つかりません')
-        }
-        const data = await response.json()
-        setSession(data.session)
-        setEstimates(data.estimates)
-
-        // 自分の見積もりがあればselectedValueを復元
-        if (nickname) {
-          const myEstimate = data.estimates.find((e: Estimate) => e.nickname === nickname)
-          if (myEstimate && myEstimate.value > 0) {
-            setSelectedValue(myEstimate.value)
-          }
-        }
-
-        setLoading(false)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'エラーが発生しました')
-        setLoading(false)
+    if (nickname && estimates.length > 0) {
+      const myEstimate = estimates.find((e) => e.nickname === nickname)
+      if (myEstimate && myEstimate.value > 0) {
+        setSelectedValue(myEstimate.value)
       }
     }
-
-    fetchSession()
-    const interval = setInterval(fetchSession, 2000) // 2秒ごとにポーリング
-
-    return () => clearInterval(interval)
-  }, [shareToken, nickname])
+  }, [nickname, estimates])
 
   // 共有URL生成とownerToken確認
   useEffect(() => {
@@ -122,7 +85,7 @@ export default function EstimatePage() {
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!nickname.trim()) {
-      setError('ニックネームを入力してください')
+      showToast('ニックネームを入力してください', 'warning')
       return
     }
     // ニックネームをlocalStorageに保存
@@ -271,11 +234,6 @@ export default function EstimatePage() {
                 placeholder="山田太郎"
               />
             </div>
-            {error && (
-              <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
             <button
               type="submit"
               className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
@@ -306,6 +264,13 @@ export default function EstimatePage() {
                   ← 部屋一覧に戻る
                 </Link>
               )}
+              {/* Connection status indicator */}
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isRealtimeConnected ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                <span className="text-xs text-gray-500">
+                  {isRealtimeConnected ? 'リアルタイム' : 'ポーリング'}
+                </span>
+              </div>
               <span className="text-sm text-gray-600">参加者: {nickname}</span>
               {session?.status === 'FINALIZED' && (
                 <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
