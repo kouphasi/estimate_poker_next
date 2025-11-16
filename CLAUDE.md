@@ -7,9 +7,10 @@
 ### Key Features
 - Planning poker-style effort estimation (1h-3d + custom input)
 - Dual user system: Guest (nickname-only) and Authenticated (email/password)
-- Real-time session updates via polling (WebSocket planned for future)
+- Real-time session updates via Supabase Realtime (WebSocket) with polling fallback
 - Session owner controls (reveal/hide estimates, finalize results)
 - Statistical analysis (average, median, min, max)
+- Automatic reconnection with graceful degradation
 
 ### Tech Stack
 - **Framework**: Next.js 16.0.1 (App Router)
@@ -17,6 +18,7 @@
 - **Language**: TypeScript 5.9.3
 - **Database**: PostgreSQL (via Supabase or Vercel Postgres)
 - **ORM**: Prisma 6.19.0
+- **Real-time**: Supabase Realtime (@supabase/supabase-js)
 - **Authentication**: NextAuth v4.24.13
 - **Styling**: Tailwind CSS v4
 - **Password Hashing**: bcryptjs
@@ -53,9 +55,12 @@
 │   └── estimate/[shareToken]/    # Estimation room
 ├── lib/                          # Utilities
 │   ├── prisma.ts                 # Prisma client singleton
+│   ├── supabase.ts               # Supabase client for real-time
 │   ├── utils.ts                  # Token generation
 │   ├── prisma-errors.ts          # Error handling
 │   └── auth/                     # NextAuth config & helpers
+├── hooks/                        # Custom React hooks
+│   └── useRealtimeSession.ts     # Real-time session updates hook
 ├── contexts/                     # React contexts
 │   └── UserContext.tsx           # User state management
 ├── types/                        # TypeScript types
@@ -242,24 +247,43 @@ Type guards for Prisma errors:
 
 ### 4. Real-Time Updates
 
-**Current**: Polling every 2 seconds
+**Implementation**: Supabase Realtime (WebSocket) with polling fallback
 
-**Location**: `app/estimate/[shareToken]/page.tsx`
+**Hook**: `hooks/useRealtimeSession.ts`
 
+**Strategy**:
 ```typescript
-useEffect(() => {
-  const interval = setInterval(fetchSession, 2000);
-  return () => clearInterval(interval);
-}, [shareToken]);
+// Subscribe to PostgreSQL changes
+supabase
+  .channel(`session-${shareToken}`)
+  .on('postgres_changes', {
+    event: '*',
+    schema: 'public',
+    table: 'estimates',
+    filter: `sessionId=eq.${sessionId}`
+  }, handleChange)
+  .subscribe()
 ```
 
-**Future**: WebSocket migration planned (Step 4 in development plan)
+**Features**:
+- Real-time updates via WebSocket (Supabase Realtime)
+- Automatic reconnection with exponential backoff (max 5 attempts)
+- Graceful degradation to 2-second polling on connection failure
+- Connection status indicator in UI (green: real-time, yellow: polling)
+- Memory leak prevention with proper cleanup
+
+**Monitored Tables**:
+- `estimates`: All changes (INSERT/UPDATE/DELETE) for specific session
+- `estimation_sessions`: UPDATE events for session state changes
+
+**Client Configuration**: `lib/supabase.ts`
 
 ### 5. State Management
 
 - **User State**: `contexts/UserContext.tsx` (guest or authenticated)
 - **Toast Notifications**: `contexts/ToastContext.tsx`
 - **Session**: NextAuth `SessionProvider`
+- **Real-time Session**: `hooks/useRealtimeSession.ts` (WebSocket-based updates)
 - **Local Storage**: User data, owner tokens, session-specific nicknames
 
 ### 6. Component Patterns
@@ -521,7 +545,7 @@ docs: Update CLAUDE.md with new patterns
 ### Phase 1: MVP (Completed)
 - ✅ Guest user sessions
 - ✅ Card-based estimation UI
-- ✅ Polling-based real-time updates
+- ✅ Real-time updates (initially polling, now WebSocket)
 - ✅ Reveal/hide toggle
 - ✅ Finalization
 
@@ -536,8 +560,8 @@ docs: Update CLAUDE.md with new patterns
 - ❌ Session-task relationships
 - ❌ Estimation history
 
-### Phase 4: Advanced Features (Planned)
-- ❌ WebSocket real-time updates
+### Phase 4: Advanced Features (In Progress)
+- ✅ WebSocket real-time updates (Supabase Realtime with polling fallback)
 - ❌ Re-voting capability
 - ❌ Guest-to-authenticated migration
 - ❌ CSV export
@@ -669,9 +693,10 @@ This is a **planning poker** application for collaborative effort estimation. Th
 | Date | Version | Changes |
 |------|---------|---------|
 | 2025-11-15 | 1.0.0 | Initial CLAUDE.md creation |
+| 2025-11-16 | 1.1.0 | Implemented real-time updates with Supabase Realtime (Step 5) |
 
 ---
 
-**Last Updated**: 2025-11-15
+**Last Updated**: 2025-11-16
 **Maintained By**: AI Assistants working on this project
 **Contact**: See repository issues for questions
