@@ -90,7 +90,12 @@ export function useRealtimeSession({
     const sessionId = session.id
 
     try {
-      console.log('[Realtime] Setting up realtime subscription for session:', sessionId)
+      console.log('[Realtime] Setting up realtime subscription')
+      console.log('[Realtime] Session ID:', sessionId)
+      console.log('[Realtime] Share Token:', shareToken)
+      console.log('[Realtime] Filters will be:')
+      console.log('[Realtime]   - estimates: session_id=eq.' + sessionId)
+      console.log('[Realtime]   - estimation_sessions: id=eq.' + sessionId)
 
       // Clean up existing channel
       if (channelRef.current) {
@@ -114,30 +119,43 @@ export function useRealtimeSession({
           },
           (payload) => {
             console.log('[Realtime] ✅ Estimate change received:', payload)
+            console.log('[Realtime] Event type:', payload.eventType)
+            console.log('[Realtime] New data:', payload.new)
+            console.log('[Realtime] Old data:', payload.old)
             fetchSession()
           }
         )
         .on(
           'postgres_changes',
           {
-            event: 'UPDATE',
+            event: '*',  // すべてのイベント（INSERT/UPDATE/DELETE）を監視
             schema: 'public',
             table: 'estimation_sessions',
             filter: `id=eq.${sessionId}`,
           },
           (payload) => {
             console.log('[Realtime] ✅ Session change received:', payload)
+            console.log('[Realtime] Event type:', payload.eventType)
+            console.log('[Realtime] New data:', payload.new)
+            console.log('[Realtime] Old data:', payload.old)
             fetchSession()
           }
         )
-        .subscribe((status) => {
+        .subscribe((status, err) => {
           console.log('[Realtime] Subscription status:', status)
+          if (err) {
+            console.error('[Realtime] Subscription error:', err)
+          }
 
           if (status === 'SUBSCRIBED') {
             setIsRealtimeConnected(true)
             stopPolling()
             reconnectAttemptsRef.current = 0
-            console.log('[Realtime] Successfully connected, polling stopped')
+            console.log('[Realtime] ✅ Successfully connected, polling stopped')
+            console.log('[Realtime] Channel name:', `session-${shareToken}`)
+            console.log('[Realtime] Monitoring tables: estimates, estimation_sessions')
+            console.log('[Realtime] Waiting for database events...')
+            console.log('[Realtime] テスト: データを変更してイベントが来るか確認してください')
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             setIsRealtimeConnected(false)
             console.error('[Realtime] Connection failed, falling back to polling')
