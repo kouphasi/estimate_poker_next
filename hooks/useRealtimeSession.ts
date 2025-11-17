@@ -103,6 +103,7 @@ export function useRealtimeSession({
       }
 
       // Create a new channel for this session
+      // TESTING: フィルターなしで全イベントを受信（診断用）
       const channel = supabase
         .channel(`session-${shareToken}`, {
           config: {
@@ -115,30 +116,52 @@ export function useRealtimeSession({
             event: '*',
             schema: 'public',
             table: 'estimates',
-            filter: `session_id=eq.${sessionId}`,
+            // フィルターを削除してテスト
+            // filter: `session_id=eq.${sessionId}`,
           },
           (payload) => {
-            console.log('[Realtime] ✅ Estimate change received:', payload)
+            console.log('[Realtime] ✅ Estimate change received (NO FILTER):', payload)
             console.log('[Realtime] Event type:', payload.eventType)
-            console.log('[Realtime] New data:', payload.new)
-            console.log('[Realtime] Old data:', payload.old)
-            fetchSession()
+            const newData = payload.new as Record<string, unknown>
+            const oldData = payload.old as Record<string, unknown>
+            console.log('[Realtime] New data:', newData)
+            console.log('[Realtime] Old data:', oldData)
+            console.log('[Realtime] Session ID in payload:', newData?.session_id)
+            console.log('[Realtime] Expected session ID:', sessionId)
+            // クライアント側でフィルタリング
+            if (newData?.session_id === sessionId || oldData?.session_id === sessionId) {
+              console.log('[Realtime] ✓ Session ID MATCHED! Fetching session data...')
+              fetchSession()
+            } else {
+              console.log('[Realtime] ✗ Session ID did NOT match, ignoring event')
+            }
           }
         )
         .on(
           'postgres_changes',
           {
-            event: '*',  // すべてのイベント（INSERT/UPDATE/DELETE）を監視
+            event: '*',
             schema: 'public',
             table: 'estimation_sessions',
-            filter: `id=eq.${sessionId}`,
+            // フィルターを削除してテスト
+            // filter: `id=eq.${sessionId}`,
           },
           (payload) => {
-            console.log('[Realtime] ✅ Session change received:', payload)
+            console.log('[Realtime] ✅ Session change received (NO FILTER):', payload)
             console.log('[Realtime] Event type:', payload.eventType)
-            console.log('[Realtime] New data:', payload.new)
-            console.log('[Realtime] Old data:', payload.old)
-            fetchSession()
+            const newData = payload.new as Record<string, unknown>
+            const oldData = payload.old as Record<string, unknown>
+            console.log('[Realtime] New data:', newData)
+            console.log('[Realtime] Old data:', oldData)
+            console.log('[Realtime] Session ID in payload:', newData?.id)
+            console.log('[Realtime] Expected session ID:', sessionId)
+            // クライアント側でフィルタリング
+            if (newData?.id === sessionId || oldData?.id === sessionId) {
+              console.log('[Realtime] ✓ Session ID MATCHED! Fetching session data...')
+              fetchSession()
+            } else {
+              console.log('[Realtime] ✗ Session ID did NOT match, ignoring event')
+            }
           }
         )
         .subscribe((status, err) => {
