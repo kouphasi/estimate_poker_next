@@ -106,7 +106,7 @@ export function useRealtimeSession({
             event: '*',
             schema: 'public',
             table: 'estimates',
-            filter: `sessionId=eq.${sessionId}`,
+            filter: `session_id=eq.${sessionId}`,  // ← データベースカラム名は session_id
           },
           (payload) => {
             console.log('[Realtime] Estimate change received:', payload)
