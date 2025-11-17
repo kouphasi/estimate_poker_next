@@ -9,14 +9,7 @@ import EstimateResult from '@/app/components/EstimateResult'
 import LoadingSpinner from '@/app/components/LoadingSpinner'
 import { useToast } from '@/app/components/Toast'
 import { useUser } from '@/contexts/UserContext'
-
-interface Session {
-  id: string
-  shareToken: string
-  isRevealed: boolean
-  status: 'ACTIVE' | 'FINALIZED'
-  finalEstimate: number | null
-}
+import { useRealtimeSession } from '@/hooks/useRealtimeSession'
 
 interface Estimate {
   nickname: string
@@ -54,15 +47,14 @@ export default function EstimatePage() {
   const [nickname, setNickname] = useState(getInitialNickname())
   const [userId, setUserId] = useState<string | null>(getInitialUserId())
   const [showNicknameForm, setShowNicknameForm] = useState(!getInitialNickname())
-  const [session, setSession] = useState<Session | null>(null)
-  const [estimates, setEstimates] = useState<Estimate[]>([])
   const [selectedValue, setSelectedValue] = useState(0)
   const [finalEstimateInput, setFinalEstimateInput] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [shareUrl, setShareUrl] = useState('')
   const [ownerToken, setOwnerToken] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
+
+  // リアルタイムセッション更新フックを使用（WebSocketまたはポーリング）
+  const { session, estimates, loading, error } = useRealtimeSession(shareToken)
 
   // ログインユーザーのニックネームを自動的に設定
   useEffect(() => {
@@ -72,40 +64,15 @@ export default function EstimatePage() {
     }
   }, [user])
 
-  // ポーリング：2秒ごとにセッション情報を取得
+  // 自分の見積もりがあればselectedValueを復元
   useEffect(() => {
-    if (!shareToken) return
-
-    const fetchSession = async () => {
-      try {
-        const response = await fetch(`/api/sessions/${shareToken}`)
-        if (!response.ok) {
-          throw new Error('セッションが見つかりません')
-        }
-        const data = await response.json()
-        setSession(data.session)
-        setEstimates(data.estimates)
-
-        // 自分の見積もりがあればselectedValueを復元
-        if (nickname) {
-          const myEstimate = data.estimates.find((e: Estimate) => e.nickname === nickname)
-          if (myEstimate && myEstimate.value > 0) {
-            setSelectedValue(myEstimate.value)
-          }
-        }
-
-        setLoading(false)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'エラーが発生しました')
-        setLoading(false)
+    if (nickname && estimates.length > 0) {
+      const myEstimate = estimates.find((e: Estimate) => e.nickname === nickname)
+      if (myEstimate && myEstimate.value > 0) {
+        setSelectedValue(myEstimate.value)
       }
     }
-
-    fetchSession()
-    const interval = setInterval(fetchSession, 2000) // 2秒ごとにポーリング
-
-    return () => clearInterval(interval)
-  }, [shareToken, nickname])
+  }, [estimates, nickname])
 
   // 共有URL生成とownerToken確認
   useEffect(() => {
@@ -122,7 +89,7 @@ export default function EstimatePage() {
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!nickname.trim()) {
-      setError('ニックネームを入力してください')
+      showToast('ニックネームを入力してください', 'warning')
       return
     }
     // ニックネームをlocalStorageに保存

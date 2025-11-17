@@ -7,7 +7,7 @@
 ### Key Features
 - Planning poker-style effort estimation (1h-3d + custom input)
 - Dual user system: Guest (nickname-only) and Authenticated (email/password)
-- Real-time session updates via polling (WebSocket planned for future)
+- Real-time session updates via Supabase Realtime (WebSocket) with polling fallback
 - Session owner controls (reveal/hide estimates, finalize results)
 - Statistical analysis (average, median, min, max)
 
@@ -18,6 +18,7 @@
 - **Database**: PostgreSQL (via Supabase or Vercel Postgres)
 - **ORM**: Prisma 6.19.0
 - **Authentication**: NextAuth v4.24.13
+- **Real-time**: Supabase Realtime (optional, falls back to polling)
 - **Styling**: Tailwind CSS v4
 - **Password Hashing**: bcryptjs
 - **Deployment**: Vercel (inferred)
@@ -53,9 +54,12 @@
 │   └── estimate/[shareToken]/    # Estimation room
 ├── lib/                          # Utilities
 │   ├── prisma.ts                 # Prisma client singleton
+│   ├── supabase.ts               # Supabase client for real-time
 │   ├── utils.ts                  # Token generation
 │   ├── prisma-errors.ts          # Error handling
 │   └── auth/                     # NextAuth config & helpers
+├── hooks/                        # Custom React hooks
+│   └── useRealtimeSession.ts     # Real-time session updates hook
 ├── contexts/                     # React contexts
 │   └── UserContext.tsx           # User state management
 ├── types/                        # TypeScript types
@@ -242,18 +246,36 @@ Type guards for Prisma errors:
 
 ### 4. Real-Time Updates
 
-**Current**: Polling every 2 seconds
+**Implementation**: Supabase Realtime (WebSocket) with polling fallback
 
-**Location**: `app/estimate/[shareToken]/page.tsx`
+**Primary Method**: WebSocket via Supabase Realtime
+- Monitors `estimates` and `estimation_sessions` tables
+- Instant updates on INSERT, UPDATE, DELETE events
+- Automatic reconnection on connection errors
+
+**Fallback Method**: Polling (2-second interval)
+- Activates when Supabase environment variables are not set
+- Also used when WebSocket connection fails
+
+**Location**: `hooks/useRealtimeSession.ts`
 
 ```typescript
-useEffect(() => {
+// Supabase Realtime (when available)
+const channel = supabase
+  .channel(`session:${shareToken}`)
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'estimates' }, fetchSession)
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'estimation_sessions' }, fetchSession)
+  .subscribe()
+
+// Fallback to polling if Realtime unavailable
+if (!canUseRealtime()) {
   const interval = setInterval(fetchSession, 2000);
-  return () => clearInterval(interval);
-}, [shareToken]);
+}
 ```
 
-**Future**: WebSocket migration planned (Step 4 in development plan)
+**Configuration**:
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to enable WebSocket
+- Omit these variables to use polling only
 
 ### 5. State Management
 
@@ -285,17 +307,19 @@ POSTGRES_URL_NON_POOLING     # Direct connection (for migrations)
 NEXTAUTH_SECRET              # JWT signing secret (generate with: openssl rand -base64 32)
 ```
 
-### Optional (Supabase)
+### Optional (Supabase Realtime)
+
+For WebSocket-based real-time updates:
 
 ```bash
-SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_URL
-SUPABASE_JWT_SECRET
-SUPABASE_SERVICE_ROLE_KEY
-NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_SUPABASE_URL         # Supabase project URL (e.g., https://xxx.supabase.co)
+NEXT_PUBLIC_SUPABASE_ANON_KEY    # Supabase anonymous/public key
 ```
 
-**Note**: See `.example.env` for full list (values are masked).
+**Note**:
+- If these are not set, the application will automatically fall back to polling (2-second interval)
+- To enable Realtime in Supabase: Database → Replication → Enable for `estimates` and `estimation_sessions` tables
+- See `.example.env` for full list (values are masked)
 
 ---
 
@@ -482,11 +506,21 @@ docs: Update CLAUDE.md with new patterns
    - Enable debug logs: `debug: true` in auth-options.ts
    - Check middleware console logs for auth flow
 
-### Polling Performance
+### Real-Time Updates
 
-- Current: 2-second interval
+**Current Implementation**: Supabase Realtime (WebSocket) with polling fallback
+
+**WebSocket Mode** (when Supabase env vars are set):
+- Zero polling overhead on database
+- Instant updates via Postgres Changes
+- Automatic reconnection on connection loss
+
+**Polling Mode** (fallback):
+- 2-second interval
 - Impact: High traffic can stress database
-- Mitigation: Consider WebSocket migration (planned)
+- Automatically activated when WebSocket unavailable
+
+**Recommendation**: Configure Supabase Realtime for production to reduce database load
 
 ---
 
@@ -530,18 +564,23 @@ docs: Update CLAUDE.md with new patterns
 - ✅ Email/password registration
 - ✅ User dashboard
 
-### Phase 3: Project Management (Planned)
+### Phase 3: Real-time Updates (Completed)
+- ✅ Supabase Realtime integration (WebSocket)
+- ✅ Automatic fallback to polling
+- ✅ Connection error handling and retry
+
+### Phase 4: Project Management (Planned)
 - ❌ Project model and CRUD
 - ❌ Task model and CRUD
 - ❌ Session-task relationships
 - ❌ Estimation history
 
-### Phase 4: Advanced Features (Planned)
-- ❌ WebSocket real-time updates
+### Phase 5: Advanced Features (Planned)
 - ❌ Re-voting capability
 - ❌ Guest-to-authenticated migration
 - ❌ CSV export
 - ❌ Team management
+- ❌ Supabase Presence (online status)
 
 ---
 
