@@ -71,6 +71,7 @@ model VerificationToken {
 
 model EstimationSession {
   id            String         @id @default(cuid())
+  name          String?        // セッション名（任意）
   shareToken    String         @unique
   ownerToken    String         @unique // セッション所有者の認証トークン
   ownerId       String?
