@@ -60,13 +60,18 @@ export function useRealtimeSession({
   }, [shareToken])
 
   // Start polling fallback
-  const startPolling = useCallback(() => {
+  const startPolling = useCallback((immediate = false) => {
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current)
     }
 
-    console.log('[Realtime] Falling back to polling mode')
-    fetchSession()
+    console.log('[Realtime] Starting polling mode (updates every 2 seconds)')
+
+    // Fetch immediately if requested (e.g., when falling back from realtime failure)
+    if (immediate) {
+      fetchSession()
+    }
+
     pollingIntervalRef.current = setInterval(fetchSession, 2000)
   }, [fetchSession])
 
@@ -128,13 +133,18 @@ export function useRealtimeSession({
             setIsRealtimeConnected(true)
             stopPolling()
             reconnectAttemptsRef.current = 0
-            console.log('[Realtime] Successfully connected')
+            console.log('[Realtime] Successfully connected, polling stopped')
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             setIsRealtimeConnected(false)
             console.error('[Realtime] Connection failed, falling back to polling')
-            startPolling()
+            startPolling(true)
           } else if (status === 'CLOSED') {
             setIsRealtimeConnected(false)
+            // Start polling immediately when connection is closed
+            if (!pollingIntervalRef.current) {
+              startPolling(true)
+            }
+
             // Attempt to reconnect
             if (reconnectAttemptsRef.current < maxReconnectAttempts) {
               reconnectAttemptsRef.current++
@@ -145,8 +155,7 @@ export function useRealtimeSession({
                 setupRealtimeSubscription()
               }, delay)
             } else {
-              console.error('[Realtime] Max reconnection attempts reached, falling back to polling')
-              startPolling()
+              console.error('[Realtime] Max reconnection attempts reached, continuing with polling')
             }
           }
         })
@@ -155,7 +164,7 @@ export function useRealtimeSession({
     } catch (err) {
       console.error('[Realtime] Setup error:', err)
       setIsRealtimeConnected(false)
-      startPolling()
+      startPolling(true)
     }
   }, [shareToken, enabled, fetchSession, startPolling, stopPolling, session?.id])
 
@@ -169,10 +178,13 @@ export function useRealtimeSession({
       return
     }
 
-    // Fetch initial data first
-    // The realtime subscription will be set up by the effect below
-    // once session?.id becomes available
-    fetchSession()
+    // Fetch initial data and start polling
+    // Polling will be stopped once realtime connection is established
+    fetchSession().then(() => {
+      // Start polling after initial fetch
+      console.log('[Realtime] Starting polling for updates')
+      startPolling()
+    })
 
     // Cleanup
     return () => {
@@ -188,13 +200,13 @@ export function useRealtimeSession({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareToken, enabled])
 
-  // Re-setup subscription when session ID becomes available
+  // Setup realtime subscription when session ID becomes available
   useEffect(() => {
-    if (session?.id && !isRealtimeConnected && !pollingIntervalRef.current) {
-      console.log('[Realtime] Session ID now available, setting up realtime subscription')
+    if (session?.id && enabled && !isRealtimeConnected) {
+      console.log('[Realtime] Session ID now available, attempting realtime connection')
       setupRealtimeSubscription()
     }
-  }, [session?.id, isRealtimeConnected, setupRealtimeSubscription])
+  }, [session?.id, enabled, isRealtimeConnected, setupRealtimeSubscription])
 
   return {
     session,
