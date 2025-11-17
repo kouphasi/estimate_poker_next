@@ -111,12 +111,20 @@ export default function MyPage() {
                 ようこそ、{user.nickname}さん
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-            >
-              ログアウト
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push('/projects')}
+                className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+              >
+                プロジェクト
+              </button>
+              <button
+                onClick={handleLogout}
+                className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+              >
+                ログアウト
+              </button>
+            </div>
           </div>
         </div>
       </header>

@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt";
 
 export default async function middleware(request: NextRequest) {
   // 認証が必要なパス
-  const protectedPaths = ["/mypage"];
+  const protectedPaths = ["/mypage", "/projects"];
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
@@ -59,5 +59,5 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/mypage/:path*"],
+  matcher: ["/mypage/:path*", "/projects/:path*"],
 };
