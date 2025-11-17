@@ -80,20 +80,11 @@ export function useRealtimeSession({
 
   // Setup realtime subscription
   const setupRealtimeSubscription = useCallback(async () => {
-    if (!shareToken || !enabled) return
+    if (!shareToken || !enabled || !session?.id) return
+
+    const sessionId = session.id
 
     try {
-      // First, fetch initial data
-      await fetchSession()
-
-      // Get session ID from the fetched session
-      const sessionId = session?.id
-      if (!sessionId) {
-        console.warn('[Realtime] Session ID not available yet, using polling')
-        startPolling()
-        return
-      }
-
       console.log('[Realtime] Setting up realtime subscription for session:', sessionId)
 
       // Clean up existing channel
@@ -170,18 +161,18 @@ export function useRealtimeSession({
 
   // Initial setup
   useEffect(() => {
-    if (!shareToken || !enabled) return
+    if (!shareToken) return
+
+    // If disabled, set loading to false and return
+    if (!enabled) {
+      setLoading(false)
+      return
+    }
 
     // Fetch initial data first
-    fetchSession().then(() => {
-      // Then setup realtime after we have the session data
-      // Use a small delay to ensure session state is updated
-      const timer = setTimeout(() => {
-        setupRealtimeSubscription()
-      }, 100)
-
-      return () => clearTimeout(timer)
-    })
+    // The realtime subscription will be set up by the effect below
+    // once session?.id becomes available
+    fetchSession()
 
     // Cleanup
     return () => {
