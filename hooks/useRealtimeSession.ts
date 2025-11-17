@@ -99,17 +99,21 @@ export function useRealtimeSession({
 
       // Create a new channel for this session
       const channel = supabase
-        .channel(`session-${shareToken}`)
+        .channel(`session-${shareToken}`, {
+          config: {
+            broadcast: { self: true },
+          },
+        })
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'estimates',
-            filter: `session_id=eq.${sessionId}`,  // ← データベースカラム名は session_id
+            filter: `session_id=eq.${sessionId}`,
           },
           (payload) => {
-            console.log('[Realtime] Estimate change received:', payload)
+            console.log('[Realtime] ✅ Estimate change received:', payload)
             fetchSession()
           }
         )
@@ -122,7 +126,7 @@ export function useRealtimeSession({
             filter: `id=eq.${sessionId}`,
           },
           (payload) => {
-            console.log('[Realtime] Session change received:', payload)
+            console.log('[Realtime] ✅ Session change received:', payload)
             fetchSession()
           }
         )
