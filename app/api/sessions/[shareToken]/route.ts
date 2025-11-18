@@ -14,6 +14,7 @@ export async function GET(
       where: { shareToken },
       select: {
         id: true,
+        name: true,
         shareToken: true,
         isRevealed: true,
         status: true,

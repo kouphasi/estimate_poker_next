@@ -26,6 +26,7 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        name: true,
         shareToken: true,
         status: true,
         createdAt: true,
