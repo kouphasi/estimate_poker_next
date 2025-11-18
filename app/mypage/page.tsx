@@ -6,6 +6,7 @@ import { useUser } from '@/contexts/UserContext';
 
 interface Session {
   id: string;
+  name?: string;
   shareToken: string;
   status: 'ACTIVE' | 'FINALIZED';
   createdAt: string;
@@ -161,7 +162,7 @@ export default function MyPage() {
                   <div className="flex-1">
                     <div className="mb-2 flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-zinc-900">
-                        部屋ID: {session.shareToken}
+                        {session.name || `部屋ID: ${session.shareToken}`}
                       </h3>
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-medium ${
@@ -173,6 +174,11 @@ export default function MyPage() {
                         {session.status === 'ACTIVE' ? 'アクティブ' : '確定済み'}
                       </span>
                     </div>
+                    {session.name && (
+                      <p className="text-sm text-zinc-500">
+                        部屋ID: {session.shareToken}
+                      </p>
+                    )}
                     <p className="text-sm text-zinc-600">
                       作成日時: {formatDate(session.createdAt)}
                     </p>
