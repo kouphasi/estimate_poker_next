@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // GET /api/projects/[projectId] - プロジェクト詳細取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -18,9 +18,11 @@ export async function GET(
       )
     }
 
+    const { projectId } = await params
+
     const project = await prisma.project.findUnique({
       where: {
-        id: params.projectId
+        id: projectId
       },
       include: {
         tasks: {
@@ -99,7 +101,7 @@ export async function GET(
 // PATCH /api/projects/[projectId] - プロジェクト更新
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -111,8 +113,10 @@ export async function PATCH(
       )
     }
 
+    const { projectId } = await params
+
     const project = await prisma.project.findUnique({
-      where: { id: params.projectId }
+      where: { id: projectId }
     })
 
     if (!project) {
@@ -140,7 +144,7 @@ export async function PATCH(
     }
 
     const updatedProject = await prisma.project.update({
-      where: { id: params.projectId },
+      where: { id: projectId },
       data: {
         ...(name !== undefined && { name: name.trim() }),
         ...(description !== undefined && { description: description?.trim() || null })
@@ -160,7 +164,7 @@ export async function PATCH(
 // DELETE /api/projects/[projectId] - プロジェクト削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -172,8 +176,10 @@ export async function DELETE(
       )
     }
 
+    const { projectId } = await params
+
     const project = await prisma.project.findUnique({
-      where: { id: params.projectId }
+      where: { id: projectId }
     })
 
     if (!project) {
@@ -191,7 +197,7 @@ export async function DELETE(
     }
 
     await prisma.project.delete({
-      where: { id: params.projectId }
+      where: { id: projectId }
     })
 
     return NextResponse.json({ success: true })

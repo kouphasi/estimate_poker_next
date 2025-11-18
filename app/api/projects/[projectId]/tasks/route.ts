@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // GET /api/projects/[projectId]/tasks - タスク一覧取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -18,9 +18,11 @@ export async function GET(
       )
     }
 
+    const { projectId } = await params
+
     // プロジェクトの存在確認とオーナーチェック
     const project = await prisma.project.findUnique({
-      where: { id: params.projectId }
+      where: { id: projectId }
     })
 
     if (!project) {
@@ -39,7 +41,7 @@ export async function GET(
 
     const tasks = await prisma.task.findMany({
       where: {
-        projectId: params.projectId
+        projectId: projectId
       },
       include: {
         sessions: {
@@ -72,7 +74,7 @@ export async function GET(
 // POST /api/projects/[projectId]/tasks - タスク作成
 export async function POST(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -84,9 +86,11 @@ export async function POST(
       )
     }
 
+    const { projectId } = await params
+
     // プロジェクトの存在確認とオーナーチェック
     const project = await prisma.project.findUnique({
-      where: { id: params.projectId }
+      where: { id: projectId }
     })
 
     if (!project) {
@@ -117,7 +121,7 @@ export async function POST(
       data: {
         name: name.trim(),
         description: description?.trim() || null,
-        projectId: params.projectId
+        projectId: projectId
       }
     })
 
