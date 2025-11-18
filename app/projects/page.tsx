@@ -21,7 +21,6 @@ export default function ProjectsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [unassignedCount, setUnassignedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,25 +39,14 @@ export default function ProjectsPage() {
     try {
       setLoading(true);
       setError(null);
+      const response = await fetch("/api/projects");
 
-      // プロジェクト一覧と無所属セッション数を並行取得
-      const [projectsRes, unassignedRes] = await Promise.all([
-        fetch("/api/projects"),
-        fetch("/api/sessions/unassigned"),
-      ]);
-
-      if (!projectsRes.ok) {
+      if (!response.ok) {
         throw new Error("Failed to fetch projects");
       }
 
-      const projectsData = await projectsRes.json();
-      setProjects(projectsData);
-
-      // 無所属セッション数を取得
-      if (unassignedRes.ok) {
-        const unassignedData = await unassignedRes.json();
-        setUnassignedCount(unassignedData.length);
-      }
+      const data = await response.json();
+      setProjects(data);
     } catch (err) {
       console.error("Error fetching projects:", err);
       setError("プロジェクトの取得に失敗しました");
@@ -149,52 +137,38 @@ export default function ProjectsPage() {
         )}
 
         {/* プロジェクト一覧 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* 無所属カード */}
-          <Link
-            href="/projects/unassigned"
-            className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-lg shadow-sm hover:shadow-md hover:border-gray-400 transition-all"
-          >
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="bg-gray-200 rounded-lg p-3 mr-3">
-                  <svg
-                    className="h-6 w-6 text-gray-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900">無所属</h3>
-              </div>
-
-              <p className="text-gray-600 text-sm mb-4">
-                プロジェクトに紐付けない見積もりセッション
-              </p>
-
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">セッション数</span>
-                  <span className="font-medium text-gray-900">
-                    {unassignedCount}
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-center py-2 bg-white rounded-lg border border-gray-200 text-gray-700 font-medium">
-                詳細を見る
-              </div>
+        {projects.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+            <div className="text-gray-400 mb-4">
+              <svg
+                className="mx-auto h-12 w-12"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                />
+              </svg>
             </div>
-          </Link>
-
-          {/* 通常のプロジェクト */}
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              プロジェクトがありません
+            </h3>
+            <p className="text-gray-600 mb-6">
+              新しいプロジェクトを作成してタスクの見積もりを始めましょう
+            </p>
+            <Link
+              href="/projects/new"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              最初のプロジェクトを作成
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => {
               const completionRate =
                 project.taskCount > 0
@@ -283,7 +257,8 @@ export default function ProjectsPage() {
                 </div>
               );
             })}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
