@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
+import { useToast } from "@/app/components/Toast";
 
 interface Session {
   id: string;
@@ -31,6 +32,7 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
+  const { showToast } = useToast();
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,11 +114,13 @@ export default function ProjectDetailPage() {
         localStorage.setItem(`ownerToken_${data.shareToken}`, data.ownerToken);
       }
 
+      showToast("セッションを作成しました", "success");
+
       // Redirect to the session
       router.push(`/estimate/${data.shareToken}`);
     } catch (err) {
       console.error("Error creating session:", err);
-      alert("セッションの作成に失敗しました");
+      showToast("セッションの作成に失敗しました", "error");
       setCreatingSession(false);
     }
   };
@@ -143,9 +147,10 @@ export default function ProjectDetailPage() {
 
       await fetchProject();
       setEditMode(false);
+      showToast("プロジェクトを更新しました", "success");
     } catch (err) {
       console.error("Error updating project:", err);
-      alert("プロジェクトの更新に失敗しました");
+      showToast("プロジェクトの更新に失敗しました", "error");
     } finally {
       setUpdating(false);
     }
@@ -163,10 +168,15 @@ export default function ProjectDetailPage() {
         throw new Error("Failed to delete project");
       }
 
+      const data = await response.json();
+      showToast(
+        `プロジェクトを削除しました（セッション ${data.deletedSessionsCount} 件を含む）`,
+        "success"
+      );
       router.push("/projects");
     } catch (err) {
       console.error("Error deleting project:", err);
-      alert("プロジェクトの削除に失敗しました");
+      showToast("プロジェクトの削除に失敗しました", "error");
       setDeleting(false);
     }
   };
@@ -455,18 +465,31 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
+        {showDeleteConfirm && project && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 プロジェクトの削除
               </h3>
+              <p className="text-gray-600 mb-4">
+                本当にこのプロジェクトを削除しますか？
+              </p>
+
+              {/* セッション数の警告 */}
+              {project.sessions.length > 0 && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-orange-800 text-sm font-medium">
+                    ⚠️ このプロジェクトには <span className="font-bold">{project.sessions.length} 件</span>のセッションが含まれています
+                  </p>
+                </div>
+              )}
+
               <p className="text-gray-600 mb-6">
-                本当にこのプロジェクトを削除しますか？<br />
                 <span className="text-red-600 font-semibold">
                   この操作は取り消せません。プロジェクトに紐付く全てのセッションも削除されます。
                 </span>
               </p>
+
               <div className="flex gap-3">
                 <button
                   onClick={handleDeleteProject}
