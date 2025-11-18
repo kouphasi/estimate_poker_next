@@ -7,6 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 export default function NewSessionPage() {
   const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
+  const [sessionName, setSessionName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
 
@@ -17,50 +18,48 @@ export default function NewSessionPage() {
     }
   }, [user, userLoading, router]);
 
-  // ページ読み込み時に自動的にセッションを作成
-  useEffect(() => {
-    const createSession = async () => {
-      if (!user || isCreating) return;
+  const handleCreateSession = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      setIsCreating(true);
-      setError('');
+    if (!user || isCreating) return;
 
-      try {
-        const response = await fetch('/api/sessions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            nickname: user.nickname,
-            userId: user.userId,
-          }),
-        });
+    setIsCreating(true);
+    setError('');
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'セッションの作成に失敗しました');
-        }
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nickname: user.nickname,
+          userId: user.userId,
+          name: sessionName.trim() || undefined,
+        }),
+      });
 
+      if (!response.ok) {
         const data = await response.json();
-
-        // ownerTokenとuserIdをlocalStorageに保存
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(`ownerToken_${data.shareToken}`, data.ownerToken);
-          localStorage.setItem(`userId_${data.shareToken}`, data.userId);
-        }
-
-        // 作成した部屋にリダイレクト
-        router.push(`/estimate/${data.shareToken}`);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'エラーが発生しました');
-        setIsCreating(false);
-        console.error('Session creation error:', err);
+        throw new Error(data.error || 'セッションの作成に失敗しました');
       }
-    };
 
-    createSession();
-  }, [user, router, isCreating]);
+      const data = await response.json();
+
+      // ownerTokenとuserIdをlocalStorageに保存
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`ownerToken_${data.shareToken}`, data.ownerToken);
+        localStorage.setItem(`userId_${data.shareToken}`, data.userId);
+      }
+
+      // 作成した部屋にリダイレクト
+      router.push(`/estimate/${data.shareToken}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+      setIsCreating(false);
+      console.error('Session creation error:', err);
+    }
+  };
 
   if (userLoading || !user) {
     return (
@@ -70,32 +69,58 @@ export default function NewSessionPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-zinc-900">エラー</h1>
-            <div className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-800">
-              {error}
-            </div>
-            <button
-              onClick={() => router.push('/mypage')}
-              className="cursor-pointer mt-6 w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800"
-            >
-              マイページに戻る
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-      <div className="text-center">
-        <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-zinc-300 border-t-zinc-900"></div>
-        <div className="text-lg text-zinc-600">部屋を作成中...</div>
+      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-zinc-900">新しいセッションを作成</h1>
+          <p className="mt-2 text-sm text-zinc-600">
+            見積もりセッションの名前を入力してください（任意）
+          </p>
+        </div>
+
+        <form onSubmit={handleCreateSession} className="mt-8 space-y-6">
+          <div>
+            <label
+              htmlFor="sessionName"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              セッション名（任意）
+            </label>
+            <input
+              id="sessionName"
+              type="text"
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+              placeholder="例: ユーザー認証機能の見積もり"
+              disabled={isCreating}
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isCreating}
+            className="cursor-pointer w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50"
+          >
+            {isCreating ? 'セッション作成中...' : 'セッションを作成'}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => router.push('/mypage')}
+            className="text-sm text-zinc-600 hover:text-zinc-900"
+          >
+            ← マイページに戻る
+          </button>
+        </div>
       </div>
     </div>
   );

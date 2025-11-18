@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     // TODO: セキュリティ改善 - userIdはリクエストボディから来るため改ざん可能
     // 将来的にはサーバー側セッション管理（HttpOnly Cookie等）で認証を行う
-    const { nickname, userId } = body
+    const { nickname, userId, name } = body
 
     if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
       return NextResponse.json(
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       shareToken: generateShareToken(),
       ownerToken: generateOwnerToken(),
       ownerId: actualUserId,
+      name: name && typeof name === 'string' && name.trim() !== '' ? name.trim() : undefined,
       isRevealed: false,
       status: 'ACTIVE'
     }, 5)
@@ -81,6 +82,7 @@ interface SessionCreateData {
   shareToken: string
   ownerToken: string
   ownerId: string
+  name?: string
   isRevealed: boolean
   status: 'ACTIVE' | 'FINALIZED'
 }

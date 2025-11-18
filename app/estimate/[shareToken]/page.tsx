@@ -12,6 +12,7 @@ import { useUser } from '@/contexts/UserContext'
 
 interface Session {
   id: string
+  name?: string
   shareToken: string
   isRevealed: boolean
   status: 'ACTIVE' | 'FINALIZED'
@@ -294,9 +295,14 @@ export default function EstimatePage() {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors cursor-pointer">
-              見積もりポーカー
-            </Link>
+            <div className="flex flex-col">
+              <Link href="/" className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors cursor-pointer">
+                見積もりポーカー
+              </Link>
+              {session?.name && (
+                <h2 className="text-lg text-gray-600 mt-1">{session.name}</h2>
+              )}
+            </div>
             <div className="flex items-center gap-4">
               {isOwner && (
                 <Link

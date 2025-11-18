@@ -150,3 +150,37 @@ app/
 ---
 
 ## 開発ログ
+
+### 2025-11-17: セッション名前付け機能の実装
+
+#### 実装内容
+1. **データベーススキーマの変更**
+   - `EstimationSession` モデルに `name` フィールドを追加（String型、任意）
+   - マイグレーションファイルを作成: `20251117000000_add_session_name`
+
+2. **API の変更**
+   - `POST /api/sessions`: リクエストボディに `name` パラメータを追加
+   - `SessionCreateData` インターフェースに `name?: string` を追加
+   - セッション作成時に名前を保存できるように修正
+
+3. **UI の変更**
+   - **セッション作成画面** (`/app/sessions/new/page.tsx`)
+     - 自動作成からフォーム入力に変更
+     - セッション名の入力フィールドを追加（任意）
+     - プレースホルダー: "例: ユーザー認証機能の見積もり"
+
+   - **見積もり画面** (`/app/estimate/[shareToken]/page.tsx`)
+     - `Session` インターフェースに `name?: string` を追加
+     - ヘッダー部分にセッション名を表示（名前がある場合のみ）
+
+#### 変更ファイル
+- `prisma/schema.prisma`
+- `prisma/migrations/20251117000000_add_session_name/migration.sql`
+- `app/api/sessions/route.ts`
+- `app/sessions/new/page.tsx`
+- `app/estimate/[shareToken]/page.tsx`
+
+#### 備考
+- セッション名は任意項目として実装
+- 既存のセッションには影響なし（name フィールドは NULL 許可）
+- 要件（requirements.md）の「部屋名入力（任意）」に対応
