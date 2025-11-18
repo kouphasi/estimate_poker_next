@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       userId: user.id,
       nickname: user.nickname,
-      isGuest: user.isGuest,
     });
   } catch (error) {
     // 詳細なエラー情報をサーバーログに記録

@@ -6,7 +6,6 @@ import { useSession, signOut } from 'next-auth/react';
 interface User {
   userId: string;
   nickname: string;
-  isGuest: boolean;
 }
 
 interface UserContextType {
@@ -47,11 +46,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     // Next-Authのセッションがある場合はそれを使用
     if (session?.user) {
-      const sessionUser = session.user as { id?: string; name?: string | null; email?: string | null; isGuest?: boolean };
+      const sessionUser = session.user as { id?: string; name?: string | null; email?: string | null };
       const userData: User = {
         userId: sessionUser.id || '',
         nickname: sessionUser.name || sessionUser.email || '',
-        isGuest: sessionUser.isGuest ?? false,
       };
       setUser(userData);
       setIsLoading(false);
@@ -63,14 +61,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
-        // 簡易ログインユーザーはゲストとして扱う
-        const userDataWithGuest = {
-          ...userData,
-          isGuest: userData.isGuest ?? true,
-        };
-        setUser(userDataWithGuest);
+        setUser(userData);
         // Cookieにも保存（既存のlocalStorageからの移行のため）
-        setCookie(USER_COOKIE_KEY, JSON.stringify(userDataWithGuest));
+        setCookie(USER_COOKIE_KEY, JSON.stringify(userData));
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem(USER_STORAGE_KEY);

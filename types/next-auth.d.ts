@@ -6,7 +6,6 @@ declare module "next-auth" {
       id: string;
       email: string;
       name: string;
-      isGuest: boolean;
     };
   }
 
@@ -14,13 +13,11 @@ declare module "next-auth" {
     id: string;
     email: string | null;
     name: string;
-    isGuest: boolean;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    isGuest: boolean;
   }
 }
