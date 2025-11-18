@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 
-function NewSessionForm() {
+export default function NewSessionPage() {
   const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -129,17 +129,5 @@ function NewSessionForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function NewSessionPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="text-lg text-zinc-600">読み込み中...</div>
-      </div>
-    }>
-      <NewSessionForm />
-    </Suspense>
   );
 }
