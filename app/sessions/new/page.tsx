@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 
-export default function NewSessionPage() {
+function NewSessionForm() {
   const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isUnassigned = searchParams.get('unassigned') === 'true';
   const [sessionName, setSessionName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
@@ -73,9 +75,13 @@ export default function NewSessionPage() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-50">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-zinc-900">新しいセッションを作成</h1>
+          <h1 className="text-3xl font-bold text-zinc-900">
+            {isUnassigned ? '無所属セッションを作成' : '新しいセッションを作成'}
+          </h1>
           <p className="mt-2 text-sm text-zinc-600">
-            見積もりセッションの名前を入力してください（任意）
+            {isUnassigned
+              ? 'プロジェクトに紐付けない見積もりセッションを作成します'
+              : '見積もりセッションの名前を入力してください（任意）'}
           </p>
         </div>
 
@@ -115,13 +121,25 @@ export default function NewSessionPage() {
 
         <div className="mt-4 text-center">
           <button
-            onClick={() => router.push('/mypage')}
+            onClick={() => router.push(isUnassigned ? '/projects/unassigned' : '/mypage')}
             className="text-sm text-zinc-600 hover:text-zinc-900"
           >
-            ← マイページに戻る
+            ← {isUnassigned ? '無所属セッション一覧に戻る' : 'マイページに戻る'}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewSessionPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <div className="text-lg text-zinc-600">読み込み中...</div>
+      </div>
+    }>
+      <NewSessionForm />
+    </Suspense>
   );
 }

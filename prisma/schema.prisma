@@ -24,6 +24,7 @@ model User {
   accounts      Account[]
   nextAuthSessions Session[]
 
+  projects      Project[]
   sessions      EstimationSession[]
   estimates     Estimate[]
 
@@ -69,16 +70,47 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  ownerId       String    @map("owner_id")
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  tasks         Task[]
+
+  @@map("projects")
+}
+
+model Task {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  projectId     String    @map("project_id")
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  finalEstimate Float?    @map("final_estimate") // 確定工数（日数）
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  sessions      EstimationSession[]
+
+  @@map("tasks")
+}
+
 model EstimationSession {
   id            String         @id @default(cuid())
   name          String?        // セッション名（任意）
-  shareToken    String         @unique
-  ownerToken    String         @unique // セッション所有者の認証トークン
-  ownerId       String?
+  shareToken    String         @unique @map("share_token")
+  ownerToken    String         @unique @map("owner_token") // セッション所有者の認証トークン
+  ownerId       String?        @map("owner_id")
   owner         User?          @relation(fields: [ownerId], references: [id])
-  isRevealed    Boolean        @default(false)
+  taskId        String?        @map("task_id") // タスクに紐付かない一時セッションの場合はnull
+  task          Task?          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  isRevealed    Boolean        @default(false) @map("is_revealed")
   status        SessionStatus  @default(ACTIVE)
-  finalEstimate Float?         // 確定工数
+  finalEstimate Float?         @map("final_estimate") // 確定工数
   createdAt     DateTime       @default(now()) @map("created_at")
 
   estimates     Estimate[]

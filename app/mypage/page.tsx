@@ -112,12 +112,22 @@ export default function MyPage() {
                 ようこそ、{user.nickname}さん
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-            >
-              ログアウト
-            </button>
+            <div className="flex items-center gap-4">
+              {!user.isGuest && (
+                <button
+                  onClick={() => router.push('/projects')}
+                  className="cursor-pointer rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+                >
+                  プロジェクト管理
+                </button>
+              )}
+              <button
+                onClick={handleLogout}
+                className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+              >
+                ログアウト
+              </button>
+            </div>
           </div>
         </div>
       </header>
