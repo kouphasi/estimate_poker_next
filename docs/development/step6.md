@@ -1,35 +1,55 @@
-## ステップ6: タスクとの紐付け
+## ステップ6: セッションへの名前付け機能
 
 ### 目標
-タスクを作成し、そのタスクに対して部屋を作成できる
+EstimationSessionに名前を付けて管理しやすくする
 
 ### 実装する機能
-- [ ] タスク作成機能
-- [ ] タスク一覧表示
-- [ ] タスクに紐付いた部屋作成
-- [ ] タスクへの工数記録
-- [ ] タスク詳細画面
+- [ ] セッション作成時に名前を入力
+- [ ] セッション名の表示
+- [ ] セッション名の編集機能
+- [ ] マイページでのセッション名表示
 
 ### データベーススキーマ追加（Step 6）
 
 ```prisma
-model Task {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?
+model EstimationSession {
+  id            String         @id @default(cuid())
+  name          String?        // セッション名（例: "ログイン機能の工数見積もり"）
+  shareToken    String         @unique
+  ownerToken    String         @unique
   ownerId       String
-  owner         User      @relation(fields: [ownerId], references: [id])
-  finalEstimate Float?    // 確定工数
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  owner         User           @relation(fields: [ownerId], references: [id])
+  isRevealed    Boolean        @default(false)
+  status        SessionStatus  @default(ACTIVE)
+  finalEstimate Float?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  sessions      EstimationSession[]
+  estimates     Estimate[]
+}
+```
+
+### API設計追加（Step 6）
+
+```typescript
+// POST /api/sessions
+// セッション作成（名前を追加）
+{
+  "ownerId": "clxxx...",
+  "name": "ログイン機能の工数見積もり"
+}
+→ Response: {
+  "sessionId": "clxxx...",
+  "shareToken": "abc123xyz",
+  "shareUrl": "https://app.com/estimate/abc123xyz",
+  "name": "ログイン機能の工数見積もり"
 }
 
-model EstimationSession {
-  // 既存のフィールド...
-  taskId        String?
-  task          Task?     @relation(fields: [taskId], references: [id])
+// PATCH /api/sessions/[shareToken]/name
+// セッション名の更新（オーナーのみ）
+{
+  "ownerToken": "owner123...",
+  "name": "ログイン機能の工数見積もり（修正版）"
 }
 ```
 
@@ -37,116 +57,52 @@ model EstimationSession {
 
 ```
 app/
-├── tasks/
-│   ├── page.tsx                      # タスク一覧
-│   ├── new/
-│   │   └── page.tsx                  # タスク作成
-│   └── [taskId]/
-│       ├── page.tsx                  # タスク詳細
-│       └── sessions/
-│           └── new/
-│               └── page.tsx          # 部屋作成
+├── sessions/
+│   └── new/
+│       └── page.tsx              # セッション作成（名前入力フォーム追加）
+├── estimate/
+│   └── [shareToken]/
+│       └── page.tsx              # セッション名表示・編集機能追加
 └── api/
-    └── tasks/
-        ├── route.ts                  # GET: 一覧, POST: 作成
-        ├── [taskId]/
-        │   ├── route.ts              # GET: 詳細, PATCH: 更新, DELETE: 削除
-        │   └── sessions/
-        │       └── route.ts          # POST: 部屋作成
+    └── sessions/
+        └── [shareToken]/
+            └── name/
+                └── route.ts      # PATCH: セッション名更新
 ```
 
 ### 実装タスク（Step 6）
 
 #### 6-1. データベース（1時間）
-- [ ] Task テーブル追加
-- [ ] リレーション設定
-- [ ] マイグレーション
+- [ ] EstimationSession に name カラム追加
+- [ ] マイグレーション実行
+- [ ] 既存データの対応（null許容）
 
-#### 6-2. タスクAPI（3時間）
-- [ ] タスク作成API
-- [ ] タスク一覧取得API
-- [ ] タスク詳細取得API
-- [ ] タスク更新API
-- [ ] タスク削除API
+#### 6-2. セッション名API（2時間）
+- [ ] セッション作成APIに名前パラメータ追加
+- [ ] セッション名更新API実装
+- [ ] オーナー権限チェック
 
-#### 6-3. タスクUI（5時間）
-- [ ] タスク一覧画面
-- [ ] タスク作成フォーム
-- [ ] タスク詳細画面
-- [ ] タスク編集フォーム
-- [ ] 部屋一覧（タスク配下）
+#### 6-3. UI実装（4時間）
+- [ ] セッション作成フォームに名前入力欄追加
+- [ ] セッション画面にタイトル表示
+- [ ] セッション名編集UI（オーナーのみ）
+- [ ] マイページでのセッション名表示
 
-#### 6-4. 紐付け処理（2時間）
-- [ ] タスクから部屋作成
-- [ ] 確定工数のタスクへの反映
-- [ ] タスク詳細での部屋履歴表示
+#### 6-4. バリデーション（1時間）
+- [ ] 名前の最大文字数制限（100文字）
+- [ ] 名前の任意入力対応（未入力時のデフォルト表示）
 
-**合計見積もり: 11時間（約1.5日）**
+**合計見積もり: 8時間（約1日）**
 
 ---
 
-## ステップ5: プロジェクト管理
-
-### 目標
-プロジェクトを作成し、その配下にタスクを管理
-
-### 実装する機能
-- [ ] プロジェクト作成機能
-- [ ] プロジェクト一覧表示
-- [ ] プロジェクト詳細画面
-- [ ] プロジェクト配下のタスク管理
-- [ ] プロジェクト統計情報
-
-### データベーススキーマ追加（Step 5）
-
-```prisma
-model Project {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?
-  ownerId       String
-  owner         User      @relation(fields: [ownerId], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  tasks         Task[]
-}
-
-model Task {
-  // 既存のフィールド...
-  projectId     String
-  project       Project   @relation(fields: [projectId], references: [id])
-}
-```
-
-### ファイル構成追加（Step 5）
-
-```
-app/
-├── projects/
-│   ├── page.tsx                      # プロジェクト一覧
-│   ├── new/
-│   │   └── page.tsx                  # プロジェクト作成
-│   └── [projectId]/
-│       ├── page.tsx                  # プロジェクト詳細
-│       └── tasks/
-│           └── new/
-│               └── page.tsx          # タスク作成
-└── api/
-    └── projects/
-        ├── route.ts                  # GET: 一覧, POST: 作成
-        ├── [projectId]/
-        │   ├── route.ts              # GET: 詳細, PATCH: 更新, DELETE: 削除
-        │   └── tasks/
-        │       └── route.ts          # GET: タスク一覧, POST: タスク作成
-```
----
 ## 完了条件
 ### Step 6
-- [ ] タスク作成ができる
-- [ ] タスクから部屋を作成できる
-- [ ] 確定工数がタスクに反映される
-- [ ] タスク一覧が表示される
+- [ ] セッション作成時に名前を入力できる
+- [ ] セッション名が表示される
+- [ ] セッション名を編集できる
+- [ ] マイページでセッション名が表示される
+
 ---
 
 ## 開発ログ
