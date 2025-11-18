@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 // GET /api/projects/[projectId]/tasks - タスク一覧取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: { params: { projectId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    const { projectId } = await params;
+    const { projectId } = params;
 
     // プロジェクトの存在とオーナー権限チェック
     const project = await prisma.project.findUnique({
@@ -77,7 +77,7 @@ export async function GET(
 // POST /api/projects/[projectId]/tasks - タスク作成
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: { params: { projectId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -90,7 +90,7 @@ export async function POST(
       );
     }
 
-    const { projectId } = await params;
+    const { projectId } = params;
 
     // プロジェクトの存在とオーナー権限チェック
     const project = await prisma.project.findUnique({

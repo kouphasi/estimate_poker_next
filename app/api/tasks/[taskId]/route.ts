@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 // GET /api/tasks/[taskId] - タスク詳細取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
+  { params }: { params: { taskId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    const { taskId } = await params;
+    const { taskId } = params;
 
     // タスク取得
     const task = await prisma.task.findUnique({
@@ -79,7 +79,7 @@ export async function GET(
 // PATCH /api/tasks/[taskId] - タスク更新
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
+  { params }: { params: { taskId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -92,7 +92,7 @@ export async function PATCH(
       );
     }
 
-    const { taskId } = await params;
+    const { taskId } = params;
 
     // タスクの存在とオーナー権限チェック
     const existingTask = await prisma.task.findUnique({
@@ -161,7 +161,7 @@ export async function PATCH(
 // DELETE /api/tasks/[taskId] - タスク削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
+  { params }: { params: { taskId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -174,7 +174,7 @@ export async function DELETE(
       );
     }
 
-    const { taskId } = await params;
+    const { taskId } = params;
 
     // タスクの存在とオーナー権限チェック
     const existingTask = await prisma.task.findUnique({
