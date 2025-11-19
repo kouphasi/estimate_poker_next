@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useUser } from '@/contexts/UserContext';
 
 interface Session {
@@ -15,11 +16,15 @@ interface Session {
 }
 
 export default function MyPage() {
+  const { data: session } = useSession();
   const { user, logout, isLoading: userLoading } = useUser();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // 認証ユーザーかどうか
+  const isAuthenticatedUser = session?.user?.id;
 
   // 未ログインならトップページへリダイレクト
   useEffect(() => {
@@ -123,6 +128,30 @@ export default function MyPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* プロジェクト管理（認証ユーザーのみ） */}
+        {isAuthenticatedUser && (
+          <div className="mb-8">
+            <div className="rounded-lg border border-zinc-200 bg-white p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-zinc-900 mb-1">
+                    プロジェクト管理
+                  </h2>
+                  <p className="text-sm text-zinc-600">
+                    プロジェクトを作成して、見積もりセッションを整理できます
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push('/projects')}
+                  className="cursor-pointer rounded-md bg-blue-600 px-6 py-2 text-sm text-white hover:bg-blue-700"
+                >
+                  プロジェクト一覧を見る
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-zinc-900">
             作成した部屋一覧
