@@ -432,7 +432,7 @@ export default function ProjectDetailPage() {
                         {session.name || "名称未設定"}
                       </h3>
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                        <span>{session._count.estimates} 名参加</span>
+                        <span>{session._count?.estimates ?? 0} 名参加</span>
                         <span>
                           {new Date(session.createdAt).toLocaleDateString("ja-JP")}
                         </span>
