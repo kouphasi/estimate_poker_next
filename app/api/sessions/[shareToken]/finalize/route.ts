@@ -11,9 +11,9 @@ export async function POST(
     const body = await request.json()
     const { finalEstimate, ownerToken } = body
 
-    if (typeof finalEstimate !== 'number' || finalEstimate < 0) {
+    if (typeof finalEstimate !== 'number' || finalEstimate <= 0 || finalEstimate > 300) {
       return NextResponse.json(
-        { error: '有効な工数を入力してください' },
+        { error: '有効な工数を入力してください（0より大きく300以下の数値）' },
         { status: 400 }
       )
     }
