@@ -201,8 +201,8 @@ export default function EstimatePage() {
 
     const value = parseFloat(finalEstimateInput)
 
-    if (isNaN(value) || value < 0) {
-      showToast('有効な工数を入力してください', 'warning')
+    if (isNaN(value) || value <= 0 || value > 300) {
+      showToast('有効な工数を入力してください（0より大きく300以下の数値）', 'warning')
       return
     }
 
@@ -389,8 +389,9 @@ export default function EstimatePage() {
                   <form onSubmit={handleFinalize} className="space-y-2">
                     <input
                       type="number"
-                      step="0.5"
+                      step="any"
                       min="0"
+                      max="300"
                       value={finalEstimateInput}
                       onChange={(e) => setFinalEstimateInput(e.target.value)}
                       placeholder="確定工数を入力（日数）"
