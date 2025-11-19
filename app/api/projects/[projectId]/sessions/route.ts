@@ -20,21 +20,17 @@ export async function GET(
       );
     }
 
-    // プロジェクトの存在確認とオーナー確認
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
+    // プロジェクトの存在確認とオーナー確認（WHERE句で直接フィルタ）
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        ownerId: session.user.id,
+      },
     });
 
     if (!project) {
       return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
-    }
-
-    if (project.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden. You are not the owner of this project." },
+        { error: "Project not found or you are not the owner" },
         { status: 403 }
       );
     }
@@ -81,21 +77,17 @@ export async function POST(
       );
     }
 
-    // プロジェクトの存在確認とオーナー確認
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
+    // プロジェクトの存在確認とオーナー確認（WHERE句で直接フィルタ）
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        ownerId: session.user.id,
+      },
     });
 
     if (!project) {
       return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
-    }
-
-    if (project.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden. You are not the owner of this project." },
+        { error: "Project not found or you are not the owner" },
         { status: 403 }
       );
     }

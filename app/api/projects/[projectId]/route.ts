@@ -114,9 +114,12 @@ export async function PATCH(
       );
     }
 
-    // 更新後のデータを取得して返す
-    const updatedProject = await prisma.project.findUnique({
-      where: { id: projectId },
+    // 更新後のデータを取得して返す（オーナー確認を含める）
+    const updatedProject = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        ownerId: session.user.id,
+      },
     });
 
     return NextResponse.json({ project: updatedProject });

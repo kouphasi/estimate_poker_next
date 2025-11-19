@@ -71,6 +71,12 @@ export default function ProjectDetailPage() {
         }
         if (response.status === 404) {
           setError("プロジェクトが見つかりません");
+          setLoading(false);
+          return;
+        }
+        if (response.status === 403) {
+          setError("このプロジェクトにアクセスする権限がありません");
+          setLoading(false);
           return;
         }
         throw new Error("Failed to fetch project");
