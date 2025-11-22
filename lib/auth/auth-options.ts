@@ -1,14 +1,37 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
+import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+// 環境変数のバリデーション
+if (process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_SECRET) {
+  throw new Error('GOOGLE_CLIENT_SECRET is required when GOOGLE_CLIENT_ID is set');
+}
 
 export const authOptions: NextAuthOptions = {
-  // CredentialsProviderを使う場合、adapterは不要
+  // GoogleProviderが有効な場合のみadapterを使用
+  // CredentialsProviderのみの場合はadapterは不要
+  ...(process.env.GOOGLE_CLIENT_ID ? { adapter: PrismaAdapter(prisma) } : {}),
   debug: true, // 本番環境でもデバッグログを有効化して問題を特定
   providers: [
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            profile(profile) {
+              return {
+                id: profile.sub,
+                name: profile.name,
+                email: profile.email,
+                image: profile.picture,
+              };
+            },
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -54,7 +77,29 @@ export const authOptions: NextAuthOptions = {
     signOut: "/",
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Google OAuth経由でサインインする場合
+      if (account?.provider === "google" && user.email) {
+        // サインイン時に1回だけ更新（重複DB更新を防ぐ）
+        const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
+
+        await prisma.user.upsert({
+          where: { email: user.email },
+          update: {
+            isGuest: false,
+            nickname: nickname,
+          },
+          create: {
+            email: user.email,
+            nickname: nickname,
+            isGuest: false,
+          }
+        });
+      }
+      return true;
+    },
     async jwt({ token, user }) {
+      // jwtコールバックではDB更新を削除（signInで完了しているため）
       if (user) {
         token.id = user.id;
       }

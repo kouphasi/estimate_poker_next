@@ -6,7 +6,7 @@
 
 ### Key Features
 - Planning poker-style effort estimation (1h-3d + custom input)
-- Dual user system: Guest (nickname-only) and Authenticated (email/password)
+- Multiple login options: Guest (nickname-only), Email/Password, and Google OAuth
 - Real-time session updates via polling (WebSocket planned for future)
 - Session owner controls (reveal/hide estimates, finalize results)
 - Statistical analysis (average, median, min, max)
@@ -121,7 +121,7 @@
 
 ## Authentication System
 
-### Dual Login Strategy
+### Multiple Login Strategy
 
 #### 1. Simple Login (Guest Users)
 - **Route**: `/simple-login`
@@ -131,13 +131,21 @@
 - **State**: Managed by `UserContext`
 - **Limitations**: No persistence, no project ownership
 
-#### 2. Authenticated Login
+#### 2. Email/Password Login (Authenticated)
 - **Route**: `/login`
 - **Method**: Email + password via NextAuth CredentialsProvider
 - **Strategy**: JWT-based, 30-day session expiry
 - **Password**: bcrypt hashed (10 rounds)
 - **Registration**: `POST /api/auth/register`
 - **Session**: NextAuth `SessionProvider` in root layout
+
+#### 3. Google OAuth Login (Authenticated)
+- **Route**: `/login` (same page as email/password)
+- **Method**: Google OAuth 2.0 via NextAuth GoogleProvider
+- **Strategy**: OAuth flow with PrismaAdapter
+- **User Creation**: Automatic via PrismaAdapter with `isGuest: false`
+- **Session**: NextAuth `SessionProvider` in root layout
+- **Callback URL**: `/api/auth/callback/google`
 
 ### Middleware Protection
 
@@ -156,11 +164,22 @@
 
 **File**: `lib/auth/auth-options.ts`
 
-- **Provider**: CredentialsProvider (email + password)
+- **Providers**:
+  - GoogleProvider (OAuth, conditional based on env vars)
+  - CredentialsProvider (email + password)
+- **Adapter**: PrismaAdapter (conditionally enabled when GoogleProvider is configured)
 - **Session**: JWT strategy, 30-day expiry
-- **Callbacks**: Adds `user.id` to JWT token and session
+- **Callbacks**:
+  - `signIn`: Sets `isGuest: false` for Google OAuth users
+  - `jwt`: Adds `user.id` to JWT token
+  - `session`: Attaches user ID to session object
 - **Pages**: Custom login (`/login`), register (`/register`)
 - **Secret**: `NEXTAUTH_SECRET` env var (required)
+
+**Important Notes**:
+- PrismaAdapter is only enabled when `GOOGLE_CLIENT_ID` is set to avoid conflicts with CredentialsProvider
+- Google OAuth users are automatically assigned a nickname from their Google profile
+- Environment variable validation ensures `GOOGLE_CLIENT_SECRET` is set if `GOOGLE_CLIENT_ID` is configured
 
 ---
 
@@ -168,7 +187,8 @@
 
 ### Authentication
 - `POST /api/auth/register` - Create authenticated user
-- `POST /api/auth/[...nextauth]` - NextAuth handler
+- `GET/POST /api/auth/[...nextauth]` - NextAuth handler (handles all auth routes)
+- `GET /api/auth/callback/google` - Google OAuth callback (handled by NextAuth)
 
 ### User Management
 - `POST /api/users` - Create guest user (simple login)
@@ -283,7 +303,17 @@ useEffect(() => {
 DATABASE_URL                 # PostgreSQL connection (pooled)
 POSTGRES_URL_NON_POOLING     # Direct connection (for migrations)
 NEXTAUTH_SECRET              # JWT signing secret (generate with: openssl rand -base64 32)
+NEXTAUTH_URL                 # Application URL (http://localhost:3000 for dev, production URL for prod)
 ```
+
+### Optional (Google OAuth)
+
+```bash
+GOOGLE_CLIENT_ID             # Google OAuth 2.0 Client ID
+GOOGLE_CLIENT_SECRET         # Google OAuth 2.0 Client Secret
+```
+
+**Note**: If `GOOGLE_CLIENT_ID` is set, `GOOGLE_CLIENT_SECRET` must also be set (validated at startup).
 
 ### Optional (Supabase)
 
