@@ -2,20 +2,36 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+// 環境変数のバリデーション
+if (process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_SECRET) {
+  throw new Error('GOOGLE_CLIENT_SECRET is required when GOOGLE_CLIENT_ID is set');
+}
 
 export const authOptions: NextAuthOptions = {
-  // OAuthプロバイダーを使用する場合はadapterが必要
-  adapter: PrismaAdapter(prisma),
+  // GoogleProviderが有効な場合のみadapterを使用
+  // CredentialsProviderのみの場合はadapterは不要
+  ...(process.env.GOOGLE_CLIENT_ID ? { adapter: PrismaAdapter(prisma) } : {}),
   debug: true, // 本番環境でもデバッグログを有効化して問題を特定
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            profile(profile) {
+              return {
+                id: profile.sub,
+                name: profile.name,
+                email: profile.email,
+                image: profile.picture,
+              };
+            },
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -61,49 +77,31 @@ export const authOptions: NextAuthOptions = {
     signOut: "/",
   },
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // Google OAuth経由でサインインする場合
-      if (account?.provider === "google") {
-        // Prisma Adapterが自動的にユーザーを作成するが、
-        // isGuestをfalseに設定し、nicknameを設定する必要がある
-        if (user.email) {
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email }
-          });
+      if (account?.provider === "google" && user.email) {
+        // サインイン時に1回だけ更新（重複DB更新を防ぐ）
+        const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
 
-          if (existingUser) {
-            // 既存のユーザーがいる場合、isGuestをfalseに更新
-            await prisma.user.update({
-              where: { email: user.email },
-              data: {
-                isGuest: false,
-                nickname: user.name || existingUser.nickname
-              }
-            });
-          } else {
-            // 新規ユーザーの場合は、Adapterが作成した後に更新
-            // Adapterがユーザーを作成するのを待つ必要があるため、
-            // ここでは何もせず、後続の処理で更新する
+        await prisma.user.upsert({
+          where: { email: user.email },
+          update: {
+            isGuest: false,
+            nickname: nickname,
+          },
+          create: {
+            email: user.email,
+            nickname: nickname,
+            isGuest: false,
           }
-        }
+        });
       }
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
+      // jwtコールバックではDB更新を削除（signInで完了しているため）
       if (user) {
         token.id = user.id;
-
-        // Google OAuth経由で新規作成された場合
-        if (account?.provider === "google") {
-          // isGuestをfalseに更新
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              isGuest: false,
-              nickname: user.name || user.email?.split('@')[0] || 'User'
-            }
-          });
-        }
       }
       return token;
     },
