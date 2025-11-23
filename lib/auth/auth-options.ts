@@ -16,11 +16,6 @@ export const authOptions: NextAuthOptions = {
   ...(process.env.GOOGLE_CLIENT_ID ? { adapter: PrismaAdapter(prisma) } : {}),
   debug: true, // 本番環境でもデバッグログを有効化して問題を特定
 
-  // 同じメールアドレスで複数のプロバイダーを使用可能にする
-  // これにより、メール/パスワードで登録したユーザーがGoogle OAuthでもログインできる
-  // Googleが既にメールアドレスの所有権を確認しているため安全
-  allowDangerousEmailAccountLinking: true,
-
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
@@ -86,25 +81,58 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       // Google OAuth経由でサインインする場合
       if (account?.provider === "google" && user.email) {
-        // サインイン時に1回だけ更新（重複DB更新を防ぐ）
-        const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
+        console.log('[NextAuth] signIn callback - Google OAuth attempt for:', user.email);
 
-        // 既存のユーザー（Credentialsで登録済み）にOAuthアカウントをリンクする場合も
-        // isGuestをfalseに更新し、nicknameを更新する
-        await prisma.user.upsert({
+        // 既存のユーザーを検索
+        const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
-          update: {
-            isGuest: false,
-            nickname: nickname,
-          },
-          create: {
-            email: user.email,
-            nickname: nickname,
-            isGuest: false,
-          }
+          include: { accounts: true }
         });
 
-        console.log('[NextAuth] signIn callback - Google OAuth user upserted:', user.email);
+        if (existingUser) {
+          console.log('[NextAuth] Existing user found:', existingUser.id);
+
+          // Google Accountが既にリンクされているか確認
+          const googleAccount = existingUser.accounts.find(
+            acc => acc.provider === "google" && acc.providerAccountId === account.providerAccountId
+          );
+
+          if (!googleAccount) {
+            // Accountレコードを手動で作成してリンク
+            console.log('[NextAuth] Linking Google account to existing user');
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                refresh_token: account.refresh_token,
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+                session_state: account.session_state,
+              }
+            });
+          }
+
+          // ユーザー情報を更新（isGuestをfalseに、nicknameを更新）
+          const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              isGuest: false,
+              nickname: nickname,
+            }
+          });
+
+          // user.idを既存ユーザーのIDに設定（重要！）
+          user.id = existingUser.id;
+        } else {
+          // 新規ユーザーの場合はPrismaAdapterが処理
+          console.log('[NextAuth] New user, will be created by PrismaAdapter');
+        }
       }
       return true;
     },
