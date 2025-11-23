@@ -98,6 +98,19 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      // OAuth認証後のリダイレクトを制御
+      // /loginページからの認証の場合は/mypageにリダイレクト
+      if (url.startsWith(baseUrl)) {
+        // 相対URLの場合
+        return url;
+      } else if (url.startsWith("/")) {
+        // 絶対パスの場合
+        return `${baseUrl}${url}`;
+      }
+      // 外部URLからのコールバック（OAuth）の場合は/mypageへ
+      return `${baseUrl}/mypage`;
+    },
     async jwt({ token, user }) {
       // jwtコールバックではDB更新を削除（signInで完了しているため）
       if (user) {
