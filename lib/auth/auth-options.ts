@@ -100,15 +100,24 @@ export const authOptions: NextAuthOptions = {
     },
     async redirect({ url, baseUrl }) {
       // OAuth認証後のリダイレクトを制御
-      // /loginページからの認証の場合は/mypageにリダイレクト
-      if (url.startsWith(baseUrl)) {
-        // 相対URLの場合
-        return url;
-      } else if (url.startsWith("/")) {
-        // 絶対パスの場合
-        return `${baseUrl}${url}`;
+      console.log('[NextAuth] redirect callback - url:', url, 'baseUrl:', baseUrl);
+
+      // callbackUrlが指定されている場合は、それに従う
+      // 絶対パス（/mypage等）の場合
+      if (url.startsWith("/")) {
+        const redirectUrl = `${baseUrl}${url}`;
+        console.log('[NextAuth] Redirecting to absolute path:', redirectUrl);
+        return redirectUrl;
       }
-      // 外部URLからのコールバック（OAuth）の場合は/mypageへ
+
+      // 完全なURL（baseUrlを含む）の場合
+      if (url.startsWith(baseUrl)) {
+        console.log('[NextAuth] Redirecting to full URL:', url);
+        return url;
+      }
+
+      // それ以外の外部URL（セキュリティのため拒否してbaseUrlにリダイレクト）
+      console.log('[NextAuth] External URL detected, redirecting to /mypage');
       return `${baseUrl}/mypage`;
     },
     async jwt({ token, user }) {
