@@ -41,7 +41,19 @@ export default function LoginForm() {
     setError("");
     setIsLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/mypage" });
+      // redirect: false を指定してNextAuthのデフォルトリダイレクトを無効化
+      const result = await signIn("google", {
+        redirect: false,
+        callbackUrl: "/mypage"
+      });
+
+      // 認証成功後、手動でマイページにリダイレクト
+      if (result?.ok) {
+        window.location.href = "/mypage";
+      } else if (result?.error) {
+        setError("Googleログイン中にエラーが発生しました");
+        setIsLoading(false);
+      }
     } catch {
       setError("Googleログイン中にエラーが発生しました");
       setIsLoading(false);
