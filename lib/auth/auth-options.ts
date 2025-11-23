@@ -15,6 +15,7 @@ export const authOptions: NextAuthOptions = {
   // CredentialsProviderのみの場合はadapterは不要
   ...(process.env.GOOGLE_CLIENT_ID ? { adapter: PrismaAdapter(prisma) } : {}),
   debug: true, // 本番環境でもデバッグログを有効化して問題を特定
+
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
@@ -80,35 +81,81 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       // Google OAuth経由でサインインする場合
       if (account?.provider === "google" && user.email) {
-        // サインイン時に1回だけ更新（重複DB更新を防ぐ）
-        const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
+        console.log('[NextAuth] signIn callback - Google OAuth attempt for:', user.email);
 
-        await prisma.user.upsert({
+        // 既存のユーザーを検索
+        const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
-          update: {
-            isGuest: false,
-            nickname: nickname,
-          },
-          create: {
-            email: user.email,
-            nickname: nickname,
-            isGuest: false,
-          }
+          include: { accounts: true }
         });
+
+        if (existingUser) {
+          console.log('[NextAuth] Existing user found:', existingUser.id);
+
+          // Google Accountが既にリンクされているか確認
+          const googleAccount = existingUser.accounts.find(
+            acc => acc.provider === "google" && acc.providerAccountId === account.providerAccountId
+          );
+
+          if (!googleAccount) {
+            // Accountレコードを手動で作成してリンク
+            console.log('[NextAuth] Linking Google account to existing user');
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                refresh_token: account.refresh_token,
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+                session_state: account.session_state,
+              }
+            });
+          }
+
+          // ユーザー情報を更新（isGuestをfalseに、nicknameを更新）
+          const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              isGuest: false,
+              nickname: nickname,
+            }
+          });
+
+          // user.idを既存ユーザーのIDに設定（重要！）
+          user.id = existingUser.id;
+        } else {
+          // 新規ユーザーの場合はPrismaAdapterが処理
+          console.log('[NextAuth] New user, will be created by PrismaAdapter');
+        }
       }
       return true;
     },
     async redirect({ url, baseUrl }) {
       // OAuth認証後のリダイレクトを制御
-      // /loginページからの認証の場合は/mypageにリダイレクト
-      if (url.startsWith(baseUrl)) {
-        // 相対URLの場合
-        return url;
-      } else if (url.startsWith("/")) {
-        // 絶対パスの場合
-        return `${baseUrl}${url}`;
+      console.log('[NextAuth] redirect callback - url:', url, 'baseUrl:', baseUrl);
+
+      // callbackUrlが指定されている場合は、それに従う
+      // 絶対パス（/mypage等）の場合
+      if (url.startsWith("/")) {
+        const redirectUrl = `${baseUrl}${url}`;
+        console.log('[NextAuth] Redirecting to absolute path:', redirectUrl);
+        return redirectUrl;
       }
-      // 外部URLからのコールバック（OAuth）の場合は/mypageへ
+
+      // 完全なURL（baseUrlを含む）の場合
+      if (url.startsWith(baseUrl)) {
+        console.log('[NextAuth] Redirecting to full URL:', url);
+        return url;
+      }
+
+      // それ以外の外部URL（セキュリティのため拒否してbaseUrlにリダイレクト）
+      console.log('[NextAuth] External URL detected, redirecting to /mypage');
       return `${baseUrl}/mypage`;
     },
     async jwt({ token, user }) {
