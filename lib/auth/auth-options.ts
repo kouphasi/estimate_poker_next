@@ -15,6 +15,12 @@ export const authOptions: NextAuthOptions = {
   // CredentialsProviderのみの場合はadapterは不要
   ...(process.env.GOOGLE_CLIENT_ID ? { adapter: PrismaAdapter(prisma) } : {}),
   debug: true, // 本番環境でもデバッグログを有効化して問題を特定
+
+  // 同じメールアドレスで複数のプロバイダーを使用可能にする
+  // これにより、メール/パスワードで登録したユーザーがGoogle OAuthでもログインできる
+  // Googleが既にメールアドレスの所有権を確認しているため安全
+  allowDangerousEmailAccountLinking: true,
+
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
@@ -83,6 +89,8 @@ export const authOptions: NextAuthOptions = {
         // サインイン時に1回だけ更新（重複DB更新を防ぐ）
         const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
 
+        // 既存のユーザー（Credentialsで登録済み）にOAuthアカウントをリンクする場合も
+        // isGuestをfalseに更新し、nicknameを更新する
         await prisma.user.upsert({
           where: { email: user.email },
           update: {
@@ -95,6 +103,8 @@ export const authOptions: NextAuthOptions = {
             isGuest: false,
           }
         });
+
+        console.log('[NextAuth] signIn callback - Google OAuth user upserted:', user.email);
       }
       return true;
     },
