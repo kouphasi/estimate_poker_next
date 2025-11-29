@@ -117,21 +117,48 @@ export const authOptions: NextAuthOptions = {
             });
           }
 
-          // ユーザー情報を更新（isGuestをfalseに、nicknameを更新）
-          const nickname = profile?.name || user.name || user.email.split('@')[0] || 'User';
+          // ユーザー情報を更新（isGuestをfalseに）
           await prisma.user.update({
             where: { id: existingUser.id },
             data: {
               isGuest: false,
-              nickname: nickname,
             }
           });
 
           // user.idを既存ユーザーのIDに設定（重要！）
           user.id = existingUser.id;
         } else {
-          // 新規ユーザーの場合はPrismaAdapterが処理
-          console.log('[NextAuth] New user, will be created by PrismaAdapter');
+          // 新規ユーザーの場合はPrismaAdapterが処理するが、
+          // nicknameフィールドはPrismaAdapterが知らないので手動で作成
+          console.log('[NextAuth] New user, creating manually with email as temporary nickname');
+
+          const newUser = await prisma.user.create({
+            data: {
+              email: user.email!,
+              nickname: user.email!, // 一時的にemailをnicknameに設定（後で変更してもらう）
+              isGuest: false,
+            }
+          });
+
+          // Accountレコードを作成
+          await prisma.account.create({
+            data: {
+              userId: newUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              refresh_token: account.refresh_token,
+              access_token: account.access_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+              session_state: account.session_state,
+            }
+          });
+
+          // user.idを新規ユーザーのIDに設定
+          user.id = newUser.id;
         }
       }
       return true;
@@ -139,6 +166,11 @@ export const authOptions: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       // OAuth認証後のリダイレクトを制御
       console.log('[NextAuth] redirect callback - url:', url, 'baseUrl:', baseUrl);
+
+      // /setup-nicknameへのリダイレクトはそのまま許可
+      if (url.includes('/setup-nickname')) {
+        return url.startsWith('/') ? `${baseUrl}${url}` : url;
+      }
 
       // callbackUrlが指定されている場合は、それに従う
       // 絶対パス（/mypage等）の場合
@@ -166,8 +198,18 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
         session.user.id = token.id as string;
+
+        // ユーザー情報を取得してnicknameをセッションに含める
+        const user = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { nickname: true, email: true }
+        });
+
+        if (user) {
+          session.user.nickname = user.nickname;
+        }
       }
       return session;
     },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { prisma } from "@/lib/prisma";
 
 export default async function middleware(request: NextRequest) {
   // 認証が必要なパス
@@ -53,6 +54,26 @@ export default async function middleware(request: NextRequest) {
 
   if (nextAuthCookie && !token) {
     console.log('[Middleware] Warning: Next-Auth cookie exists but getToken failed. Allowing access anyway.');
+  }
+
+  // Next-Authユーザーの場合、ニックネーム設定が必要かチェック
+  if (token?.sub) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: token.sub as string },
+        select: { nickname: true, email: true }
+      });
+
+      // ニックネームがメールアドレスのままの場合は、ニックネーム設定ページにリダイレクト
+      if (user && user.email && user.nickname === user.email) {
+        console.log('[Middleware] User needs to set up nickname, redirecting to /setup-nickname');
+        const url = new URL("/setup-nickname", request.url);
+        return NextResponse.redirect(url);
+      }
+    } catch (error) {
+      console.error('[Middleware] Error checking user nickname:', error);
+      // エラーが発生しても、アクセスは許可する
+    }
   }
 
   return NextResponse.next();
