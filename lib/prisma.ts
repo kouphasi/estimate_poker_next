@@ -45,5 +45,11 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-// Note: Graceful shutdown handlers (process.on) are removed to support Edge Runtime compatibility
-// In serverless environments (Vercel, etc.), process lifecycle is automatically managed
+// Note: Graceful shutdown handlers (process.on) are intentionally omitted
+// Reason: Next.js static analysis detects process.on() as incompatible with Edge Runtime,
+//         even though this file is never executed in Edge Runtime (used only in API routes)
+// Impact: In serverless environments (Vercel, etc.), this is not an issue:
+//         - Connection pooling is managed by Prisma Client automatically
+//         - Process lifecycle is managed by the serverless platform
+//         - Explicit shutdown handlers can cause issues with function cold starts
+// For traditional long-running servers: Consider adding shutdown handlers in a separate initialization file
