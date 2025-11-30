@@ -17,11 +17,14 @@ interface Session {
 
 export default function MyPage() {
   const { data: session } = useSession();
-  const { user, logout, isLoading: userLoading } = useUser();
+  const { user, logout, updateNickname, isLoading: userLoading } = useUser();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [newNickname, setNewNickname] = useState('');
+  const [nicknameError, setNicknameError] = useState('');
 
   // 認証ユーザーかどうか
   const isAuthenticatedUser = session?.user?.id;
@@ -87,6 +90,39 @@ export default function MyPage() {
     }
   };
 
+  const handleEditNickname = () => {
+    setNewNickname(user?.nickname || '');
+    setNicknameError('');
+    setIsEditingNickname(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingNickname(false);
+    setNewNickname('');
+    setNicknameError('');
+  };
+
+  const handleSaveNickname = async () => {
+    if (!newNickname.trim()) {
+      setNicknameError('ニックネームを入力してください');
+      return;
+    }
+
+    if (newNickname.trim().length > 50) {
+      setNicknameError('ニックネームは50文字以内で入力してください');
+      return;
+    }
+
+    try {
+      await updateNickname(newNickname.trim());
+      setIsEditingNickname(false);
+      setNewNickname('');
+      setNicknameError('');
+    } catch (err) {
+      setNicknameError(err instanceof Error ? err.message : 'ニックネームの更新に失敗しました');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ja-JP', {
@@ -111,11 +147,49 @@ export default function MyPage() {
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-zinc-900">マイページ</h1>
-              <p className="mt-1 text-sm text-zinc-600">
-                ようこそ、{user.nickname}さん
-              </p>
+              {!isEditingNickname ? (
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="text-sm text-zinc-600">
+                    ようこそ、{user.nickname}さん
+                  </p>
+                  <button
+                    onClick={handleEditNickname}
+                    className="cursor-pointer text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    編集
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newNickname}
+                      onChange={(e) => setNewNickname(e.target.value)}
+                      className="rounded-md border border-zinc-300 px-3 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="新しいニックネーム"
+                      maxLength={50}
+                    />
+                    <button
+                      onClick={handleSaveNickname}
+                      className="cursor-pointer rounded-md bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+                    >
+                      保存
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-50"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                  {nicknameError && (
+                    <p className="text-xs text-red-600">{nicknameError}</p>
+                  )}
+                </div>
+              )}
             </div>
             <button
               onClick={handleLogout}
