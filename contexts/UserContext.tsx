@@ -12,6 +12,7 @@ interface UserContextType {
   user: User | null;
   login: (nickname: string) => Promise<void>;
   logout: () => void;
+  updateNickname: (nickname: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -117,8 +118,49 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ニックネーム更新
+  const updateNickname = async (nickname: string) => {
+    if (!user) {
+      throw new Error('User not logged in');
+    }
+
+    try {
+      const response = await fetch(`/api/users/${user.userId}/nickname`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nickname }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update nickname');
+      }
+
+      const data = await response.json();
+
+      // ユーザー情報を更新
+      const updatedUser = {
+        userId: data.userId,
+        nickname: data.nickname,
+      };
+
+      // Next-Authセッションの場合は、ローカル状態のみ更新
+      // 簡易ログインの場合は、ローカルストレージとCookieも更新
+      if (session) {
+        setUser(updatedUser);
+      } else {
+        saveUser(updatedUser);
+      }
+    } catch (error) {
+      console.error('Update nickname error:', error);
+      throw error;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, login, logout, isLoading }}>
+    <UserContext.Provider value={{ user, login, logout, updateNickname, isLoading }}>
       {children}
     </UserContext.Provider>
   );
