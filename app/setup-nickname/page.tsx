@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 export default function SetupNicknamePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
@@ -55,6 +55,9 @@ export default function SetupNicknamePage() {
         const data = await response.json();
         throw new Error(data.error || 'ニックネームの設定に失敗しました');
       }
+
+      // セッションを更新してトークンに新しいニックネームを反映
+      await update();
 
       // 成功したらマイページにリダイレクト
       router.push('/mypage');

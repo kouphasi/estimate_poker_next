@@ -190,26 +190,32 @@ export const authOptions: NextAuthOptions = {
       console.log('[NextAuth] External URL detected, redirecting to /mypage');
       return `${baseUrl}/mypage`;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       // jwtコールバックではDB更新を削除（signInで完了しているため）
       if (user) {
         token.id = user.id;
       }
+
+      // トークンにnicknameとemailを含める（ミドルウェアで使用）
+      // trigger === 'update'の場合は、DBから最新情報を取得
+      if (token.id && (trigger === 'update' || !token.nickname)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { nickname: true, email: true }
+        });
+
+        if (dbUser) {
+          token.nickname = dbUser.nickname;
+          token.email = dbUser.email || undefined;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string;
-
-        // ユーザー情報を取得してnicknameをセッションに含める
-        const user = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { nickname: true, email: true }
-        });
-
-        if (user) {
-          session.user.nickname = user.nickname;
-        }
+        session.user.nickname = token.nickname;
       }
       return session;
     },
