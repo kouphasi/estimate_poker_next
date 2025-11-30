@@ -55,6 +55,16 @@ export default async function middleware(request: NextRequest) {
     console.log('[Middleware] Warning: Next-Auth cookie exists but getToken failed. Allowing access anyway.');
   }
 
+  // Next-Authユーザーの場合、ニックネーム設定が必要かチェック
+  // トークンにnicknameとemailが含まれているかチェック
+  // ただし、/setup-nicknameページ自体へのアクセスは除外（無限リダイレクト防止）
+  if (request.nextUrl.pathname !== '/setup-nickname' &&
+      token?.nickname && token?.email && token.nickname === token.email) {
+    console.log('[Middleware] User needs to set up nickname, redirecting to /setup-nickname');
+    const url = new URL("/setup-nickname", request.url);
+    return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 
