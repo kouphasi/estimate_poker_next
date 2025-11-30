@@ -45,13 +45,5 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-// Graceful shutdown (本番環境のみ、ビルド時を除外)
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
-  const shutdown = async () => {
-    await prisma.$disconnect()
-  }
-
-  process.on('beforeExit', shutdown)
-  process.on('SIGINT', shutdown)
-  process.on('SIGTERM', shutdown)
-}
+// Note: Graceful shutdown handlers (process.on) are removed to support Edge Runtime compatibility
+// In serverless environments (Vercel, etc.), process lifecycle is automatically managed
