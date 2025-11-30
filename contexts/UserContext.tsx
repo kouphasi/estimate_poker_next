@@ -35,7 +35,7 @@ function deleteCookie(name: string) {
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
 
   // Next-Authセッションまたはローカルストレージからユーザー情報を読み込む
   useEffect(() => {
@@ -146,12 +146,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
         nickname: data.nickname,
       };
 
-      // Next-Authセッションの場合は、ローカル状態のみ更新
+      // ローカル状態を更新
+      setUser(updatedUser);
+
       // 簡易ログインの場合は、ローカルストレージとCookieも更新
-      if (session) {
-        setUser(updatedUser);
+      if (!session) {
+        const userJson = JSON.stringify(updatedUser);
+        localStorage.setItem(USER_STORAGE_KEY, userJson);
+        setCookie(USER_COOKIE_KEY, userJson);
       } else {
-        saveUser(updatedUser);
+        // Next-Authセッションの場合は、セッションを更新して最新のnicknameを反映
+        if (updateSession) {
+          await updateSession();
+        }
       }
     } catch (error) {
       console.error('Update nickname error:', error);

@@ -30,39 +30,47 @@ export async function PATCH(
     // 認証チェック
     const session = await getServerSession(authOptions);
 
+    console.log('Nickname update request:', {
+      userId,
+      hasSession: !!session,
+      sessionUserId: session?.user?.id,
+    });
+
+    let isAuthorized = false;
+
     // Next-Authセッションがある場合は、ユーザーIDが一致するか確認
-    if (session?.user?.id) {
-      if (session.user.id !== userId) {
-        return NextResponse.json(
-          { error: '他のユーザーのニックネームは変更できません' },
-          { status: 403 }
-        );
+    if (session?.user) {
+      const sessionUser = session.user as { id?: string };
+      if (sessionUser.id === userId) {
+        isAuthorized = true;
+        console.log('Authorized via NextAuth session');
       }
-    } else {
-      // 簡易ログインの場合は、クッキーから確認
-      // TODO: セキュリティ改善 - 現在はクライアント側で制御されているため、将来的にはより堅牢な認証が必要
+    }
+
+    // NextAuthセッションでの認証が失敗した場合、簡易ログインをチェック
+    if (!isAuthorized) {
       const cookieUserId = request.cookies.get('simple_login_user')?.value;
+      console.log('Checking simple login cookie:', { hasCookie: !!cookieUserId });
+
       if (cookieUserId) {
         try {
           const userData = JSON.parse(cookieUserId);
-          if (userData.userId !== userId) {
-            return NextResponse.json(
-              { error: '他のユーザーのニックネームは変更できません' },
-              { status: 403 }
-            );
+          if (userData.userId === userId) {
+            isAuthorized = true;
+            console.log('Authorized via simple login cookie');
           }
-        } catch {
-          return NextResponse.json(
-            { error: '認証に失敗しました' },
-            { status: 401 }
-          );
+        } catch (err) {
+          console.error('Failed to parse simple login cookie:', err);
         }
-      } else {
-        return NextResponse.json(
-          { error: 'ログインが必要です' },
-          { status: 401 }
-        );
       }
+    }
+
+    if (!isAuthorized) {
+      console.log('Authorization failed for userId:', userId);
+      return NextResponse.json(
+        { error: 'ログインが必要です、または他のユーザーのニックネームは変更できません' },
+        { status: 401 }
+      );
     }
 
     // ユーザーの存在確認

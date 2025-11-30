@@ -166,8 +166,22 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
         session.user.id = token.id as string;
+
+        // DBから最新のユーザー情報を取得してnicknameを更新
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { nickname: true },
+          });
+
+          if (user) {
+            session.user.name = user.nickname;
+          }
+        } catch (error) {
+          console.error('Failed to fetch user nickname in session callback:', error);
+        }
       }
       return session;
     },
