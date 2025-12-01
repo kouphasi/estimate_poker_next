@@ -47,10 +47,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     // Next-Authのセッションがある場合はそれを使用
     if (session?.user) {
-      const sessionUser = session.user as { id?: string; name?: string | null; email?: string | null };
+      const sessionUser = session.user as {
+        id?: string;
+        name?: string | null;
+        email?: string | null;
+        nickname?: string | null;
+      };
       const userData: User = {
         userId: sessionUser.id || '',
-        nickname: sessionUser.name || sessionUser.email || '',
+        // nickname が設定されている場合は優先的に使用、なければ name、それもなければ email
+        nickname: sessionUser.nickname || sessionUser.name || sessionUser.email || '',
       };
       setUser(userData);
       setIsLoading(false);
