@@ -65,11 +65,14 @@ export default function EstimatePage() {
   const [ownerToken, setOwnerToken] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
 
-  // ログインユーザーのニックネームを自動的に設定
+  // ログインユーザーのニックネームとユーザーIDを自動的に設定
   useEffect(() => {
     if (user?.nickname) {
       setNickname(user.nickname)
       setShowNicknameForm(false)
+    }
+    if (user?.userId) {
+      setUserId(user.userId)
     }
   }, [user])
 
