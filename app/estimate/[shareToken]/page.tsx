@@ -257,14 +257,18 @@ export default function EstimatePage() {
   }
 
   if (showNicknameForm) {
+    const callbackUrl = typeof window !== 'undefined' ? window.location.href : ''
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">セッションに参加</h1>
+
+          {/* ゲストとして参加 */}
           <form onSubmit={handleJoin} className="space-y-4">
             <div>
               <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-2">
-                ニックネーム
+                ゲストとして参加
               </label>
               <input
                 type="text"
@@ -272,7 +276,7 @@ export default function EstimatePage() {
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                placeholder="山田太郎"
+                placeholder="ニックネームを入力"
               />
             </div>
             {error && (
@@ -284,9 +288,35 @@ export default function EstimatePage() {
               type="submit"
               className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
             >
-              参加する
+              ゲストとして参加
             </button>
           </form>
+
+          {/* 区切り線 */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">または</span>
+            </div>
+          </div>
+
+          {/* ログイン/新規登録オプション */}
+          <div className="space-y-3">
+            <Link
+              href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              className="block w-full py-3 text-center bg-white border-2 border-blue-500 text-blue-500 font-semibold rounded-lg hover:bg-blue-50 transition-colors cursor-pointer"
+            >
+              ログインして参加
+            </Link>
+            <Link
+              href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              className="block w-full py-3 text-center bg-white border-2 border-green-500 text-green-500 font-semibold rounded-lg hover:bg-green-50 transition-colors cursor-pointer"
+            >
+              新規登録して参加
+            </Link>
+          </div>
         </div>
       </div>
     )

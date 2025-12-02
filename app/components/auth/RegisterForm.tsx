@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function RegisterForm() {
+interface RegisterFormProps {
+  callbackUrl?: string;
+}
+
+export default function RegisterForm({ callbackUrl = "/mypage" }: RegisterFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
@@ -51,8 +55,9 @@ export default function RegisterForm() {
         return;
       }
 
-      // 登録成功後、ログインページにリダイレクト
-      router.push("/login?registered=true");
+      // 登録成功後、ログインページにリダイレクト（callbackUrlを引き継ぐ）
+      const loginUrl = `/login?registered=true&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      router.push(loginUrl);
     } catch {
       setError("登録中にエラーが発生しました");
     } finally {
