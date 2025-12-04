@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 
-export default function LoginForm() {
+interface LoginFormProps {
+  callbackUrl?: string;
+}
+
+export default function LoginForm({ callbackUrl = "/mypage" }: LoginFormProps) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,7 +33,7 @@ export default function LoginForm() {
       } else if (result?.ok) {
         // セッション確立後にリダイレクト
         // location.replaceを使うことでブラウザの履歴をクリーンに保つ
-        window.location.replace("/mypage");
+        window.location.replace(callbackUrl);
       }
     } catch {
       setError("ログイン中にエラーが発生しました");
@@ -42,9 +46,9 @@ export default function LoginForm() {
     setIsLoading(true);
     try {
       // Google OAuthはredirect: trueが必須（デフォルト動作）
-      // callbackUrlを明示的に指定して、OAuth完了後に/mypageにリダイレクト
+      // callbackUrlを明示的に指定して、OAuth完了後にリダイレクト
       await signIn("google", {
-        callbackUrl: "/mypage"
+        callbackUrl: callbackUrl
       });
       // signIn()はGoogleにリダイレクトするため、以下のコードは実行されない
     } catch (error) {

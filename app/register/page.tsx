@@ -1,7 +1,14 @@
+'use client';
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import RegisterForm from "@/app/components/auth/RegisterForm";
 
-export default function RegisterPage() {
+function RegisterPageContent() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/mypage';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -12,7 +19,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             または{" "}
             <Link
-              href="/login"
+              href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               ログイン
@@ -21,7 +28,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <RegisterForm />
+          <RegisterForm callbackUrl={callbackUrl} />
         </div>
 
         <div className="text-center">
@@ -34,5 +41,17 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-600">読み込み中...</div>
+      </div>
+    }>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
