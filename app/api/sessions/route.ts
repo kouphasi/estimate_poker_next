@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateShareToken, generateOwnerToken } from '@/lib/utils'
 import { isPrismaError } from '@/lib/prisma-errors'
 
-// POST /api/sessions - 部屋を作成
+// POST /api/sessions - セッションを作成
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

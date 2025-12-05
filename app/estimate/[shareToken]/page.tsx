@@ -342,7 +342,7 @@ export default function EstimatePage() {
                   href="/mypage"
                   className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                 >
-                  ← 部屋一覧に戻る
+                  ← セッション一覧に戻る
                 </Link>
               )}
               <span className="text-sm text-gray-600">参加者: {nickname}</span>

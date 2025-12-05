@@ -52,7 +52,7 @@ export default function NewSessionPage() {
         localStorage.setItem(`userId_${data.shareToken}`, data.userId);
       }
 
-      // 作成した部屋にリダイレクト
+      // 作成したセッションにリダイレクト
       router.push(`/estimate/${data.shareToken}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
