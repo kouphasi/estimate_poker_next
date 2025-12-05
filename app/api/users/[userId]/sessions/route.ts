@@ -20,7 +20,7 @@ export async function GET(
       );
     }
 
-    // ユーザーが作成した部屋一覧を取得
+    // ユーザーが作成したセッション一覧を取得
     const sessions = await prisma.estimationSession.findMany({
       where: { ownerId: userId },
       orderBy: { createdAt: 'desc' },

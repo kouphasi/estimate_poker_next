@@ -1,10 +1,10 @@
-## ステップ1: 基本的な部屋機能とポーリング
+## ステップ1: 基本的なセッション機能とポーリング
 
 ### 目標
 URLを発行して複数人で見積もりができる最小限の機能を実装
 
 ### 実装する機能
-- [ ] 部屋（見積もりセッション）の作成
+- [ ] セッション（見積もりセッション）の作成
 - [ ] ニックネーム入力での参加
 - [ ] 共有URL生成
 - [ ] カード選択UI（ポーカー風）
@@ -49,7 +49,7 @@ model Estimate {
 
 ```typescript
 // POST /api/sessions
-// 部屋を作成
+// セッションを作成
 {
   "nickname": "山田太郎"
 }
@@ -99,13 +99,13 @@ model Estimate {
 
 ```
 app/
-├── page.tsx                          # トップページ（部屋作成）
+├── page.tsx                          # トップページ（セッション作成）
 ├── estimate/
 │   └── [shareToken]/
 │       └── page.tsx                  # 見積もり画面
 ├── api/
 │   └── sessions/
-│       ├── route.ts                  # POST: 部屋作成
+│       ├── route.ts                  # POST: セッション作成
 │       └── [shareToken]/
 │           ├── route.ts              # GET: セッション情報取得
 │           ├── estimates/
@@ -138,14 +138,14 @@ app/
 - [ ] シードデータ作成（開発用）
 
 #### 1-3. API実装（4時間）
-- [ ] 部屋作成API
+- [ ] セッション作成API
 - [ ] セッション情報取得API
 - [ ] 見積もり投稿API
 - [ ] 公開切り替えAPI
 - [ ] 工数確定API
 
 #### 1-4. UI実装（6時間）
-- [ ] トップページ（部屋作成フォーム）
+- [ ] トップページ（セッション作成フォーム）
 - [ ] カードコンポーネント
 - [ ] カード選択UI
 - [ ] 参加者一覧
@@ -201,7 +201,7 @@ components/
 
 ## 開発ログ
 
-### 2025-11-06: 基本的な部屋機能とポーリングの実装
+### 2025-11-06: 基本的なセッション機能とポーリングの実装
 
 #### 完了した作業
 
@@ -212,7 +212,7 @@ components/
    - マイグレーションファイルを作成（20251106143400_add_estimation_session_models）
 
 2. **API実装**
-   - ✅ POST /api/sessions - 部屋作成API
+   - ✅ POST /api/sessions - セッション作成API
    - ✅ GET /api/sessions/[shareToken] - セッション情報取得API（ポーリング用）
    - ✅ POST /api/sessions/[shareToken]/estimates - 見積もり投稿API
    - ✅ PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替えAPI
@@ -229,7 +229,7 @@ components/
    - ✅ EstimateResult.tsx - 結果表示（平均値・中央値・個別見積もり）
 
 5. **ページ実装**
-   - ✅ app/page.tsx - トップページ（部屋作成フォーム）
+   - ✅ app/page.tsx - トップページ（セッション作成フォーム）
    - ✅ app/estimate/[shareToken]/page.tsx - 見積もり画面
      - ニックネーム入力フォーム
      - カード選択UI

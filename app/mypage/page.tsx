@@ -36,7 +36,7 @@ export default function MyPage() {
     }
   }, [user, userLoading, router]);
 
-  // 部屋一覧を取得
+  // セッション一覧を取得
   useEffect(() => {
     const fetchSessions = async () => {
       if (!user) return;
@@ -49,7 +49,7 @@ export default function MyPage() {
         const data = await response.json();
         setSessions(data.sessions);
       } catch (err) {
-        setError('部屋一覧の取得に失敗しました');
+        setError('セッション一覧の取得に失敗しました');
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -61,7 +61,7 @@ export default function MyPage() {
 
   const handleDeleteSession = async (shareToken: string) => {
     if (!user) return;
-    if (!confirm('この部屋を削除してもよろしいですか？')) return;
+    if (!confirm('このセッションを削除してもよろしいですか？')) return;
 
     try {
       const response = await fetch(`/api/sessions/${shareToken}`, {
@@ -78,7 +78,7 @@ export default function MyPage() {
       // 削除成功したら一覧から除外
       setSessions(sessions.filter((s) => s.shareToken !== shareToken));
     } catch (err) {
-      alert('部屋の削除に失敗しました');
+      alert('セッションの削除に失敗しました');
       console.error(err);
     }
   };
@@ -228,13 +228,13 @@ export default function MyPage() {
 
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-zinc-900">
-            作成した部屋一覧
+            作成したセッション一覧
           </h2>
           <button
             onClick={() => router.push('/sessions/new')}
             className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
           >
-            新しい部屋を作成
+            新しいセッションを作成
           </button>
         </div>
 
@@ -249,9 +249,9 @@ export default function MyPage() {
         ) : sessions.length === 0 ? (
           <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center">
             <p className="text-zinc-600">
-              まだ部屋を作成していません。
+              まだセッションを作成していません。
               <br />
-              新しい部屋を作成してみましょう！
+              新しいセッションを作成してみましょう！
             </p>
           </div>
         ) : (
@@ -265,7 +265,7 @@ export default function MyPage() {
                   <div className="flex-1">
                     <div className="mb-2 flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-zinc-900">
-                        {session.name || `部屋ID: ${session.shareToken}`}
+                        {session.name || `セッションID: ${session.shareToken}`}
                       </h3>
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-medium ${
@@ -279,7 +279,7 @@ export default function MyPage() {
                     </div>
                     {session.name && (
                       <p className="text-sm text-zinc-500">
-                        部屋ID: {session.shareToken}
+                        セッションID: {session.shareToken}
                       </p>
                     )}
                     <p className="text-sm text-zinc-600">
