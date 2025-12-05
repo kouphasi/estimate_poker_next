@@ -33,10 +33,10 @@ function LoginPageContent() {
 
         <div className="text-center">
           <Link
-            href="/"
+            href={callbackUrl}
             className="text-sm text-gray-600 hover:text-gray-900"
           >
-            トップページに戻る
+            ← 前のページに戻る
           </Link>
         </div>
       </div>
