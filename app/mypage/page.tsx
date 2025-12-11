@@ -15,11 +15,22 @@ interface Session {
   isRevealed: boolean;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  _count: {
+    sessions: number;
+  };
+}
+
 export default function MyPage() {
   const { data: session } = useSession();
   const { user, logout, updateNickname, isLoading: userLoading } = useUser();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditingNickname, setIsEditingNickname] = useState(false);
@@ -36,28 +47,38 @@ export default function MyPage() {
     }
   }, [user, userLoading, router]);
 
-  // セッション一覧を取得
+  // プロジェクト一覧とセッション一覧を取得
   useEffect(() => {
-    const fetchSessions = async () => {
+    const fetchData = async () => {
       if (!user) return;
 
       try {
-        const response = await fetch(`/api/users/${user.userId}/sessions`);
-        if (!response.ok) {
+        // セッション一覧を取得
+        const sessionsResponse = await fetch(`/api/users/${user.userId}/sessions`);
+        if (!sessionsResponse.ok) {
           throw new Error('Failed to fetch sessions');
         }
-        const data = await response.json();
-        setSessions(data.sessions);
+        const sessionsData = await sessionsResponse.json();
+        setSessions(sessionsData.sessions);
+
+        // 認証ユーザーの場合はプロジェクト一覧も取得
+        if (isAuthenticatedUser) {
+          const projectsResponse = await fetch('/api/projects');
+          if (projectsResponse.ok) {
+            const projectsData = await projectsResponse.json();
+            setProjects(projectsData.projects);
+          }
+        }
       } catch (err) {
-        setError('セッション一覧の取得に失敗しました');
+        setError('データの取得に失敗しました');
         console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSessions();
-  }, [user]);
+    fetchData();
+  }, [user, isAuthenticatedUser]);
 
   const handleDeleteSession = async (shareToken: string) => {
     if (!user) return;
@@ -202,42 +223,6 @@ export default function MyPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* プロジェクト管理（認証ユーザーのみ） */}
-        {isAuthenticatedUser && (
-          <div className="mb-8">
-            <div className="rounded-lg border border-zinc-200 bg-white p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-zinc-900 mb-1">
-                    プロジェクト管理
-                  </h2>
-                  <p className="text-sm text-zinc-600">
-                    プロジェクトを作成して、見積もりセッションを整理できます
-                  </p>
-                </div>
-                <button
-                  onClick={() => router.push('/projects')}
-                  className="cursor-pointer rounded-md bg-blue-600 px-6 py-2 text-sm text-white hover:bg-blue-700"
-                >
-                  プロジェクト一覧を見る
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-zinc-900">
-            作成したセッション一覧
-          </h2>
-          <button
-            onClick={() => router.push('/sessions/new')}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
-          >
-            新しいセッションを作成
-          </button>
-        </div>
-
         {error && (
           <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">
             {error}
@@ -246,68 +231,155 @@ export default function MyPage() {
 
         {isLoading ? (
           <div className="text-center text-zinc-600">読み込み中...</div>
-        ) : sessions.length === 0 ? (
-          <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center">
-            <p className="text-zinc-600">
-              まだセッションを作成していません。
-              <br />
-              新しいセッションを作成してみましょう！
-            </p>
-          </div>
         ) : (
-          <div className="space-y-4">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="rounded-lg border border-zinc-200 bg-white p-6"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="mb-2 flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-zinc-900">
-                        {session.name || `セッションID: ${session.shareToken}`}
-                      </h3>
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          session.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-zinc-100 text-zinc-800'
-                        }`}
-                      >
-                        {session.status === 'ACTIVE' ? 'アクティブ' : '確定済み'}
-                      </span>
-                    </div>
-                    {session.name && (
-                      <p className="text-sm text-zinc-500">
-                        セッションID: {session.shareToken}
-                      </p>
-                    )}
-                    <p className="text-sm text-zinc-600">
-                      作成日時: {formatDate(session.createdAt)}
-                    </p>
-                    {session.finalEstimate && (
-                      <p className="mt-1 text-sm text-zinc-600">
-                        確定工数: {session.finalEstimate}日
-                      </p>
-                    )}
-                  </div>
+          <div className="space-y-8">
+            {/* プロジェクト一覧（認証ユーザーのみ） */}
+            {isAuthenticatedUser && (
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-zinc-900">
+                    プロジェクト
+                  </h2>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => router.push(`/estimate/${session.shareToken}`)}
-                      className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                      onClick={() => router.push('/projects')}
+                      className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 underline"
                     >
-                      開く
+                      すべて見る
                     </button>
                     <button
-                      onClick={() => handleDeleteSession(session.shareToken)}
-                      className="cursor-pointer rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                      onClick={() => router.push('/projects/new')}
+                      className="cursor-pointer rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
                     >
-                      削除
+                      新規作成
                     </button>
                   </div>
                 </div>
+
+                {projects.length === 0 ? (
+                  <div className="rounded-lg border border-zinc-200 bg-white p-6 text-center">
+                    <p className="text-sm text-zinc-600">
+                      まだプロジェクトがありません。
+                      <br />
+                      プロジェクトを作成して、見積もりセッションを整理しましょう。
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {projects.slice(0, 3).map((project) => (
+                      <div
+                        key={project.id}
+                        onClick={() => router.push(`/projects/${project.id}`)}
+                        className="cursor-pointer rounded-lg border border-zinc-200 bg-white p-4 hover:border-blue-300 hover:shadow-md transition"
+                      >
+                        <h3 className="text-lg font-semibold text-zinc-900 mb-2 line-clamp-1">
+                          {project.name}
+                        </h3>
+                        {project.description && (
+                          <p className="text-sm text-zinc-600 mb-3 line-clamp-2">
+                            {project.description}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                          <span>{project._count.sessions} セッション</span>
+                          <span>
+                            {new Date(project.createdAt).toLocaleDateString('ja-JP')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
+            )}
+
+            {/* セッション一覧 */}
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-zinc-900">
+                  最近のセッション
+                </h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => router.push('/sessions')}
+                    className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    すべて見る
+                  </button>
+                  <button
+                    onClick={() => router.push('/sessions/new')}
+                    className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
+                  >
+                    新規作成
+                  </button>
+                </div>
+              </div>
+
+              {sessions.length === 0 ? (
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 text-center">
+                  <p className="text-sm text-zinc-600">
+                    まだセッションを作成していません。
+                    <br />
+                    新しいセッションを作成してみましょう！
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sessions.slice(0, 5).map((session) => (
+                    <div
+                      key={session.id}
+                      className="rounded-lg border border-zinc-200 bg-white p-6"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="mb-2 flex items-center gap-2">
+                            <h3 className="text-lg font-semibold text-zinc-900">
+                              {session.name || `セッションID: ${session.shareToken}`}
+                            </h3>
+                            <span
+                              className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                session.status === 'ACTIVE'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-zinc-100 text-zinc-800'
+                              }`}
+                            >
+                              {session.status === 'ACTIVE' ? 'アクティブ' : '確定済み'}
+                            </span>
+                          </div>
+                          {session.name && (
+                            <p className="text-sm text-zinc-500">
+                              セッションID: {session.shareToken}
+                            </p>
+                          )}
+                          <p className="text-sm text-zinc-600">
+                            作成日時: {formatDate(session.createdAt)}
+                          </p>
+                          {session.finalEstimate && (
+                            <p className="mt-1 text-sm text-zinc-600">
+                              確定工数: {session.finalEstimate}日
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => router.push(`/estimate/${session.shareToken}`)}
+                            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                          >
+                            開く
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSession(session.shareToken)}
+                            className="cursor-pointer rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
