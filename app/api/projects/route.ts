@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth/auth-options";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/projects - プロジェクト一覧取得
+// GET /api/projects - プロジェクト一覧取得（オーナーとメンバー両方）
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -15,14 +15,23 @@ export async function GET() {
       );
     }
 
-    const projects = await prisma.project.findMany({
+    const userId = session.user.id;
+
+    // オーナーとして所有しているプロジェクト
+    const ownedProjects = await prisma.project.findMany({
       where: {
-        ownerId: session.user.id,
+        ownerId: userId,
       },
       include: {
         _count: {
           select: {
             sessions: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            nickname: true,
           },
         },
       },
@@ -31,7 +40,40 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ projects });
+    // メンバーとして参加しているプロジェクト
+    const memberProjects = await prisma.project.findMany({
+      where: {
+        members: {
+          some: {
+            userId: userId,
+          },
+        },
+      },
+      include: {
+        _count: {
+          select: {
+            sessions: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            nickname: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // オーナーかメンバーかのフラグを追加
+    const projectsWithRole = [
+      ...ownedProjects.map((p) => ({ ...p, role: "owner" as const })),
+      ...memberProjects.map((p) => ({ ...p, role: "member" as const })),
+    ];
+
+    return NextResponse.json({ projects: projectsWithRole });
   } catch (error) {
     console.error("Error fetching projects:", error);
     return NextResponse.json(
