@@ -19,11 +19,22 @@ export async function GET(
       );
     }
 
-    // オーナーチェックを先に行い、不要なデータ取得を防ぐ
+    const userId = session.user.id;
+
+    // プロジェクトを取得（オーナーまたはメンバーのみ）
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        ownerId: session.user.id, // 先にフィルタ
+        OR: [
+          { ownerId: userId }, // オーナー
+          {
+            members: { // メンバー
+              some: {
+                userId: userId,
+              },
+            },
+          },
+        ],
       },
       include: {
         sessions: {
@@ -50,12 +61,20 @@ export async function GET(
 
     if (!project) {
       return NextResponse.json(
-        { error: "Project not found" },
+        { error: "Project not found or you don't have access" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ project });
+    // ユーザーの役割を追加
+    const role = project.ownerId === userId ? "owner" : "member";
+
+    return NextResponse.json({
+      project: {
+        ...project,
+        role,
+      },
+    });
   } catch (error) {
     console.error("Error fetching project:", error);
     return NextResponse.json(

@@ -6,6 +6,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { useToast } from "@/app/components/Toast";
+import ProjectInvitationManager from "@/app/components/ProjectInvitationManager";
+import ProjectJoinRequestManager from "@/app/components/ProjectJoinRequestManager";
 
 interface Session {
   id: string;
@@ -24,6 +26,7 @@ interface Project {
   name: string;
   description: string | null;
   createdAt: string;
+  role: "owner" | "member";
   sessions: Session[];
 }
 
@@ -296,20 +299,22 @@ export default function ProjectDetailPage() {
                     作成日: {new Date(project.createdAt).toLocaleDateString("ja-JP")}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditMode(true)}
-                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="px-4 py-2 text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50"
-                  >
-                    削除
-                  </button>
-                </div>
+                {project.role === "owner" && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditMode(true)}
+                      className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      編集
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="px-4 py-2 text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50"
+                    >
+                      削除
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -346,16 +351,32 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
+        {/* Invitation Management Section - オーナーのみ */}
+        {project.role === "owner" && (
+          <div className="mb-6">
+            <ProjectInvitationManager projectId={projectId} />
+          </div>
+        )}
+
+        {/* Join Request Management Section - オーナーのみ */}
+        {project.role === "owner" && (
+          <div className="mb-6">
+            <ProjectJoinRequestManager projectId={projectId} />
+          </div>
+        )}
+
         {/* Sessions Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">見積もりセッション</h2>
-            <button
-              onClick={() => setShowCreateSession(true)}
-              className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              + 新規セッション
-            </button>
+            {project.role === "owner" && (
+              <button
+                onClick={() => setShowCreateSession(true)}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                + 新規セッション
+              </button>
+            )}
           </div>
 
           {/* Create Session Form */}

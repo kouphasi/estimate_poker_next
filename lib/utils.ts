@@ -9,3 +9,8 @@ export function generateShareToken(): string {
 export function generateOwnerToken(): string {
   return randomBytes(32).toString('base64url')
 }
+
+// プロジェクト招待トークン生成（24文字）
+export function generateInviteToken(): string {
+  return randomBytes(18).toString('base64url').substring(0, 24)
+}

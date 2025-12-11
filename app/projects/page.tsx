@@ -11,6 +11,11 @@ interface Project {
   name: string;
   description: string | null;
   createdAt: string;
+  role: "owner" | "member";
+  owner: {
+    id: string;
+    nickname: string;
+  };
   _count: {
     sessions: number;
   };
@@ -141,12 +146,27 @@ export default function ProjectsPage() {
                   <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">
                     {project.name}
                   </h3>
+                  <span
+                    className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${
+                      project.role === "owner"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-green-100 text-green-800"
+                    }`}
+                  >
+                    {project.role === "owner" ? "オーナー" : "メンバー"}
+                  </span>
                 </div>
 
                 {project.description && (
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {project.description}
                   </p>
+                )}
+
+                {project.role === "member" && (
+                  <div className="text-xs text-gray-500 mb-2">
+                    オーナー: {project.owner.nickname}
+                  </div>
                 )}
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">

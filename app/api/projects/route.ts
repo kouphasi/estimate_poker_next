@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth/auth-options";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/projects - プロジェクト一覧取得
+// GET /api/projects - プロジェクト一覧取得（オーナーとメンバー両方）
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -15,14 +15,32 @@ export async function GET() {
       );
     }
 
+    const userId = session.user.id;
+
+    // オーナーまたはメンバーとしてアクセス可能なプロジェクトを取得
     const projects = await prisma.project.findMany({
       where: {
-        ownerId: session.user.id,
+        OR: [
+          { ownerId: userId },
+          {
+            members: {
+              some: {
+                userId: userId,
+              },
+            },
+          },
+        ],
       },
       include: {
         _count: {
           select: {
             sessions: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            nickname: true,
           },
         },
       },
@@ -31,7 +49,13 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ projects });
+    // オーナーかメンバーかのフラグを追加
+    const projectsWithRole = projects.map((project) => ({
+      ...project,
+      role: project.ownerId === userId ? ("owner" as const) : ("member" as const),
+    }));
+
+    return NextResponse.json({ projects: projectsWithRole });
   } catch (error) {
     console.error("Error fetching projects:", error);
     return NextResponse.json(
