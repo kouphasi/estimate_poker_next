@@ -17,37 +17,19 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // オーナーとして所有しているプロジェクト
-    const ownedProjects = await prisma.project.findMany({
+    // オーナーまたはメンバーとしてアクセス可能なプロジェクトを取得
+    const projects = await prisma.project.findMany({
       where: {
-        ownerId: userId,
-      },
-      include: {
-        _count: {
-          select: {
-            sessions: true,
+        OR: [
+          { ownerId: userId },
+          {
+            members: {
+              some: {
+                userId: userId,
+              },
+            },
           },
-        },
-        owner: {
-          select: {
-            id: true,
-            nickname: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    // メンバーとして参加しているプロジェクト
-    const memberProjects = await prisma.project.findMany({
-      where: {
-        members: {
-          some: {
-            userId: userId,
-          },
-        },
+        ],
       },
       include: {
         _count: {
@@ -68,10 +50,10 @@ export async function GET() {
     });
 
     // オーナーかメンバーかのフラグを追加
-    const projectsWithRole = [
-      ...ownedProjects.map((p) => ({ ...p, role: "owner" as const })),
-      ...memberProjects.map((p) => ({ ...p, role: "member" as const })),
-    ];
+    const projectsWithRole = projects.map((project) => ({
+      ...project,
+      role: project.ownerId === userId ? ("owner" as const) : ("member" as const),
+    }));
 
     return NextResponse.json({ projects: projectsWithRole });
   } catch (error) {

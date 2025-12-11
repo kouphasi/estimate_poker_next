@@ -36,7 +36,7 @@ export async function POST(
     }
 
     // 招待トークン生成（ユニークになるまでリトライ）
-    let inviteToken: string;
+    let inviteToken = "";
     let retries = 0;
     const maxRetries = 5;
 
@@ -52,7 +52,7 @@ export async function POST(
       retries++;
     }
 
-    if (retries >= maxRetries) {
+    if (!inviteToken || retries >= maxRetries) {
       return NextResponse.json(
         { error: "Failed to generate unique invite token" },
         { status: 500 }
@@ -63,7 +63,7 @@ export async function POST(
     const invitation = await prisma.projectInvitation.create({
       data: {
         projectId,
-        inviteToken: inviteToken!,
+        inviteToken,
         createdById: session.user.id,
         isActive: true,
       },

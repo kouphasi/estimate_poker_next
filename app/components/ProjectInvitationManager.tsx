@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "./Toast";
 
 interface Invitation {
@@ -22,14 +22,10 @@ export default function ProjectInvitationManager({ projectId }: ProjectInvitatio
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [deactivating, setDeactivating] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  useEffect(() => {
-    fetchInvitations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
-
-  const fetchInvitations = async () => {
+  const fetchInvitations = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/projects/${projectId}/invitations`);
@@ -46,7 +42,11 @@ export default function ProjectInvitationManager({ projectId }: ProjectInvitatio
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, showToast]);
+
+  useEffect(() => {
+    fetchInvitations();
+  }, [fetchInvitations]);
 
   const handleCreateInvitation = async () => {
     try {
@@ -76,6 +76,34 @@ export default function ProjectInvitationManager({ projectId }: ProjectInvitatio
     const url = `${window.location.origin}/join/${inviteToken}`;
     navigator.clipboard.writeText(url);
     showToast("招待リンクをコピーしました", "success");
+  };
+
+  const handleDeactivateInvitation = async (invitationId: string) => {
+    if (!confirm("この招待リンクを無効化しますか？")) {
+      return;
+    }
+
+    try {
+      setDeactivating(invitationId);
+      const response = await fetch(
+        `/api/projects/${projectId}/invitations/${invitationId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to deactivate invitation");
+      }
+
+      await fetchInvitations();
+      showToast("招待リンクを無効化しました", "success");
+    } catch (error) {
+      console.error("Error deactivating invitation:", error);
+      showToast("招待リンクの無効化に失敗しました", "error");
+    } finally {
+      setDeactivating(null);
+    }
   };
 
   return (
@@ -116,12 +144,21 @@ export default function ProjectInvitationManager({ projectId }: ProjectInvitatio
                     {new Date(invitation.createdAt).toLocaleDateString("ja-JP")}
                   </div>
                 </div>
-                <button
-                  onClick={() => copyInviteLink(invitation.inviteToken)}
-                  className="ml-4 px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
-                >
-                  コピー
-                </button>
+                <div className="flex gap-2 ml-4">
+                  <button
+                    onClick={() => copyInviteLink(invitation.inviteToken)}
+                    className="px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+                  >
+                    コピー
+                  </button>
+                  <button
+                    onClick={() => handleDeactivateInvitation(invitation.id)}
+                    disabled={deactivating === invitation.id}
+                    className="px-3 py-1 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {deactivating === invitation.id ? "無効化中..." : "無効化"}
+                  </button>
+                </div>
               </div>
             </div>
           ))}

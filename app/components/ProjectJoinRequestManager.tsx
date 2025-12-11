@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "./Toast";
 
 interface JoinRequest {
@@ -31,12 +31,7 @@ export default function ProjectJoinRequestManager({
   const [processing, setProcessing] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  useEffect(() => {
-    fetchRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
-
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/projects/${projectId}/requests`);
@@ -53,7 +48,11 @@ export default function ProjectJoinRequestManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, showToast]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
   const handleApprove = async (requestId: string) => {
     try {
