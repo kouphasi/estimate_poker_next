@@ -7,13 +7,16 @@
 ### Key Features
 - Planning poker-style effort estimation (1h-3d + custom input)
 - Multiple login options: Guest (nickname-only), Email/Password, and Google OAuth
+- **Project Management**: Organize estimation sessions under projects (authenticated users only)
+- **Named Sessions**: Give sessions descriptive names for better organization
 - Real-time session updates via polling (WebSocket planned for future)
 - Session owner controls (reveal/hide estimates, finalize results)
 - Statistical analysis (average, median, min, max)
+- Dynamic OGP metadata for session sharing
 
 ### Tech Stack
-- **Framework**: Next.js 16.0.1 (App Router)
-- **Runtime**: React 19.2.0
+- **Framework**: Next.js 16.0.7 (App Router)
+- **Runtime**: React 19.2.1
 - **Language**: TypeScript 5.9.3
 - **Database**: PostgreSQL (via Supabase or Vercel Postgres)
 - **ORM**: Prisma 6.19.0
@@ -43,13 +46,20 @@
 │   │   └── Providers.tsx         # Context providers wrapper
 │   ├── api/                      # API routes
 │   │   ├── auth/                 # NextAuth + registration
+│   │   ├── projects/             # Project CRUD operations
 │   │   ├── sessions/             # Session CRUD operations
 │   │   └── users/                # User management
 │   ├── simple-login/             # Nickname-only login
 │   ├── login/                    # Email/password login
 │   ├── register/                 # User registration
-│   ├── mypage/                   # User dashboard
-│   ├── sessions/new/             # Create new session
+│   ├── mypage/                   # User dashboard (projects + sessions)
+│   ├── projects/                 # Project management pages
+│   │   ├── page.tsx              # Project list
+│   │   ├── new/                  # Create new project
+│   │   └── [projectId]/          # Project detail page
+│   ├── sessions/                 # Session management pages
+│   │   ├── page.tsx              # Session list
+│   │   └── new/                  # Create new session
 │   └── estimate/[shareToken]/    # Estimation room
 ├── lib/                          # Utilities
 │   ├── prisma.ts                 # Prisma client singleton
@@ -89,18 +99,29 @@
 - `nickname`: String - Display name
 - `isGuest`: Boolean (default: true) - Guest vs authenticated
 - `createdAt`, `updatedAt`: DateTime
-- Relations: `accounts`, `nextAuthSessions`, `sessions`, `estimates`
+- Relations: `accounts`, `nextAuthSessions`, `projects`, `sessions`, `estimates`
+
+**Project** (`projects` table) - NEW in Phase 3
+- `id`: String (cuid) - Primary key
+- `name`: String - Project name
+- `description`: String? - Optional description
+- `ownerId`: String (FK to User) - Project owner (authenticated users only)
+- `createdAt`, `updatedAt`: DateTime
+- Relations: `owner` (User), `sessions[]` (EstimationSession)
+- **Purpose**: Organize estimation sessions under projects for better management
 
 **EstimationSession** (`estimation_sessions` table)
 - `id`: String (cuid)
+- `name`: String? - Optional session name (NEW)
 - `shareToken`: String (unique, 16-char base64url) - For sharing
 - `ownerToken`: String (unique, 32-char base64url) - For owner auth
-- `ownerId`: String (FK to User)
+- `ownerId`: String? (FK to User) - Session owner
+- `projectId`: String? (FK to Project) - Optional project association (NEW)
 - `isRevealed`: Boolean - Cards visible to all
 - `status`: Enum (ACTIVE | FINALIZED)
 - `finalEstimate`: Float? - Confirmed estimate in days
 - `createdAt`: DateTime
-- Relations: `estimates[]`
+- Relations: `owner` (User), `project` (Project), `estimates[]`
 
 **Estimate** (`estimates` table)
 - `id`: String (cuid)
@@ -151,14 +172,17 @@
 
 **File**: `middleware.ts`
 
-**Protected Routes**: `/mypage/*`
+**Protected Routes**: `/mypage/*`, `/projects/*`, `/sessions/*` (list views)
 
 **Authentication Check Order**:
 1. NextAuth token via `getToken()`
 2. Simple login cookie (`simple_login_user`)
 3. NextAuth cookie existence (fallback if `getToken()` fails)
 
-**Important**: The middleware includes debug logging for troubleshooting auth issues.
+**Important Notes**:
+- The middleware includes debug logging for troubleshooting auth issues
+- Middleware is Edge Runtime compatible (Prisma removed from middleware)
+- Guest users can access `/mypage` but cannot access `/projects/*` routes
 
 ### NextAuth Configuration
 
@@ -180,6 +204,8 @@
 - PrismaAdapter is only enabled when `GOOGLE_CLIENT_ID` is set to avoid conflicts with CredentialsProvider
 - Google OAuth users are automatically assigned a nickname from their Google profile
 - Environment variable validation ensures `GOOGLE_CLIENT_SECRET` is set if `GOOGLE_CLIENT_ID` is configured
+- **Nickname Setup Screen**: Google OAuth users are redirected to a nickname setup screen if their profile doesn't include a name
+- **Account Linking**: Manual account linking is implemented to handle OAuthAccountNotLinked errors
 
 ---
 
@@ -194,8 +220,16 @@
 - `POST /api/users` - Create guest user (simple login)
 - `GET /api/users/[userId]/sessions` - Get user's sessions
 
+### Project Management (NEW - Phase 3)
+- `GET /api/projects` - Get all projects for authenticated user
+- `POST /api/projects` - Create new project (authenticated users only)
+- `GET /api/projects/[projectId]` - Get project details
+- `PUT /api/projects/[projectId]` - Update project
+- `DELETE /api/projects/[projectId]` - Delete project
+- `GET /api/projects/[projectId]/sessions` - Get all sessions for a project
+
 ### Session Management
-- `POST /api/sessions` - Create new session
+- `POST /api/sessions` - Create new session (with optional name and projectId)
 - `GET /api/sessions/[shareToken]` - Get session data (polling endpoint)
 - `DELETE /api/sessions/[shareToken]` - Delete session (owner only, requires `ownerToken`)
 - `POST /api/sessions/[shareToken]/estimates` - Submit/update estimate
@@ -292,6 +326,24 @@ useEffect(() => {
 
 **Form Components**:
 - `LoginForm`, `RegisterForm` - NextAuth integration with error handling
+
+### 7. Project Management Patterns (NEW)
+
+**Project Organization**:
+- Projects are only available to authenticated users (not guest users)
+- Sessions can be optionally associated with a project via `projectId`
+- Projects show session count via `_count` aggregation
+- MyPage shows excerpts (first 3 projects, first 5 sessions) with "View All" links
+
+**Access Control**:
+- Project CRUD operations require NextAuth session
+- API routes check `session?.user?.id` before allowing operations
+- Guest users see only sessions on MyPage, not projects section
+
+**UI Patterns**:
+- Card-based layout for projects with hover effects
+- `line-clamp-1` for project names, `line-clamp-2` for descriptions
+- Consistent "New" buttons with different colors (blue for projects, zinc for sessions)
 
 ---
 
@@ -518,6 +570,18 @@ docs: Update CLAUDE.md with new patterns
 - Impact: High traffic can stress database
 - Mitigation: Consider WebSocket migration (planned)
 
+### React Patterns
+
+1. **Suspense Boundaries**
+   - `useSearchParams()` must be wrapped in Suspense boundary
+   - Failure to do so causes hydration errors
+   - Pattern: Create separate client component with Suspense wrapper
+
+2. **Edge Runtime Compatibility**
+   - Middleware runs on Edge Runtime
+   - Cannot import Prisma in middleware.ts
+   - Use API routes for database operations instead
+
 ---
 
 ## Code Quality Standards
@@ -560,10 +624,13 @@ docs: Update CLAUDE.md with new patterns
 - ✅ Email/password registration
 - ✅ User dashboard
 
-### Phase 3: Project Management (Planned)
-- ❌ Project model and CRUD
+### Phase 3: Project Management (In Progress)
+- ✅ Project model and CRUD
+- ✅ Project-session relationships
+- ✅ Session naming feature
+- ✅ MyPage reorganization (projects + sessions)
+- ✅ Project detail pages
 - ❌ Task model and CRUD
-- ❌ Session-task relationships
 - ❌ Estimation history
 
 ### Phase 4: Advanced Features (Planned)
@@ -583,28 +650,40 @@ docs: Update CLAUDE.md with new patterns
    - Update `prisma/schema.prisma`
    - Run `npx prisma migrate dev --name feature_name`
    - Commit schema + migration files
+   - For relationships, consider cascade delete behavior
 
 2. **New API Routes**:
    - Create `route.ts` in `app/api/...`
    - Follow Next.js App Router conventions
    - Add proper error handling and validation
    - Use Prisma client from `@/lib/prisma`
+   - **For authenticated-only routes**: Use `getServerSession(authOptions)` to check auth
+   - Return 401 for unauthorized, 400 for bad requests, 500 for server errors
 
 3. **Authentication Changes**:
    - Modify `lib/auth/auth-options.ts`
    - Update `middleware.ts` if adding protected routes
    - Test both guest and authenticated flows
+   - Remember: guest users should not access project management features
 
 4. **UI Components**:
    - Place in `app/components/`
    - Use Tailwind CSS classes
    - Follow existing animation patterns (see `globals.css`)
    - Ensure responsive design
+   - Use `line-clamp-*` for text truncation
+   - Add hover states with `hover:` prefix
 
 5. **State Management**:
    - Use existing contexts (`UserContext`, `ToastContext`)
    - Create new context if needed in `contexts/`
    - Wrap in `Providers.tsx`
+
+6. **Project-Related Features**:
+   - Always check if user is authenticated (not guest)
+   - Use `session?.user?.id` for ownership checks
+   - Include `_count` for related data counts
+   - Sort by `createdAt: "desc"` for consistent ordering
 
 ### When Fixing Bugs
 
@@ -632,20 +711,29 @@ docs: Update CLAUDE.md with new patterns
 - `next.config.ts` - Next.js configuration
 - `eslint.config.mjs` - ESLint rules
 - `postcss.config.mjs` - Tailwind CSS configuration
-- `middleware.ts` - Route protection
+- `middleware.ts` - Route protection (Edge Runtime)
 
 ### Core Application Files
 - `app/layout.tsx` - Root layout with providers
 - `app/page.tsx` - Landing page
+- `app/mypage/page.tsx` - User dashboard (projects + sessions)
 - `lib/auth/auth-options.ts` - NextAuth configuration
 - `lib/prisma.ts` - Database client
 - `prisma/schema.prisma` - Database schema
+
+### Key Page Files (NEW)
+- `app/projects/page.tsx` - Project list page
+- `app/projects/new/page.tsx` - Create project page
+- `app/projects/[projectId]/page.tsx` - Project detail page
+- `app/sessions/page.tsx` - Session list page
+- `app/sessions/new/page.tsx` - Create session page
 
 ### Documentation
 - `docs/requirements.md` - Full requirements (Japanese)
 - `docs/development_plan.md` - Development roadmap
 - `MIGRATION_RECOVERY.md` - Database migration troubleshooting
 - `README.md` - Basic setup instructions
+- `CLAUDE.md` - This file (AI assistant guide)
 
 ---
 
@@ -674,6 +762,18 @@ docs: Update CLAUDE.md with new patterns
 **Cause**: API route error or network issue
 **Fix**: Check browser console and network tab
 
+### Hydration errors with useSearchParams
+**Cause**: Missing Suspense boundary
+**Fix**: Wrap component using `useSearchParams()` in `<Suspense>` boundary
+
+### Project features not visible for user
+**Cause**: User is logged in as guest (not authenticated)
+**Fix**: Guest users cannot access project management - must use email/password or Google OAuth login
+
+### "Cannot use Prisma in Edge Runtime"
+**Cause**: Importing Prisma in middleware.ts
+**Fix**: Middleware is Edge Runtime - move database logic to API routes
+
 ---
 
 ## Resources
@@ -694,14 +794,49 @@ This is a **planning poker** application for collaborative effort estimation. Th
 
 ---
 
+## Recent Updates & Improvements
+
+### December 2025 Updates
+
+**Project Management (Phase 3)**:
+- ✅ Project model added with full CRUD operations
+- ✅ Sessions can be organized under projects
+- ✅ Project list and detail pages implemented
+- ✅ MyPage reorganized to show both projects and sessions
+
+**Session Naming**:
+- ✅ Sessions can now have optional descriptive names
+- ✅ UI updated throughout to display session names
+
+**UX Improvements**:
+- ✅ Nickname editing on MyPage
+- ✅ Back button on auth pages to return to session
+- ✅ Auto-populate logged-in user's name in sessions
+- ✅ Login/register options during session join flow
+- ✅ Unified terminology (部屋 → セッション)
+
+**Google OAuth Enhancements**:
+- ✅ Nickname setup screen for Google OAuth users
+- ✅ Better session handling and redirects
+- ✅ Manual account linking support
+
+**Technical Improvements**:
+- ✅ Edge Runtime compatibility (Prisma removed from middleware)
+- ✅ Suspense boundaries for useSearchParams
+- ✅ Dynamic OGP metadata for session sharing
+- ✅ Version updates: Next.js 16.0.7, React 19.2.1
+
+---
+
 ## Changelog
 
 | Date | Version | Changes |
 |------|---------|---------|
+| 2025-12-21 | 1.1.0 | Major update: Project management, session naming, UX improvements |
 | 2025-11-15 | 1.0.0 | Initial CLAUDE.md creation |
 
 ---
 
-**Last Updated**: 2025-11-15
+**Last Updated**: 2025-12-21
 **Maintained By**: AI Assistants working on this project
 **Contact**: See repository issues for questions
