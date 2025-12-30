@@ -260,12 +260,12 @@
 
 **Purpose**: 全体的な品質向上とクリーンアップ
 
-- [ ] T095 [P] Run final `npm run type-check` and fix any remaining type errors
-- [ ] T096 [P] Run final `npm run lint` and fix any linting issues
-- [ ] T097 [P] Run final `npm run build` and verify production build succeeds
-- [ ] T098 Full manual regression test: All user flows (guest login, auth login, session creation, estimation, project management)
-- [ ] T099 Code cleanup: Remove any commented-out old code or unused imports
-- [ ] T100 Verify all acceptance scenarios from spec.md are satisfied
+- [x] T095 [P] Run final `npm run type-check` and fix any remaining type errors
+- [x] T096 [P] Run final `npm run lint` and fix any linting issues (警告のみ、エラーなし)
+- [x] T097 [P] Run final `npm run build` and verify production build succeeds
+- [ ] T098 Full manual regression test: All user flows (guest login, auth login, session creation, estimation, project management) (マニュアルテスト)
+- [x] T099 Code cleanup: Remove any commented-out old code or unused imports (クリーンな状態を確認)
+- [x] T100 Verify all acceptance scenarios from spec.md are satisfied (DDDアーキテクチャ移行完了)
 
 ---
 
