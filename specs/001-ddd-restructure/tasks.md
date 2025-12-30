@@ -149,26 +149,26 @@
 
 #### アプリケーション層ユースケース
 
-- [ ] T045 [P] [US2] Create CreateSessionUseCase in src/application/session/CreateSessionUseCase.ts
-- [ ] T046 [P] [US2] Create GetSessionUseCase in src/application/session/GetSessionUseCase.ts
-- [ ] T047 [P] [US2] Create DeleteSessionUseCase in src/application/session/DeleteSessionUseCase.ts
-- [ ] T048 [P] [US2] Create SubmitEstimateUseCase in src/application/session/SubmitEstimateUseCase.ts
-- [ ] T049 [P] [US2] Create ToggleRevealUseCase in src/application/session/ToggleRevealUseCase.ts
-- [ ] T050 [P] [US2] Create FinalizeSessionUseCase in src/application/session/FinalizeSessionUseCase.ts
+- [x] T045 [P] [US2] Create CreateSessionUseCase in src/application/session/CreateSessionUseCase.ts
+- [x] T046 [P] [US2] Create GetSessionUseCase in src/application/session/GetSessionUseCase.ts
+- [x] T047 [P] [US2] Create DeleteSessionUseCase in src/application/session/DeleteSessionUseCase.ts
+- [x] T048 [P] [US2] Create SubmitEstimateUseCase in src/application/session/SubmitEstimateUseCase.ts
+- [x] T049 [P] [US2] Create ToggleRevealUseCase in src/application/session/ToggleRevealUseCase.ts
+- [x] T050 [P] [US2] Create FinalizeSessionUseCase in src/application/session/FinalizeSessionUseCase.ts
 
 #### APIルート更新（セッション）
 
-- [ ] T051 [US2] Update app/api/sessions/route.ts to use CreateSessionUseCase (thin controller pattern)
-- [ ] T052 [US2] Update app/api/sessions/[shareToken]/route.ts GET to use GetSessionUseCase
-- [ ] T053 [US2] Update app/api/sessions/[shareToken]/route.ts DELETE to use DeleteSessionUseCase
-- [ ] T054 [US2] Update app/api/sessions/[shareToken]/estimates/route.ts to use SubmitEstimateUseCase
-- [ ] T055 [US2] Update app/api/sessions/[shareToken]/reveal/route.ts to use ToggleRevealUseCase
-- [ ] T056 [US2] Update app/api/sessions/[shareToken]/finalize/route.ts to use FinalizeSessionUseCase
+- [x] T051 [US2] Update app/api/sessions/route.ts to use CreateSessionUseCase (thin controller pattern)
+- [x] T052 [US2] Update app/api/sessions/[shareToken]/route.ts GET to use GetSessionUseCase
+- [x] T053 [US2] Update app/api/sessions/[shareToken]/route.ts DELETE to use DeleteSessionUseCase
+- [x] T054 [US2] Update app/api/sessions/[shareToken]/estimates/route.ts to use SubmitEstimateUseCase
+- [x] T055 [US2] Update app/api/sessions/[shareToken]/reveal/route.ts to use ToggleRevealUseCase
+- [x] T056 [US2] Update app/api/sessions/[shareToken]/finalize/route.ts to use FinalizeSessionUseCase
 
 #### セッション機能検証
 
-- [ ] T057 [US2] Run `npm run type-check` to verify session migration has no type errors
-- [ ] T058 [US2] Run `npm run build` to verify session migration builds successfully
+- [x] T057 [US2] Run `npm run type-check` to verify session migration has no type errors
+- [x] T058 [US2] Run `npm run build` to verify session migration builds successfully
 - [ ] T059 [US2] Manual test: Create new session
 - [ ] T060 [US2] Manual test: Join session and submit estimate
 - [ ] T061 [US2] Manual test: Reveal/hide estimates (owner action)

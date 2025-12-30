@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/infrastructure/database/prisma';
+import { GetSessionUseCase } from '@/application/session/GetSessionUseCase';
+import { DeleteSessionUseCase } from '@/application/session/DeleteSessionUseCase';
+import { PrismaSessionRepository } from '@/infrastructure/database/repositories/PrismaSessionRepository';
+import { PrismaEstimateRepository } from '@/infrastructure/database/repositories/PrismaEstimateRepository';
+import { NotFoundError, UnauthorizedError } from '@/domain/errors/DomainError';
 
 // GET /api/sessions/[shareToken] - セッション情報と見積もり一覧を取得
 export async function GET(
@@ -9,43 +14,27 @@ export async function GET(
   try {
     const { shareToken } = await params;
 
-    // セッション情報を取得
-    const session = await prisma.estimationSession.findUnique({
-      where: { shareToken },
-      select: {
-        id: true,
-        name: true,
-        shareToken: true,
-        isRevealed: true,
-        status: true,
-        finalEstimate: true,
-      },
-    });
+    const sessionRepository = new PrismaSessionRepository(prisma);
+    const estimateRepository = new PrismaEstimateRepository(prisma);
+    const getSessionUseCase = new GetSessionUseCase(sessionRepository, estimateRepository);
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 404 }
-      );
-    }
-
-    // 見積もり一覧を取得
-    const estimates = await prisma.estimate.findMany({
-      where: { sessionId: session.id },
-      select: {
-        userId: true,
-        nickname: true,
-        value: true,
-        updatedAt: true,
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
+    const result = await getSessionUseCase.execute(shareToken);
 
     return NextResponse.json({
-      session,
-      estimates,
+      session: {
+        id: result.id,
+        name: result.name,
+        shareToken: result.shareToken,
+        isRevealed: result.isRevealed,
+        status: result.status,
+        finalEstimate: result.finalEstimate,
+      },
+      estimates: result.estimates.map((est) => ({
+        userId: est.userId,
+        nickname: est.nickname,
+        value: est.value,
+        updatedAt: est.updatedAt,
+      })),
     });
   } catch (error) {
     console.error('Error fetching session:', {
@@ -54,6 +43,13 @@ export async function GET(
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
       errorStack: error instanceof Error ? error.stack : undefined,
     });
+
+    if (error instanceof NotFoundError) {
+      return NextResponse.json(
+        { error: 'Session not found' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json(
       { error: 'Failed to fetch session' },
@@ -68,53 +64,43 @@ export async function DELETE(
 ) {
   try {
     const { shareToken } = await params;
-    const userId = request.headers.get('x-user-id');
+    const body = await request.json();
+    const { ownerToken } = body;
 
-    if (!userId) {
+    if (!ownerToken) {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { error: 'Owner token is required' },
         { status: 401 }
       );
     }
 
-    // セッションを取得してオーナーか確認
-    const session = await prisma.estimationSession.findUnique({
-      where: { shareToken },
-      select: {
-        id: true,
-        ownerId: true,
-      },
-    });
+    const sessionRepository = new PrismaSessionRepository(prisma);
+    const deleteSessionUseCase = new DeleteSessionUseCase(sessionRepository);
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 404 }
-      );
-    }
-
-    // オーナーのみ削除可能
-    if (session.ownerId !== userId) {
-      return NextResponse.json(
-        { error: 'Only the owner can delete this session' },
-        { status: 403 }
-      );
-    }
-
-    // セッション削除
-    await prisma.estimationSession.delete({
-      where: { shareToken },
-    });
+    await deleteSessionUseCase.execute({ shareToken, ownerToken });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    // 詳細なエラー情報をサーバーログに記録
     console.error('Error deleting session:', {
       error,
       shareToken: (await params).shareToken,
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
       errorStack: error instanceof Error ? error.stack : undefined,
     });
+
+    if (error instanceof NotFoundError) {
+      return NextResponse.json(
+        { error: 'Session not found' },
+        { status: 404 }
+      );
+    }
+
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json(
+        { error: 'Invalid owner token' },
+        { status: 403 }
+      );
+    }
 
     return NextResponse.json(
       { error: 'Failed to delete session' },

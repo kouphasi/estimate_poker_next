@@ -40,6 +40,24 @@ export class EntityNotFoundError extends DomainError {
 }
 
 /**
+ * リソースが見つからないエラー（汎用）
+ */
+export class NotFoundError extends DomainError {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+/**
+ * バリデーションエラー（汎用）
+ */
+export class ValidationError extends DomainError {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+/**
  * 認可エラー（権限がない操作を試みた場合）
  */
 export class UnauthorizedError extends DomainError {
