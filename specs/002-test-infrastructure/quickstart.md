@@ -68,7 +68,19 @@ npm run test:coverage
 
 # UI モード（ブラウザでデバッグ）
 npm run test:ui
+
+# 特定のテストファイルのみ実行
+npx vitest run __tests__/unit/lib/utils.test.ts
 ```
+
+**実装済みテスト**:
+- トークン生成関数（utils.test.ts）
+- マイグレーションテスト（migrations.test.ts）
+- PokerCard コンポーネント（8テスト）
+- CardSelector コンポーネント（12テスト）
+- ParticipantList コンポーネント（11テスト）
+- EstimateResult コンポーネント（15テスト）
+- LoadingSpinner コンポーネント（6テスト）
 
 ### E2Eテスト（Playwright）
 
@@ -84,12 +96,24 @@ npx playwright test --headed
 
 # デバッグモード
 npx playwright test --debug
+
+# UIモード（インタラクティブ）
+npx playwright test --ui
 ```
+
+**実装済みE2Eテスト**:
+- ゲストログインフロー（3テスト）
+- 認証ログインフロー（4テスト）
+- セッション作成・見積もりフロー（6テスト）
 
 ### すべてのテストを実行
 
 ```bash
+# ユニットテストのみ
 npm test
+
+# ユニットテスト + E2Eテスト
+npm run test:unit && npm run test:e2e
 ```
 
 ## カバレッジレポートの確認

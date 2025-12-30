@@ -36,11 +36,11 @@ describe('Token Generation', () => {
   });
 
   describe('generateOwnerToken', () => {
-    it('should generate 32-character base64url token', () => {
+    it('should generate 43-character base64url token', () => {
       const token = generateOwnerToken();
 
-      // Base64url形式（A-Z, a-z, 0-9, _, -）で32文字
-      expect(token).toMatch(/^[A-Za-z0-9_-]{32}$/);
+      // Base64url形式（A-Z, a-z, 0-9, _, -）で43文字（32バイト → base64は43文字）
+      expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
     });
 
     it('should generate unique tokens on successive calls', () => {
@@ -76,7 +76,7 @@ describe('Token Generation', () => {
 
       // 長さも異なることを確認
       expect(shareToken.length).toBe(16);
-      expect(ownerToken.length).toBe(32);
+      expect(ownerToken.length).toBe(43); // 32バイト → base64で43文字
     });
   });
 });
