@@ -238,19 +238,19 @@
 
 ### アーキテクチャドキュメント作成
 
-- [ ] T088 [P] [US3] Create ARCHITECTURE.md at project root documenting DDD layer structure and responsibilities
-- [ ] T089 [P] [US3] Update CLAUDE.md to reflect new DDD directory structure and development patterns
+- [x] T088 [P] [US3] Create ARCHITECTURE.md at project root documenting DDD layer structure and responsibilities
+- [x] T089 [P] [US3] Update CLAUDE.md to reflect new DDD directory structure and development patterns
 
 ### レイヤー依存関係検証
 
-- [ ] T090 [US3] Verify domain layer has no imports from infrastructure or app directories (dependency inversion principle)
-- [ ] T091 [US3] Verify application layer imports only from domain layer (not infrastructure directly except via interfaces)
+- [x] T090 [US3] Verify domain layer has no imports from infrastructure or app directories (dependency inversion principle)
+- [x] T091 [US3] Verify application layer imports only from domain layer (not infrastructure directly except via interfaces)
 
 ### インデックスファイル整備
 
-- [ ] T092 [P] [US3] Create src/domain/index.ts barrel export for all domain entities and interfaces
-- [ ] T093 [P] [US3] Create src/application/index.ts barrel export for all use cases
-- [ ] T094 [P] [US3] Create src/infrastructure/index.ts barrel export for all infrastructure components
+- [x] T092 [P] [US3] Create src/domain/index.ts barrel export for all domain entities and interfaces
+- [x] T093 [P] [US3] Create src/application/index.ts barrel export for all use cases
+- [x] T094 [P] [US3] Create src/infrastructure/index.ts barrel export for all infrastructure components
 
 **Checkpoint**: アーキテクチャドキュメント完備。開発者が新機能追加ガイドラインを理解できる状態。
 

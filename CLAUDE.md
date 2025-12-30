@@ -31,7 +31,7 @@
 
 ```
 /home/user/estimate_poker_next/
-├── app/                          # Next.js App Router
+├── app/                          # Presentation層 (Next.js App Router)
 │   ├── page.tsx                  # Landing page (login selection)
 │   ├── layout.tsx                # Root layout with SessionProvider
 │   ├── globals.css               # Global styles + Tailwind + animations
@@ -44,7 +44,7 @@
 │   │   ├── LoadingSpinner.tsx    # Loading indicator
 │   │   ├── Toast.tsx             # Toast notifications
 │   │   └── Providers.tsx         # Context providers wrapper
-│   ├── api/                      # API routes
+│   ├── api/                      # API routes (Thin controllers)
 │   │   ├── auth/                 # NextAuth + registration
 │   │   ├── projects/             # Project CRUD operations
 │   │   ├── sessions/             # Session CRUD operations
@@ -61,11 +61,58 @@
 │   │   ├── page.tsx              # Session list
 │   │   └── new/                  # Create new session
 │   └── estimate/[shareToken]/    # Estimation room
-├── lib/                          # Utilities
-│   ├── prisma.ts                 # Prisma client singleton
-│   ├── utils.ts                  # Token generation
-│   ├── prisma-errors.ts          # Error handling
-│   └── auth/                     # NextAuth config & helpers
+├── src/                          # DDD層構造
+│   ├── domain/                   # Domain層 (ビジネスロジック)
+│   │   ├── errors/               # Domain errors
+│   │   │   └── DomainError.ts    # Base error + specific errors
+│   │   ├── user/                 # User domain
+│   │   │   ├── User.ts           # User entity
+│   │   │   ├── Email.ts          # Email value object
+│   │   │   └── UserRepository.ts # User repository interface
+│   │   ├── project/              # Project domain
+│   │   │   ├── Project.ts        # Project entity
+│   │   │   └── ProjectRepository.ts
+│   │   └── session/              # Session domain
+│   │       ├── EstimationSession.ts
+│   │       ├── Estimate.ts
+│   │       ├── ShareToken.ts     # Share token value object
+│   │       ├── OwnerToken.ts     # Owner token value object
+│   │       ├── SessionRepository.ts
+│   │       └── EstimateRepository.ts
+│   ├── application/              # Application層 (ユースケース)
+│   │   ├── auth/                 # Authentication use cases
+│   │   │   ├── LoginUseCase.ts
+│   │   │   ├── RegisterUseCase.ts
+│   │   │   └── CreateGuestUserUseCase.ts
+│   │   ├── project/              # Project use cases
+│   │   │   ├── CreateProjectUseCase.ts
+│   │   │   ├── GetProjectUseCase.ts
+│   │   │   ├── UpdateProjectUseCase.ts
+│   │   │   ├── DeleteProjectUseCase.ts
+│   │   │   ├── ListProjectsUseCase.ts
+│   │   │   ├── ListProjectSessionsUseCase.ts
+│   │   │   └── CreateProjectSessionUseCase.ts
+│   │   ├── session/              # Session use cases
+│   │   │   ├── CreateSessionUseCase.ts
+│   │   │   ├── GetSessionUseCase.ts
+│   │   │   ├── DeleteSessionUseCase.ts
+│   │   │   ├── SubmitEstimateUseCase.ts
+│   │   │   ├── ToggleRevealUseCase.ts
+│   │   │   └── FinalizeSessionUseCase.ts
+│   │   └── middleware/           # Application middleware
+│   │       └── authMiddleware.ts # Authentication logic
+│   └── infrastructure/           # Infrastructure層 (技術的実装)
+│       ├── database/             # Database implementations
+│       │   ├── prisma.ts         # Prisma client singleton
+│       │   ├── prismaErrors.ts   # Prisma error handling
+│       │   └── repositories/     # Repository implementations
+│       │       ├── PrismaUserRepository.ts
+│       │       ├── PrismaProjectRepository.ts
+│       │       ├── PrismaSessionRepository.ts
+│       │       └── PrismaEstimateRepository.ts
+│       └── auth/                 # Authentication infrastructure
+│           ├── nextAuthConfig.ts # NextAuth configuration
+│           └── authHelpers.ts    # Auth helper functions
 ├── contexts/                     # React contexts
 │   └── UserContext.tsx           # User state management
 ├── types/                        # TypeScript types
@@ -80,10 +127,14 @@
 │   ├── requirements.md           # Full requirements (Japanese)
 │   ├── development_plan.md       # Development roadmap
 │   └── development/              # Step-by-step guides
+├── specs/                        # Feature specifications
+│   └── 001-ddd-restructure/      # DDD restructure spec
 ├── .github/workflows/            # CI/CD
 │   ├── ci.yaml                   # Lint + type check
 │   └── db-migration.yml          # Database migrations
-└── middleware.ts                 # Route protection
+├── middleware.ts                 # Route protection
+├── ARCHITECTURE.md               # DDD architecture documentation
+└── CLAUDE.md                     # This file (AI assistant guide)
 ```
 
 ---
@@ -258,9 +309,140 @@ const { userId } = await request.json();
 
 ## Key Development Patterns
 
-### 1. Prisma Client Singleton
+### 1. DDD Layered Architecture
 
-**File**: `lib/prisma.ts`
+**See**: `ARCHITECTURE.md` for detailed documentation
+
+**Dependency Flow**:
+```
+Presentation → Application → Domain ← Infrastructure
+```
+
+**Key Principles**:
+- Domain layer is independent of all other layers
+- Application layer depends only on Domain
+- Infrastructure implements Domain interfaces
+- Presentation orchestrates Use Cases
+
+### 2. Repository Pattern
+
+**Purpose**: Abstract data access from domain logic
+
+**Interface Definition** (Domain layer):
+```typescript
+// src/domain/project/ProjectRepository.ts
+export interface ProjectRepository {
+  save(project: Project): Promise<Project>;
+  findById(id: string): Promise<Project | null>;
+  delete(id: string): Promise<void>;
+}
+```
+
+**Implementation** (Infrastructure layer):
+```typescript
+// src/infrastructure/database/repositories/PrismaProjectRepository.ts
+export class PrismaProjectRepository implements ProjectRepository {
+  constructor(private prisma: PrismaClient) {}
+
+  async save(project: Project): Promise<Project> {
+    // Convert domain object → Prisma model
+    // Persist to database
+    // Convert Prisma model → domain object
+  }
+}
+```
+
+### 3. Use Case Pattern
+
+**Purpose**: Orchestrate business processes
+
+**Structure**:
+```typescript
+// src/application/project/CreateProjectUseCase.ts
+export class CreateProjectUseCase {
+  constructor(
+    private projectRepository: ProjectRepository,  // Dependency injection
+    private userRepository: UserRepository
+  ) {}
+
+  async execute(input: CreateProjectInput): Promise<CreateProjectOutput> {
+    // 1. Fetch required entities
+    // 2. Validate business rules (delegate to domain)
+    // 3. Create/modify domain objects
+    // 4. Persist via repository
+    // 5. Return DTO
+  }
+}
+```
+
+### 4. Value Object Pattern
+
+**Purpose**: Encapsulate validation and immutability
+
+**Implementation**:
+```typescript
+// src/domain/session/ShareToken.ts
+export class ShareToken {
+  private constructor(private readonly value: string) {}
+
+  static fromString(value: string): ShareToken {
+    if (!ShareToken.isValid(value)) {
+      throw new ValidationError("Invalid share token format");
+    }
+    return new ShareToken(value);
+  }
+
+  static async generate(): Promise<ShareToken> {
+    const value = randomBytes(12).toString('base64url').substring(0, 16);
+    return new ShareToken(value);
+  }
+
+  getValue(): string {
+    return this.value;
+  }
+}
+```
+
+### 5. Domain Error Hierarchy
+
+**File**: `src/domain/errors/DomainError.ts`
+
+**Structure**:
+```typescript
+export class DomainError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+export class ValidationError extends DomainError {}
+export class UnauthorizedError extends DomainError {}
+export class NotFoundError extends DomainError {}
+```
+
+**Usage in API Routes**:
+```typescript
+try {
+  const result = await useCase.execute(input);
+  return NextResponse.json({ data: result }, { status: 200 });
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    return NextResponse.json({ error: error.message }, { status: 404 });
+  }
+  if (error instanceof UnauthorizedError) {
+    return NextResponse.json({ error: error.message }, { status: 403 });
+  }
+  if (error instanceof ValidationError) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+}
+```
+
+### 6. Prisma Client Singleton
+
+**File**: `src/infrastructure/database/prisma.ts`
 
 **Pattern**: Global singleton to prevent hot reload issues in development
 
@@ -274,27 +456,7 @@ if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
 - Falls back to `DATABASE_URL` with `?pgbouncer=true` param
 - Includes graceful shutdown handlers (SIGINT, SIGTERM)
 
-### 2. Token Generation
-
-**File**: `lib/utils.ts`
-
-```typescript
-generateShareToken()  // 16-char base64url for session sharing
-generateOwnerToken()  // 32-char base64url for owner auth
-```
-
-Both use `crypto.randomBytes()` with retry logic for uniqueness.
-
-### 3. Error Handling
-
-**File**: `lib/prisma-errors.ts`
-
-Type guards for Prisma errors:
-- `isPrismaError()`
-- `isUniqueConstraintViolation()`
-- `isForeignKeyConstraintViolation()`
-
-### 4. Real-Time Updates
+### 7. Real-Time Updates
 
 **Current**: Polling every 2 seconds
 
@@ -309,14 +471,14 @@ useEffect(() => {
 
 **Future**: WebSocket migration planned (Step 4 in development plan)
 
-### 5. State Management
+### 8. State Management
 
 - **User State**: `contexts/UserContext.tsx` (guest or authenticated)
 - **Toast Notifications**: `contexts/ToastContext.tsx`
 - **Session**: NextAuth `SessionProvider`
 - **Local Storage**: User data, owner tokens, session-specific nicknames
 
-### 6. Component Patterns
+### 9. Component Patterns
 
 **Reusable UI Components**:
 - `LoadingSpinner` - 3 sizes (small, medium, large)
@@ -327,7 +489,7 @@ useEffect(() => {
 **Form Components**:
 - `LoginForm`, `RegisterForm` - NextAuth integration with error handling
 
-### 7. Project Management Patterns (NEW)
+### 10. Project Management Patterns
 
 **Project Organization**:
 - Projects are only available to authenticated users (not guest users)
