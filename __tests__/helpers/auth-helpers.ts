@@ -39,6 +39,7 @@ export async function generateAuthToken(userId: string): Promise<string> {
   const secret = process.env.NEXTAUTH_SECRET || 'test-secret-key-for-testing';
   const token = await encode({
     token: {
+      id: userId,
       sub: userId,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30日

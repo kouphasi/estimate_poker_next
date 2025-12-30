@@ -35,6 +35,7 @@ export async function setupTestDatabase(schemaName: string): Promise<PrismaClien
       env: {
         ...process.env,
         DATABASE_URL: getTestDatabaseUrl(schemaName),
+        POSTGRES_URL_NON_POOLING: getTestDatabaseUrl(schemaName),
       },
       stdio: 'inherit',
     });

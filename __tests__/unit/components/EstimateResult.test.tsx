@@ -55,14 +55,16 @@ describe('EstimateResult', () => {
     render(<EstimateResult estimates={mockEstimates} isRevealed={true} finalEstimate={null} />);
 
     // (1 + 3 + 5) / 3 = 3.00
-    expect(screen.getByText('3.00日')).toBeInTheDocument();
+    const avgSection = screen.getByText('平均値').closest('div');
+    expect(avgSection).toHaveTextContent('3.00日');
   });
 
   it('中央値が正しく計算される（奇数個）', () => {
     render(<EstimateResult estimates={mockEstimates} isRevealed={true} finalEstimate={null} />);
 
     // 中央値は3
-    expect(screen.getByText('3.00日')).toBeInTheDocument();
+    const medianSection = screen.getByText('中央値').closest('div');
+    expect(medianSection).toHaveTextContent('3.00日');
   });
 
   it('中央値が正しく計算される（偶数個）', () => {
@@ -74,7 +76,8 @@ describe('EstimateResult', () => {
     render(<EstimateResult estimates={evenEstimates} isRevealed={true} finalEstimate={null} />);
 
     // (2 + 4) / 2 = 3.00
-    expect(screen.getByText('3.00日')).toBeInTheDocument();
+    const medianSection = screen.getByText('中央値').closest('div');
+    expect(medianSection).toHaveTextContent('3.00日');
   });
 
   it('最大値が正しく表示される', () => {
@@ -121,7 +124,8 @@ describe('EstimateResult', () => {
     render(<EstimateResult estimates={estimatesWithInvalid} isRevealed={true} finalEstimate={null} />);
 
     // 平均値は3のみから計算される
-    expect(screen.getByText('3.00日')).toBeInTheDocument();
+    const avgSection = screen.getByText('平均値').closest('div');
+    expect(avgSection).toHaveTextContent('3.00日');
   });
 
   it('全員の見積もり一覧には有効な見積もりのみ表示される', () => {

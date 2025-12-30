@@ -9,15 +9,15 @@ import { PrismaClient } from '@prisma/client';
  * @throws 検証失敗時はエラーをスロー
  */
 export async function validateSchema(prisma: PrismaClient): Promise<boolean> {
-  // 必須テーブルのリスト
+  // 必須テーブルのリスト（PostgreSQLではスネークケース）
   const requiredTables = [
     'users',
     'projects',
     'estimation_sessions',
     'estimates',
-    'Account',
-    'Session',
-    'VerificationToken',
+    'accounts',
+    'sessions',
+    'verification_tokens',
   ];
 
   // 現在のスキーマのテーブル一覧を取得
@@ -45,16 +45,17 @@ export async function validateSchema(prisma: PrismaClient): Promise<boolean> {
   const migrations = await prisma.$queryRaw<
     Array<{
       migration_name: string;
-      applied_steps_count: number;
-      steps_to_apply: number;
+      finished_at: Date | null;
+      rolled_back_at: Date | null;
     }>
   >`
-    SELECT migration_name, applied_steps_count, steps_to_apply
+    SELECT migration_name, finished_at, rolled_back_at
     FROM _prisma_migrations
   `;
 
+  // finished_atがnullまたはrolled_back_atが設定されている場合は失敗
   const failedMigrations = migrations.filter(
-    m => m.applied_steps_count !== m.steps_to_apply
+    m => m.finished_at === null || m.rolled_back_at !== null
   );
 
   if (failedMigrations.length > 0) {
