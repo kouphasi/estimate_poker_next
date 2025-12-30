@@ -195,7 +195,7 @@
 - [x] T070 [US2] Update app/api/projects/[projectId]/route.ts GET to use GetProjectUseCase
 - [x] T071 [US2] Update app/api/projects/[projectId]/route.ts PUT to use UpdateProjectUseCase
 - [x] T072 [US2] Update app/api/projects/[projectId]/route.ts DELETE to use DeleteProjectUseCase
-- [ ] T073 [US2] Update app/api/projects/[projectId]/sessions/route.ts to use new repository pattern
+- [x] T073 [US2] Update app/api/projects/[projectId]/sessions/route.ts to use new repository pattern
 
 #### プロジェクト機能検証
 

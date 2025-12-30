@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/infrastructure/auth/nextAuthConfig";
 import { prisma } from "@/infrastructure/database/prisma";
-import { generateShareToken, generateOwnerToken } from "@/lib/utils";
+import { ListProjectSessionsUseCase } from "@/application/project/ListProjectSessionsUseCase";
+import { CreateProjectSessionUseCase } from "@/application/project/CreateProjectSessionUseCase";
+import { PrismaProjectRepository } from "@/infrastructure/database/repositories/PrismaProjectRepository";
+import { PrismaSessionRepository } from "@/infrastructure/database/repositories/PrismaSessionRepository";
+import { NotFoundError, UnauthorizedError } from "@/domain/errors/DomainError";
 
 // GET /api/projects/[projectId]/sessions - プロジェクト配下のセッション一覧取得
 export async function GET(
@@ -20,44 +24,36 @@ export async function GET(
       );
     }
 
-    // プロジェクトの存在確認とオーナー確認
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-    });
+    const projectRepository = new PrismaProjectRepository(prisma);
+    const sessionRepository = new PrismaSessionRepository(prisma);
+    const listProjectSessionsUseCase = new ListProjectSessionsUseCase(
+      projectRepository,
+      sessionRepository
+    );
 
-    if (!project) {
+    const result = await listProjectSessionsUseCase.execute(
+      projectId,
+      session.user.id
+    );
+
+    return NextResponse.json({ sessions: result.sessions });
+  } catch (error) {
+    console.error("Error fetching project sessions:", error);
+
+    if (error instanceof NotFoundError) {
       return NextResponse.json(
         { error: "Project not found" },
         { status: 404 }
       );
     }
 
-    if (project.ownerId !== session.user.id) {
+    if (error instanceof UnauthorizedError) {
       return NextResponse.json(
-        { error: "Forbidden. You are not the owner of this project." },
+        { error: (error as UnauthorizedError).message },
         { status: 403 }
       );
     }
 
-    const sessions = await prisma.estimationSession.findMany({
-      where: {
-        projectId: projectId,
-      },
-      include: {
-        _count: {
-          select: {
-            estimates: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json({ sessions });
-  } catch (error) {
-    console.error("Error fetching project sessions:", error);
     return NextResponse.json(
       { error: "Failed to fetch sessions" },
       { status: 500 }
@@ -81,52 +77,48 @@ export async function POST(
       );
     }
 
-    // プロジェクトの存在確認とオーナー確認
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
+    const body = await request.json();
+    const { name } = body;
+
+    const projectRepository = new PrismaProjectRepository(prisma);
+    const sessionRepository = new PrismaSessionRepository(prisma);
+    const createProjectSessionUseCase = new CreateProjectSessionUseCase(
+      projectRepository,
+      sessionRepository
+    );
+
+    const result = await createProjectSessionUseCase.execute({
+      projectId,
+      requestUserId: session.user.id,
+      name,
     });
 
-    if (!project) {
+    return NextResponse.json(
+      {
+        sessionId: result.sessionId,
+        shareToken: result.shareToken,
+        ownerToken: result.ownerToken,
+        name: result.name,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Error creating project session:", error);
+
+    if (error instanceof NotFoundError) {
       return NextResponse.json(
         { error: "Project not found" },
         { status: 404 }
       );
     }
 
-    if (project.ownerId !== session.user.id) {
+    if (error instanceof UnauthorizedError) {
       return NextResponse.json(
-        { error: "Forbidden. You are not the owner of this project." },
+        { error: (error as UnauthorizedError).message },
         { status: 403 }
       );
     }
 
-    const body = await request.json();
-    const { name } = body;
-
-    const shareToken = await generateShareToken();
-    const ownerToken = await generateOwnerToken();
-
-    const estimationSession = await prisma.estimationSession.create({
-      data: {
-        name: name?.trim() || null,
-        shareToken,
-        ownerToken,
-        ownerId: session.user.id,
-        projectId: projectId,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        sessionId: estimationSession.id,
-        shareToken: estimationSession.shareToken,
-        ownerToken: estimationSession.ownerToken,
-        name: estimationSession.name,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Error creating project session:", error);
     return NextResponse.json(
       { error: "Failed to create session" },
       { status: 500 }
