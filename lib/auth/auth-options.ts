@@ -78,7 +78,7 @@ export const authOptions: NextAuthOptions = {
     signOut: "/",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // Google OAuth経由でサインインする場合
       if (account?.provider === "google" && user.email) {
         console.log('[NextAuth] signIn callback - Google OAuth attempt for:', user.email);

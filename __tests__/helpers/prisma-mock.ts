@@ -9,6 +9,7 @@ import { vi } from 'vitest';
 
 // Prismaクライアントのモック型定義
 type MockPrismaClient = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [K in keyof PrismaClient]: PrismaClient[K] extends (...args: any[]) => any
     ? ReturnType<typeof vi.fn>
     : PrismaClient[K];
