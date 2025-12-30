@@ -82,7 +82,21 @@ export default function EstimatePage() {
     setSession(null)
     setEstimates([])
     setLoading(true)
-  }, [shareToken])
+    setError('')
+
+    // ニックネームとuserIdもリセット（localStorageから再取得）
+    if (typeof window !== 'undefined') {
+      const storedNickname = localStorage.getItem(`nickname_${shareToken}`) || ''
+      const storedUserId = localStorage.getItem(`userId_${shareToken}`) || null
+
+      // ログインユーザーがいる場合はそちらを優先
+      if (!user?.nickname) {
+        setNickname(storedNickname)
+        setShowNicknameForm(!storedNickname)
+      }
+      setUserId(storedUserId)
+    }
+  }, [shareToken, user?.nickname])
 
   // ポーリング：2秒ごとにセッション情報を取得
   useEffect(() => {
