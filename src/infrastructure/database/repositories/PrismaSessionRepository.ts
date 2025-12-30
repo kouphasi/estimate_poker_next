@@ -58,21 +58,28 @@ export class PrismaSessionRepository implements SessionRepository {
   }
 
   async save(session: EstimationSession): Promise<EstimationSession> {
-    const data = await this.prisma.estimationSession.upsert({
+    // IDが空の場合は新規作成（Prismaの@default(cuid())を使用させる）
+    if (!session.id || session.id === '') {
+      const data = await this.prisma.estimationSession.create({
+        data: {
+          name: session.name,
+          shareToken: session.shareToken.value,
+          ownerToken: session.ownerToken.value,
+          ownerId: session.ownerId,
+          projectId: session.projectId,
+          isRevealed: session.isRevealed,
+          status: session.status,
+          finalEstimate: session.finalEstimate,
+        },
+      });
+      return this.toDomain(data);
+    }
+
+    // IDがある場合は既存レコードの更新
+    const data = await this.prisma.estimationSession.update({
       where: { id: session.id },
-      update: {
+      data: {
         name: session.name,
-        isRevealed: session.isRevealed,
-        status: session.status,
-        finalEstimate: session.finalEstimate,
-      },
-      create: {
-        id: session.id,
-        name: session.name,
-        shareToken: session.shareToken.value,
-        ownerToken: session.ownerToken.value,
-        ownerId: session.ownerId,
-        projectId: session.projectId,
         isRevealed: session.isRevealed,
         status: session.status,
         finalEstimate: session.finalEstimate,
