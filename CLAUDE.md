@@ -840,3 +840,10 @@ This is a **planning poker** application for collaborative effort estimation. Th
 **Last Updated**: 2025-12-21
 **Maintained By**: AI Assistants working on this project
 **Contact**: See repository issues for questions
+
+## Active Technologies
+- TypeScript 5.x (strict mode) + Next.js 16.x (App Router), React 19.x, NextAuth.js v4.x, Prisma 6.x (001-project-sharing)
+- PostgreSQL (via Prisma ORM) (001-project-sharing)
+
+## Recent Changes
+- 001-project-sharing: Added TypeScript 5.x (strict mode) + Next.js 16.x (App Router), React 19.x, NextAuth.js v4.x, Prisma 6.x
