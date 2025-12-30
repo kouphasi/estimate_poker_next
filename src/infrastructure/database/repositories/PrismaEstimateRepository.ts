@@ -36,23 +36,48 @@ export class PrismaEstimateRepository implements EstimateRepository {
   }
 
   async save(estimate: Estimate): Promise<Estimate> {
-    const data = await this.prisma.estimate.upsert({
-      where: { id: estimate.id },
-      update: {
-        value: estimate.value,
-        nickname: estimate.nickname,
-        updatedAt: new Date(),
-      },
-      create: {
-        id: estimate.id,
-        sessionId: estimate.sessionId,
-        userId: estimate.userId,
-        nickname: estimate.nickname,
-        value: estimate.value,
-      },
-    });
-
-    return this.toDomain(data);
+    // IDが空の場合は新規作成、それ以外は既存のupsertを使用
+    if (!estimate.id || estimate.id === '') {
+      // 新規作成: sessionId_userIdでupsertを使用
+      const data = await this.prisma.estimate.upsert({
+        where: {
+          sessionId_userId: {
+            sessionId: estimate.sessionId,
+            userId: estimate.userId,
+          },
+        },
+        update: {
+          value: estimate.value,
+          nickname: estimate.nickname,
+          updatedAt: new Date(),
+        },
+        create: {
+          sessionId: estimate.sessionId,
+          userId: estimate.userId,
+          nickname: estimate.nickname,
+          value: estimate.value,
+        },
+      });
+      return this.toDomain(data);
+    } else {
+      // 既存の更新
+      const data = await this.prisma.estimate.upsert({
+        where: { id: estimate.id },
+        update: {
+          value: estimate.value,
+          nickname: estimate.nickname,
+          updatedAt: new Date(),
+        },
+        create: {
+          id: estimate.id,
+          sessionId: estimate.sessionId,
+          userId: estimate.userId,
+          nickname: estimate.nickname,
+          value: estimate.value,
+        },
+      });
+      return this.toDomain(data);
+    }
   }
 
   async upsert(
