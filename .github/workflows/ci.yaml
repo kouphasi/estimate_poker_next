@@ -77,11 +77,13 @@ jobs:
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/estimate_poker_test
+          POSTGRES_URL_NON_POOLING: postgresql://postgres:test@localhost:5432/estimate_poker_test
 
       - name: Run unit tests with coverage
         run: npm run test:unit -- --coverage
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/estimate_poker_test
+          POSTGRES_URL_NON_POOLING: postgresql://postgres:test@localhost:5432/estimate_poker_test
           NEXTAUTH_SECRET: test-secret-key-for-ci
           NEXTAUTH_URL: http://localhost:3000
 
@@ -144,6 +146,7 @@ jobs:
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/estimate_poker_test
+          POSTGRES_URL_NON_POOLING: postgresql://postgres:test@localhost:5432/estimate_poker_test
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -152,6 +155,7 @@ jobs:
         run: npx playwright test --shard=${{ matrix.shard }}
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/estimate_poker_test
+          POSTGRES_URL_NON_POOLING: postgresql://postgres:test@localhost:5432/estimate_poker_test
           NEXTAUTH_SECRET: test-secret-key-for-ci
           NEXTAUTH_URL: http://localhost:3000
 
