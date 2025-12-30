@@ -70,33 +70,33 @@
 
 ### ドメイン層エンティティ
 
-- [ ] T014 [P] [US1] Create User entity in src/domain/user/User.ts with canManageProjects(), canCreateSession(), isAuthenticated() methods
-- [ ] T015 [P] [US1] Create Project entity in src/domain/project/Project.ts with isOwnedBy(), canBeDeletedBy() methods
-- [ ] T016 [P] [US1] Create EstimationSession entity in src/domain/session/EstimationSession.ts with reveal(), hide(), finalize(), canBeControlledBy(), isActive(), isFinalized() methods
-- [ ] T017 [P] [US1] Create Estimate entity in src/domain/session/Estimate.ts with update(), belongsToSession() methods
+- [x] T014 [P] [US1] Create User entity in src/domain/user/User.ts with canManageProjects(), canCreateSession(), isAuthenticated() methods
+- [x] T015 [P] [US1] Create Project entity in src/domain/project/Project.ts with isOwnedBy(), canBeDeletedBy() methods
+- [x] T016 [P] [US1] Create EstimationSession entity in src/domain/session/EstimationSession.ts with reveal(), hide(), finalize(), canBeControlledBy(), isActive(), isFinalized() methods
+- [x] T017 [P] [US1] Create Estimate entity in src/domain/session/Estimate.ts with update(), belongsToSession() methods
 
 ### ドメイン層リポジトリインターフェース
 
-- [ ] T018 [P] [US1] Create UserRepository interface in src/domain/user/UserRepository.ts
-- [ ] T019 [P] [US1] Create ProjectRepository interface in src/domain/project/ProjectRepository.ts
-- [ ] T020 [P] [US1] Create SessionRepository interface in src/domain/session/SessionRepository.ts
-- [ ] T021 [P] [US1] Create EstimateRepository interface in src/domain/session/EstimateRepository.ts
+- [x] T018 [P] [US1] Create UserRepository interface in src/domain/user/UserRepository.ts
+- [x] T019 [P] [US1] Create ProjectRepository interface in src/domain/project/ProjectRepository.ts
+- [x] T020 [P] [US1] Create SessionRepository interface in src/domain/session/SessionRepository.ts
+- [x] T021 [P] [US1] Create EstimateRepository interface in src/domain/session/EstimateRepository.ts
 
 ### ドメインサービス
 
-- [ ] T022 [US1] Create EstimateCalculationService in src/domain/session/EstimateCalculationService.ts with calculateAverage(), calculateMedian(), findMin(), findMax() methods
+- [x] T022 [US1] Create EstimateCalculationService in src/domain/session/EstimateCalculationService.ts with calculateAverage(), calculateMedian(), findMin(), findMax() methods
 
 ### インフラストラクチャ層リポジトリ実装
 
-- [ ] T023 [P] [US1] Create PrismaUserRepository in src/infrastructure/database/repositories/PrismaUserRepository.ts implementing UserRepository
-- [ ] T024 [P] [US1] Create PrismaProjectRepository in src/infrastructure/database/repositories/PrismaProjectRepository.ts implementing ProjectRepository
-- [ ] T025 [P] [US1] Create PrismaSessionRepository in src/infrastructure/database/repositories/PrismaSessionRepository.ts implementing SessionRepository
-- [ ] T026 [P] [US1] Create PrismaEstimateRepository in src/infrastructure/database/repositories/PrismaEstimateRepository.ts implementing EstimateRepository
+- [x] T023 [P] [US1] Create PrismaUserRepository in src/infrastructure/database/repositories/PrismaUserRepository.ts implementing UserRepository
+- [x] T024 [P] [US1] Create PrismaProjectRepository in src/infrastructure/database/repositories/PrismaProjectRepository.ts implementing ProjectRepository
+- [x] T025 [P] [US1] Create PrismaSessionRepository in src/infrastructure/database/repositories/PrismaSessionRepository.ts implementing SessionRepository
+- [x] T026 [P] [US1] Create PrismaEstimateRepository in src/infrastructure/database/repositories/PrismaEstimateRepository.ts implementing EstimateRepository
 
 ### インデックスファイル作成
 
-- [ ] T027 [P] [US1] Create index.ts barrel exports in src/domain/user/, src/domain/project/, src/domain/session/
-- [ ] T028 [P] [US1] Create index.ts barrel exports in src/infrastructure/database/repositories/
+- [x] T027 [P] [US1] Create index.ts barrel exports in src/domain/user/, src/domain/project/, src/domain/session/
+- [x] T028 [P] [US1] Create index.ts barrel exports in src/infrastructure/database/repositories/
 
 **Checkpoint**: DDDレイヤー構造が完成。開発者がドメインモデルを探す際、迷わずsrc/domain/にアクセスできる状態。
 
