@@ -215,16 +215,16 @@
 
 #### ユーティリティ分散配置
 
-- [ ] T081 [P] [US2] Move token generation functions from lib/utils.ts to src/domain/session/utils/tokenGenerator.ts
-- [ ] T082 [P] [US2] Create src/infrastructure/utils/ for infrastructure-specific utilities if needed
+- [x] T081 [P] [US2] Move token generation functions from lib/utils.ts to src/domain/session/utils/tokenGenerator.ts (既にValueObjectに実装済みのため不要)
+- [x] T082 [P] [US2] Create src/infrastructure/utils/ for infrastructure-specific utilities if needed (不要)
 
 #### 旧コード削除
 
-- [ ] T083 [US2] Remove lib/ directory after verifying all imports are updated
-- [ ] T084 [US2] Update any remaining imports throughout the codebase to use new paths
-- [ ] T085 [US2] Run `npm run type-check` to verify all migrations complete with no type errors
-- [ ] T086 [US2] Run `npm run lint` to verify code quality
-- [ ] T087 [US2] Run `npm run build` to verify full build succeeds
+- [x] T083 [US2] Remove lib/ directory after verifying all imports are updated
+- [x] T084 [US2] Update any remaining imports throughout the codebase to use new paths
+- [x] T085 [US2] Run `npm run type-check` to verify all migrations complete with no type errors
+- [x] T086 [US2] Run `npm run lint` to verify code quality (警告のみ、エラーなし)
+- [x] T087 [US2] Run `npm run build` to verify full build succeeds
 
 **Checkpoint**: すべての既存機能がDDDアーキテクチャに移行完了。lib/ディレクトリ削除済み。
 

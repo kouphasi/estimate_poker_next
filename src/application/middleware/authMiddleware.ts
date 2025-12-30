@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { JWT } from 'next-auth/jwt';
 
 /**
  * 認証チェック結果
@@ -9,7 +9,7 @@ export interface AuthCheckResult {
   hasNextAuthToken: boolean;
   hasSimpleLoginCookie: boolean;
   hasNextAuthCookie: boolean;
-  token: any;
+  token: JWT | null;
 }
 
 /**
@@ -24,7 +24,7 @@ export function isProtectedPath(pathname: string): boolean {
  * 認証状態をチェック
  */
 export function checkAuthentication(
-  token: any,
+  token: JWT | null,
   simpleLoginCookie: string | undefined,
   nextAuthCookie: string | undefined,
   pathname: string
@@ -41,12 +41,13 @@ export function checkAuthentication(
 
   // ニックネーム設定が必要かチェック
   // （Next-Authユーザーで、nicknameがemailと同じ場合）
-  const needsNicknameSetup =
+  const needsNicknameSetup = Boolean(
     pathname !== '/setup-nickname' &&
     hasNextAuthToken &&
     token?.nickname &&
     token?.email &&
-    token.nickname === token.email;
+    token.nickname === token.email
+  );
 
   return {
     isAuthenticated,

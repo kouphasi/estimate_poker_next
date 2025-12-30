@@ -6,7 +6,7 @@ import { ListProjectsUseCase } from "@/application/project/ListProjectsUseCase";
 import { CreateProjectUseCase } from "@/application/project/CreateProjectUseCase";
 import { PrismaProjectRepository } from "@/infrastructure/database/repositories/PrismaProjectRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
-import { NotFoundError, UnauthorizedError, ValidationError } from "@/domain/errors/DomainError";
+import { UnauthorizedError, ValidationError } from "@/domain/errors/DomainError";
 
 // GET /api/projects - プロジェクト一覧取得
 export async function GET() {
