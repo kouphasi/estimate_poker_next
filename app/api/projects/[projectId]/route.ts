@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth/auth-options";
-import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/infrastructure/auth/nextAuthConfig";
+import { prisma } from "@/infrastructure/database/prisma";
+import { GetProjectUseCase } from "@/application/project/GetProjectUseCase";
+import { UpdateProjectUseCase } from "@/application/project/UpdateProjectUseCase";
+import { DeleteProjectUseCase } from "@/application/project/DeleteProjectUseCase";
+import { PrismaProjectRepository } from "@/infrastructure/database/repositories/PrismaProjectRepository";
+import { PrismaSessionRepository } from "@/infrastructure/database/repositories/PrismaSessionRepository";
+import { NotFoundError, UnauthorizedError, ValidationError } from "@/domain/errors/DomainError";
 
 // GET /api/projects/[projectId] - プロジェクト詳細取得
 export async function GET(
@@ -19,45 +25,30 @@ export async function GET(
       );
     }
 
-    // オーナーチェックを先に行い、不要なデータ取得を防ぐ
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        ownerId: session.user.id, // 先にフィルタ
-      },
-      include: {
-        sessions: {
-          orderBy: {
-            createdAt: "desc",
-          },
-          include: {
-            _count: {
-              select: {
-                estimates: true,
-              },
-            },
-          },
-        },
-        owner: {
-          select: {
-            id: true,
-            nickname: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const projectRepository = new PrismaProjectRepository(prisma);
+    const sessionRepository = new PrismaSessionRepository(prisma);
+    const getProjectUseCase = new GetProjectUseCase(projectRepository, sessionRepository);
 
-    if (!project) {
+    const project = await getProjectUseCase.execute(projectId, session.user.id);
+
+    return NextResponse.json({ project });
+  } catch (error) {
+    console.error("Error fetching project:", error);
+
+    if (error instanceof NotFoundError) {
       return NextResponse.json(
         { error: "Project not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ project });
-  } catch (error) {
-    console.error("Error fetching project:", error);
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json(
+        { error: (error as UnauthorizedError).message },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to fetch project" },
       { status: 500 }
@@ -84,51 +75,41 @@ export async function PATCH(
     const body = await request.json();
     const { name, description } = body;
 
-    // バリデーション
-    if (name !== undefined) {
-      if (typeof name !== "string" || name.trim() === "") {
-        return NextResponse.json(
-          { error: "Project name cannot be empty" },
-          { status: 400 }
-        );
-      }
-    }
+    const projectRepository = new PrismaProjectRepository(prisma);
+    const updateProjectUseCase = new UpdateProjectUseCase(projectRepository);
 
-    // 更新データの準備
-    const updateData: { name?: string; description?: string | null } = {};
-
-    if (name !== undefined) {
-      updateData.name = name.trim();
-    }
-
-    if (description !== undefined) {
-      updateData.description = description?.trim() || null;
-    }
-
-    // オーナーチェックを含めた更新
-    const project = await prisma.project.updateMany({
-      where: {
-        id: projectId,
-        ownerId: session.user.id, // オーナーのみ更新可能
-      },
-      data: updateData,
+    const project = await updateProjectUseCase.execute({
+      projectId,
+      requestUserId: session.user.id,
+      name,
+      description,
     });
 
-    if (project.count === 0) {
+    return NextResponse.json({ project });
+  } catch (error) {
+    console.error("Error updating project:", error);
+
+    if (error instanceof NotFoundError) {
       return NextResponse.json(
-        { error: "Project not found or you are not the owner" },
+        { error: "Project not found" },
         { status: 404 }
       );
     }
 
-    // 更新後のデータを取得して返す
-    const updatedProject = await prisma.project.findUnique({
-      where: { id: projectId },
-    });
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json(
+        { error: (error as UnauthorizedError).message },
+        { status: 403 }
+      );
+    }
 
-    return NextResponse.json({ project: updatedProject });
-  } catch (error) {
-    console.error("Error updating project:", error);
+    if (error instanceof ValidationError) {
+      return NextResponse.json(
+        { error: (error as ValidationError).message },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to update project" },
       { status: 500 }
@@ -152,42 +133,37 @@ export async function DELETE(
       );
     }
 
-    // プロジェクトの存在確認とオーナー確認、セッション数も取得
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        ownerId: session.user.id, // オーナーのみ削除可能
-      },
-      include: {
-        _count: {
-          select: {
-            sessions: true,
-          },
-        },
-      },
-    });
+    const projectRepository = new PrismaProjectRepository(prisma);
+    const deleteProjectUseCase = new DeleteProjectUseCase(projectRepository);
 
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or you are not the owner" },
-        { status: 404 }
-      );
-    }
-
-    // プロジェクトを削除（関連するセッションもカスケード削除される）
-    await prisma.project.delete({
-      where: { id: projectId },
+    await deleteProjectUseCase.execute({
+      projectId,
+      requestUserId: session.user.id,
     });
 
     return NextResponse.json(
       {
         message: "Project deleted successfully",
-        deletedSessionsCount: project._count.sessions,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error deleting project:", error);
+
+    if (error instanceof NotFoundError) {
+      return NextResponse.json(
+        { error: "Project not found" },
+        { status: 404 }
+      );
+    }
+
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json(
+        { error: (error as UnauthorizedError).message },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to delete project" },
       { status: 500 }
