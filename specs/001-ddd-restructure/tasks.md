@@ -25,11 +25,11 @@
 
 **Purpose**: DDDレイヤードアーキテクチャの基盤ディレクトリ構造とTypeScript設定
 
-- [ ] T001 Create src/domain/ directory structure with user/, project/, session/ subdirectories
-- [ ] T002 [P] Create src/application/ directory structure with auth/, session/, project/, middleware/ subdirectories
-- [ ] T003 [P] Create src/infrastructure/ directory structure with database/repositories/, auth/ subdirectories
-- [ ] T004 Update tsconfig.json to add path aliases (@/domain/*, @/application/*, @/infrastructure/*)
-- [ ] T005 Verify TypeScript path aliases work with `npm run type-check`
+- [x] T001 Create src/domain/ directory structure with user/, project/, session/ subdirectories
+- [x] T002 [P] Create src/application/ directory structure with auth/, session/, project/, middleware/ subdirectories
+- [x] T003 [P] Create src/infrastructure/ directory structure with database/repositories/, auth/ subdirectories
+- [x] T004 Update tsconfig.json to add path aliases (@/domain/*, @/application/*, @/infrastructure/*)
+- [x] T005 Verify TypeScript path aliases work with `npm run type-check`
 
 **Checkpoint**: ディレクトリ構造とパスエイリアスが準備完了
 
