@@ -1,70 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/infrastructure/database/prisma";
+import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
+import { RegisterUseCase } from "@/application/auth/RegisterUseCase";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password, nickname } = body;
 
-    // バリデーション
-    if (!email || !password || !nickname) {
-      return NextResponse.json(
-        { error: "メールアドレス、パスワード、ニックネームは必須です" },
-        { status: 400 }
-      );
-    }
+    // 依存性の組み立て
+    const userRepository = new PrismaUserRepository(prisma);
+    const useCase = new RegisterUseCase(userRepository);
 
-    // メールアドレスの形式チェック
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "有効なメールアドレスを入力してください" },
-        { status: 400 }
-      );
-    }
-
-    // パスワードの長さチェック
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "パスワードは8文字以上である必要があります" },
-        { status: 400 }
-      );
-    }
-
-    // 既存ユーザーのチェック
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "このメールアドレスは既に登録されています" },
-        { status: 400 }
-      );
-    }
-
-    // パスワードのハッシュ化
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // ユーザー作成
-    const user = await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        nickname,
-        isGuest: false,
-      },
-    });
+    // ユースケース実行
+    const user = await useCase.execute(email, password, nickname);
 
     return NextResponse.json(
       {
         message: "ユーザー登録が完了しました",
         user: {
           id: user.id,
-          email: user.email,
+          email: user.email?.value,
           nickname: user.nickname,
         },
       },
@@ -72,9 +28,19 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Registration error:", error);
+
+    const errorMessage = error instanceof Error ? error.message : "ユーザー登録中にエラーが発生しました";
+    const statusCode = error instanceof Error &&
+      (errorMessage.includes('required') ||
+       errorMessage.includes('already exists') ||
+       errorMessage.includes('must be') ||
+       errorMessage.includes('Invalid email'))
+      ? 400
+      : 500;
+
     return NextResponse.json(
-      { error: "ユーザー登録中にエラーが発生しました" },
-      { status: 500 }
+      { error: errorMessage },
+      { status: statusCode }
     );
   }
 }

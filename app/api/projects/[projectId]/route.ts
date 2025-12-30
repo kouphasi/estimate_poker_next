@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth/auth-options";
+import { authOptions } from "@/infrastructure/auth/nextAuthConfig";
 import { prisma } from "@/infrastructure/database/prisma";
 
 // GET /api/projects/[projectId] - プロジェクト詳細取得

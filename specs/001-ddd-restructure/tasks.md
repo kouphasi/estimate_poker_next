@@ -112,31 +112,31 @@
 
 #### アプリケーション層ユースケース
 
-- [ ] T029 [P] [US2] Create CreateGuestUserUseCase in src/application/auth/CreateGuestUserUseCase.ts
-- [ ] T030 [P] [US2] Create RegisterUseCase in src/application/auth/RegisterUseCase.ts
-- [ ] T031 [P] [US2] Create LoginUseCase in src/application/auth/LoginUseCase.ts
+- [x] T029 [P] [US2] Create CreateGuestUserUseCase in src/application/auth/CreateGuestUserUseCase.ts
+- [x] T030 [P] [US2] Create RegisterUseCase in src/application/auth/RegisterUseCase.ts
+- [x] T031 [P] [US2] Create LoginUseCase in src/application/auth/LoginUseCase.ts
 
 #### インフラストラクチャ層認証設定
 
-- [ ] T032 [US2] Move lib/auth/auth-options.ts to src/infrastructure/auth/nextAuthConfig.ts
-- [ ] T033 [US2] Move lib/auth/auth-helpers.ts to src/infrastructure/auth/authHelpers.ts
-- [ ] T034 [US2] Update NextAuth configuration to use LoginUseCase in CredentialsProvider
+- [x] T032 [US2] Move lib/auth/auth-options.ts to src/infrastructure/auth/nextAuthConfig.ts
+- [x] T033 [US2] Move lib/auth/auth-helpers.ts to src/infrastructure/auth/authHelpers.ts
+- [x] T034 [US2] Update NextAuth configuration to use LoginUseCase in CredentialsProvider
 
 #### APIルート更新（認証）
 
-- [ ] T035 [US2] Update app/api/users/route.ts to use CreateGuestUserUseCase (thin controller pattern)
-- [ ] T036 [US2] Update app/api/auth/register/route.ts to use RegisterUseCase (thin controller pattern)
-- [ ] T037 [US2] Update app/api/auth/[...nextauth]/route.ts to use new nextAuthConfig path
+- [x] T035 [US2] Update app/api/users/route.ts to use CreateGuestUserUseCase (thin controller pattern)
+- [x] T036 [US2] Update app/api/auth/register/route.ts to use RegisterUseCase (thin controller pattern)
+- [x] T037 [US2] Update app/api/auth/[...nextauth]/route.ts to use new nextAuthConfig path
 
 #### ミドルウェア移行
 
-- [ ] T038 [US2] Create authMiddleware logic in src/application/middleware/authMiddleware.ts
-- [ ] T039 [US2] Update middleware.ts at project root to reference src/application/middleware/authMiddleware.ts
+- [x] T038 [US2] Create authMiddleware logic in src/application/middleware/authMiddleware.ts
+- [x] T039 [US2] Update middleware.ts at project root to reference src/application/middleware/authMiddleware.ts
 
 #### 認証機能検証
 
-- [ ] T040 [US2] Run `npm run type-check` to verify auth migration has no type errors
-- [ ] T041 [US2] Run `npm run build` to verify auth migration builds successfully
+- [x] T040 [US2] Run `npm run type-check` to verify auth migration has no type errors
+- [x] T041 [US2] Run `npm run build` to verify auth migration builds successfully
 - [ ] T042 [US2] Manual test: Guest login flow (simple-login page)
 - [ ] T043 [US2] Manual test: Email/password registration and login flow
 - [ ] T044 [US2] Manual test: Protected route access (mypage)
