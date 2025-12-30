@@ -182,25 +182,25 @@
 
 #### アプリケーション層ユースケース
 
-- [ ] T063 [P] [US2] Create ListProjectsUseCase in src/application/project/ListProjectsUseCase.ts
-- [ ] T064 [P] [US2] Create CreateProjectUseCase in src/application/project/CreateProjectUseCase.ts
-- [ ] T065 [P] [US2] Create GetProjectUseCase in src/application/project/GetProjectUseCase.ts
-- [ ] T066 [P] [US2] Create UpdateProjectUseCase in src/application/project/UpdateProjectUseCase.ts
-- [ ] T067 [P] [US2] Create DeleteProjectUseCase in src/application/project/DeleteProjectUseCase.ts
+- [x] T063 [P] [US2] Create ListProjectsUseCase in src/application/project/ListProjectsUseCase.ts
+- [x] T064 [P] [US2] Create CreateProjectUseCase in src/application/project/CreateProjectUseCase.ts
+- [x] T065 [P] [US2] Create GetProjectUseCase in src/application/project/GetProjectUseCase.ts
+- [x] T066 [P] [US2] Create UpdateProjectUseCase in src/application/project/UpdateProjectUseCase.ts
+- [x] T067 [P] [US2] Create DeleteProjectUseCase in src/application/project/DeleteProjectUseCase.ts
 
 #### APIルート更新（プロジェクト）
 
-- [ ] T068 [US2] Update app/api/projects/route.ts GET to use ListProjectsUseCase
-- [ ] T069 [US2] Update app/api/projects/route.ts POST to use CreateProjectUseCase
-- [ ] T070 [US2] Update app/api/projects/[projectId]/route.ts GET to use GetProjectUseCase
-- [ ] T071 [US2] Update app/api/projects/[projectId]/route.ts PUT to use UpdateProjectUseCase
-- [ ] T072 [US2] Update app/api/projects/[projectId]/route.ts DELETE to use DeleteProjectUseCase
+- [x] T068 [US2] Update app/api/projects/route.ts GET to use ListProjectsUseCase
+- [x] T069 [US2] Update app/api/projects/route.ts POST to use CreateProjectUseCase
+- [x] T070 [US2] Update app/api/projects/[projectId]/route.ts GET to use GetProjectUseCase
+- [x] T071 [US2] Update app/api/projects/[projectId]/route.ts PUT to use UpdateProjectUseCase
+- [x] T072 [US2] Update app/api/projects/[projectId]/route.ts DELETE to use DeleteProjectUseCase
 - [ ] T073 [US2] Update app/api/projects/[projectId]/sessions/route.ts to use new repository pattern
 
 #### プロジェクト機能検証
 
-- [ ] T074 [US2] Run `npm run type-check` to verify project migration has no type errors
-- [ ] T075 [US2] Run `npm run build` to verify project migration builds successfully
+- [x] T074 [US2] Run `npm run type-check` to verify project migration has no type errors
+- [x] T075 [US2] Run `npm run build` to verify project migration builds successfully
 - [ ] T076 [US2] Manual test: List projects (authenticated user)
 - [ ] T077 [US2] Manual test: Create new project
 - [ ] T078 [US2] Manual test: View project details
