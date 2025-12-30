@@ -2,8 +2,9 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { prisma } from "@/infrastructure/database/prisma";
+import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
+import { LoginUseCase } from "@/application/auth/LoginUseCase";
 
 // 環境変数のバリデーション
 if (process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_SECRET) {
@@ -44,26 +45,22 @@ export const authOptions: NextAuthOptions = {
           throw new Error("メールアドレスとパスワードを入力してください");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
+        // LoginUseCaseを使用してログイン認証
+        const userRepository = new PrismaUserRepository(prisma);
+        const loginUseCase = new LoginUseCase(userRepository);
 
-        if (!user || !user.passwordHash) {
-          throw new Error("メールアドレスまたはパスワードが正しくありません");
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
+        const user = await loginUseCase.verifyCredentials(
+          credentials.email,
+          credentials.password
         );
 
-        if (!isPasswordValid) {
+        if (!user) {
           throw new Error("メールアドレスまたはパスワードが正しくありません");
         }
 
         return {
           id: user.id,
-          email: user.email,
+          email: user.email?.value ?? null,
           name: user.nickname,
         };
       }

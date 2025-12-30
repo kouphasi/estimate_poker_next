@@ -1,29 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/infrastructure/database/prisma';
+import { PrismaUserRepository } from '@/infrastructure/database/repositories/PrismaUserRepository';
+import { CreateGuestUserUseCase } from '@/application/auth/CreateGuestUserUseCase';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { nickname } = body;
 
-    if (!nickname || typeof nickname !== 'string' || nickname.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Nickname is required' },
-        { status: 400 }
-      );
-    }
+    // 依存性の組み立て
+    const userRepository = new PrismaUserRepository(prisma);
+    const useCase = new CreateGuestUserUseCase(userRepository);
 
-    const user = await prisma.user.create({
-      data: {
-        nickname: nickname.trim(),
-        isGuest: true,
+    // ユースケース実行
+    const user = await useCase.execute(nickname);
+
+    return NextResponse.json(
+      {
+        userId: user.id,
+        nickname: user.nickname,
       },
-    });
-
-    return NextResponse.json({
-      userId: user.id,
-      nickname: user.nickname,
-    });
+      { status: 201 }
+    );
   } catch (error) {
     // 詳細なエラー情報をサーバーログに記録
     console.error('Error creating user:', {
@@ -33,8 +31,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : 'Failed to create user' },
+      { status: error instanceof Error && error.message.includes('required') ? 400 : 500 }
     );
   }
 }

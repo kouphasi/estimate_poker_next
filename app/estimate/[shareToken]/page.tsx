@@ -76,6 +76,28 @@ export default function EstimatePage() {
     }
   }, [user])
 
+  // shareTokenが変わった時に状態をリセット
+  useEffect(() => {
+    setSelectedValue(0)
+    setSession(null)
+    setEstimates([])
+    setLoading(true)
+    setError('')
+
+    // ニックネームとuserIdもリセット（localStorageから再取得）
+    if (typeof window !== 'undefined') {
+      const storedNickname = localStorage.getItem(`nickname_${shareToken}`) || ''
+      const storedUserId = localStorage.getItem(`userId_${shareToken}`) || null
+
+      // ログインユーザーがいる場合はそちらを優先
+      if (!user?.nickname) {
+        setNickname(storedNickname)
+        setShowNicknameForm(!storedNickname)
+      }
+      setUserId(storedUserId)
+    }
+  }, [shareToken, user?.nickname])
+
   // ポーリング：2秒ごとにセッション情報を取得
   useEffect(() => {
     if (!shareToken) return
@@ -93,7 +115,7 @@ export default function EstimatePage() {
         // 自分の見積もりがあればselectedValueを復元
         if (nickname) {
           const myEstimate = data.estimates.find((e: Estimate) => e.nickname === nickname)
-          if (myEstimate && myEstimate.value > 0) {
+          if (myEstimate) {
             setSelectedValue(myEstimate.value)
           }
         }

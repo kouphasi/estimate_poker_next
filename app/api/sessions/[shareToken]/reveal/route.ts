@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/infrastructure/database/prisma'
+import { ToggleRevealUseCase } from '@/application/session/ToggleRevealUseCase'
+import { PrismaSessionRepository } from '@/infrastructure/database/repositories/PrismaSessionRepository'
+import { NotFoundError, UnauthorizedError } from '@/domain/errors/DomainError'
 
 // PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替え
 export async function PATCH(
@@ -25,49 +28,46 @@ export async function PATCH(
       )
     }
 
-    // セッションの存在確認とオーナー認証
-    const existingSession = await prisma.estimationSession.findUnique({
-      where: { shareToken }
-    })
+    // リポジトリとユースケースのインスタンス化
+    const sessionRepository = new PrismaSessionRepository(prisma)
+    const toggleRevealUseCase = new ToggleRevealUseCase(sessionRepository)
 
-    if (!existingSession) {
-      return NextResponse.json(
-        { error: 'セッションが見つかりません' },
-        { status: 404 }
-      )
-    }
-
-    if (existingSession.ownerToken !== ownerToken) {
-      return NextResponse.json(
-        { error: '操作する権限がありません' },
-        { status: 403 }
-      )
-    }
-
-    // セッションを更新
-    const session = await prisma.estimationSession.update({
-      where: { shareToken },
-      data: { isRevealed }
+    // Reveal/Hide操作
+    const result = await toggleRevealUseCase.execute({
+      shareToken,
+      ownerToken,
+      reveal: isRevealed,
     })
 
     return NextResponse.json({
       success: true,
       session: {
-        id: session.id,
-        shareToken: session.shareToken,
-        isRevealed: session.isRevealed,
-        status: session.status,
-        finalEstimate: session.finalEstimate
+        id: result.id,
+        shareToken: result.shareToken,
+        isRevealed: result.isRevealed,
       }
     })
   } catch (error) {
-    // 詳細なエラー情報をサーバーログに記録
     console.error('Reveal toggle error:', {
       error,
       shareToken: (await params).shareToken,
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
       errorStack: error instanceof Error ? error.stack : undefined,
     })
+
+    if (error instanceof NotFoundError) {
+      return NextResponse.json(
+        { error: 'セッションが見つかりません' },
+        { status: 404 }
+      )
+    }
+
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json(
+        { error: '操作する権限がありません' },
+        { status: 403 }
+      )
+    }
 
     return NextResponse.json(
       { error: '公開設定の変更に失敗しました' },

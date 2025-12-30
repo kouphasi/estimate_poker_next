@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/infrastructure/database/prisma'
+import { SubmitEstimateUseCase } from '@/application/session/SubmitEstimateUseCase'
+import { CreateGuestUserUseCase } from '@/application/auth/CreateGuestUserUseCase'
+import { PrismaSessionRepository } from '@/infrastructure/database/repositories/PrismaSessionRepository'
+import { PrismaEstimateRepository } from '@/infrastructure/database/repositories/PrismaEstimateRepository'
+import { PrismaUserRepository } from '@/infrastructure/database/repositories/PrismaUserRepository'
+import { NotFoundError, ValidationError } from '@/domain/errors/DomainError'
 
 // POST /api/sessions/[shareToken]/estimates - 見積もりを投稿
 export async function POST(
@@ -9,8 +15,6 @@ export async function POST(
   try {
     const { shareToken } = await params
     const body = await request.json()
-    // TODO: セキュリティ改善 - userIdはリクエストボディから来るため改ざん可能
-    // 将来的にはサーバー側セッション管理（HttpOnly Cookie等）で認証を行う
     const { nickname, value, userId } = body
 
     if (!nickname || typeof nickname !== 'string' || nickname.trim() === '') {
@@ -27,55 +31,31 @@ export async function POST(
       )
     }
 
-    // セッションを確認
-    const session = await prisma.estimationSession.findUnique({
-      where: { shareToken }
-    })
+    // リポジトリのインスタンス化
+    const userRepository = new PrismaUserRepository(prisma)
+    const sessionRepository = new PrismaSessionRepository(prisma)
+    const estimateRepository = new PrismaEstimateRepository(prisma)
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'セッションが見つかりません' },
-        { status: 404 }
-      )
-    }
-
-    if (session.status === 'FINALIZED') {
-      return NextResponse.json(
-        { error: 'このセッションは既に確定済みです' },
-        { status: 400 }
-      )
-    }
-
-    // ユーザーIDが提供されていない場合、新規ユーザーを作成
+    // ユーザーIDが提供されていない場合、新規ゲストユーザーを作成
     let actualUserId = userId
     if (!actualUserId) {
-      const user = await prisma.user.create({
-        data: {
-          nickname: nickname.trim(),
-          isGuest: true
-        }
-      })
+      const createGuestUserUseCase = new CreateGuestUserUseCase(userRepository)
+      const user = await createGuestUserUseCase.execute(nickname.trim())
       actualUserId = user.id
     }
 
-    // upsert で見積もりを作成または更新
-    const estimate = await prisma.estimate.upsert({
-      where: {
-        sessionId_userId: {
-          sessionId: session.id,
-          userId: actualUserId
-        }
-      },
-      update: {
-        value,
-        nickname: nickname.trim()
-      },
-      create: {
-        sessionId: session.id,
-        userId: actualUserId,
-        nickname: nickname.trim(),
-        value
-      }
+    // 見積もり投稿
+    const submitEstimateUseCase = new SubmitEstimateUseCase(
+      sessionRepository,
+      estimateRepository,
+      userRepository
+    )
+
+    const estimate = await submitEstimateUseCase.execute({
+      shareToken,
+      userId: actualUserId,
+      nickname: nickname.trim(),
+      value,
     })
 
     return NextResponse.json({
@@ -88,13 +68,26 @@ export async function POST(
       userId: actualUserId
     })
   } catch (error) {
-    // 詳細なエラー情報をサーバーログに記録
     console.error('Estimate submission error:', {
       error,
       shareToken: (await params).shareToken,
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
       errorStack: error instanceof Error ? error.stack : undefined,
     })
+
+    if (error instanceof NotFoundError) {
+      return NextResponse.json(
+        { error: 'セッションが見つかりません' },
+        { status: 404 }
+      )
+    }
+
+    if (error instanceof ValidationError) {
+      return NextResponse.json(
+        { error: (error as ValidationError).message },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json(
       { error: '見積もりの投稿に失敗しました' },
