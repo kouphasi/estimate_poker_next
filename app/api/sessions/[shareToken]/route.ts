@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/infrastructure/database/prisma';
 
 // GET /api/sessions/[shareToken] - セッション情報と見積もり一覧を取得
 export async function GET(

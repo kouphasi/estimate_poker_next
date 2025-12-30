@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/infrastructure/database/prisma'
 import { generateShareToken, generateOwnerToken } from '@/lib/utils'
-import { isPrismaError } from '@/lib/prisma-errors'
+import { isPrismaError } from '@/infrastructure/database/prismaErrors'
 
 // POST /api/sessions - セッションを作成
 export async function POST(request: NextRequest) {

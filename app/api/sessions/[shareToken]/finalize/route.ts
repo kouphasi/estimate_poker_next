@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/infrastructure/database/prisma'
 
 // POST /api/sessions/[shareToken]/finalize - 工数確定
 export async function POST(

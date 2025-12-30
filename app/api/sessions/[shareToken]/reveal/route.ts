@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/infrastructure/database/prisma'
 
 // PATCH /api/sessions/[shareToken]/reveal - 公開/非公開切り替え
 export async function PATCH(

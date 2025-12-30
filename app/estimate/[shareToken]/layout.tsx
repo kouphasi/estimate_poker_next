@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/infrastructure/database/prisma'
 
 interface Props {
   params: Promise<{

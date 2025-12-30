@@ -43,20 +43,20 @@
 
 ### 値オブジェクト（全機能で共有）
 
-- [ ] T006 [P] Create Email value object in src/domain/user/Email.ts
-- [ ] T007 [P] Create ShareToken value object in src/domain/session/ShareToken.ts
-- [ ] T008 [P] Create OwnerToken value object in src/domain/session/OwnerToken.ts
-- [ ] T009 [P] Create SessionStatus enum in src/domain/session/SessionStatus.ts
+- [x] T006 [P] Create Email value object in src/domain/user/Email.ts
+- [x] T007 [P] Create ShareToken value object in src/domain/session/ShareToken.ts
+- [x] T008 [P] Create OwnerToken value object in src/domain/session/OwnerToken.ts
+- [x] T009 [P] Create SessionStatus enum in src/domain/session/SessionStatus.ts
 
 ### Prismaクライアント移行
 
-- [ ] T010 Move lib/prisma.ts to src/infrastructure/database/prisma.ts
-- [ ] T011 Update all existing imports of lib/prisma.ts to use @/infrastructure/database/prisma
+- [x] T010 Move lib/prisma.ts to src/infrastructure/database/prisma.ts
+- [x] T011 Update all existing imports of lib/prisma.ts to use @/infrastructure/database/prisma
 
 ### 共通エラークラス
 
-- [ ] T012 [P] Create domain error classes in src/domain/errors/DomainError.ts (InvalidEmailError, InvalidTokenError, etc.)
-- [ ] T013 [P] Move lib/prisma-errors.ts to src/infrastructure/database/prismaErrors.ts
+- [x] T012 [P] Create domain error classes in src/domain/errors/DomainError.ts (InvalidEmailError, InvalidTokenError, etc.)
+- [x] T013 [P] Move lib/prisma-errors.ts to src/infrastructure/database/prismaErrors.ts
 
 **Checkpoint**: 共通基盤コンポーネント準備完了 - ユーザーストーリー実装開始可能
 
