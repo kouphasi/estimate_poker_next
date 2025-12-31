@@ -135,13 +135,13 @@
 
 ### Implementation for User Story 5
 
-- [ ] T036 [US5] Create GET /api/projects/[projectId]/members/route.ts (メンバー一覧API)
-- [ ] T037 [US5] Create DELETE /api/projects/[projectId]/members/[memberId]/route.ts (メンバー削除API)
-- [ ] T038 [US5] Create app/projects/[projectId]/members/page.tsx (メンバー管理ページ)
-- [ ] T039 [US5] Create MemberList component in app/components/MemberList.tsx
-- [ ] T040 [US5] Add delete button with confirmation dialog (owner only) in MemberList component
-- [ ] T041 [US5] Prevent owner self-deletion in members/[memberId]/route.ts
-- [ ] T042 [US5] Add "メンバー" tab/link to app/projects/[projectId]/page.tsx
+- [X] T036 [US5] Create GET /api/projects/[projectId]/members/route.ts (メンバー一覧API)
+- [X] T037 [US5] Create DELETE /api/projects/[projectId]/members/[memberId]/route.ts (メンバー削除API)
+- [X] T038 [US5] Create app/projects/[projectId]/members/page.tsx (メンバー管理ページ)
+- [X] T039 [US5] Implement member list with role badge (integrated in members page)
+- [X] T040 [US5] Add delete button with confirmation dialog (owner only)
+- [X] T041 [US5] Prevent owner self-deletion in members/[memberId]/route.ts
+- [X] T042 [US5] Add "メンバー管理" link to app/projects/[projectId]/page.tsx
 
 **Checkpoint**: User Story 5 complete - オーナーがメンバーを管理できる
 
