@@ -11,9 +11,9 @@ test.describe('セッション作成・見積もりフロー', () => {
 
   // ヘルパー関数: セッションを作成
   async function createSession(page: import('@playwright/test').Page) {
-    await page.click('a:has-text("新規セッション")');
+    await page.click('button:has-text("新規作成")');
     await expect(page).toHaveURL(/\/sessions\/new/);
-    await page.click('button:has-text("セッション作成")');
+    await page.click('button:has-text("セッションを作成")');
     await expect(page).toHaveURL(/\/estimate\/[a-zA-Z0-9_-]+/);
   }
 
@@ -27,8 +27,8 @@ test.describe('セッション作成・見積もりフロー', () => {
     // ステップ3: 見積もりを選択
     await page.click('button:has-text("3d")');
 
-    // ステップ4: 参加者一覧に自分が表示されることを確認
-    await expect(page.locator('text=セッションオーナー')).toBeVisible();
+    // ステップ4: 参加者一覧に自分が表示されることを確認（exactマッチで重複回避）
+    await expect(page.getByText('セッションオーナー', { exact: true })).toBeVisible();
 
     // ステップ5: 提出状態が表示されることを確認
     await expect(page.locator('text=提出済み')).toBeVisible();
@@ -61,9 +61,9 @@ test.describe('セッション作成・見積もりフロー', () => {
     // 見積もりを選択
     await page2.click('button:has-text("2d")');
 
-    // 両方のユーザーが参加者一覧に表示されることを確認
-    await expect(page1.locator('text=ユーザー1')).toBeVisible();
-    await expect(page1.locator('text=ユーザー2')).toBeVisible({ timeout: 10000 });
+    // 両方のユーザーが参加者一覧に表示されることを確認（exactマッチで重複回避）
+    await expect(page1.getByText('ユーザー1', { exact: true })).toBeVisible();
+    await expect(page1.getByText('ユーザー2', { exact: true })).toBeVisible({ timeout: 10000 });
 
     // クリーンアップ
     await context1.close();
@@ -97,14 +97,12 @@ test.describe('セッション作成・見積もりフロー', () => {
     await page.click('button:has-text("公開")');
     await expect(page.locator('text=平均')).toBeVisible();
 
-    // 確定ボタンをクリック
-    const finalizeButton = page.locator('button:has-text("確定")');
-    if (await finalizeButton.isVisible()) {
-      await finalizeButton.click();
+    // 確定工数を入力して確定ボタンをクリック
+    await page.getByPlaceholder('確定工数を入力（日数）').fill('2');
+    await page.click('button:has-text("工数を確定")');
 
-      // 確定工数が表示されることを確認
-      await expect(page.locator('text=確定工数')).toBeVisible({ timeout: 5000 });
-    }
+    // セッションが確定状態になることを確認（FINALIZEDステータス）
+    await expect(page.getByText('確定済み')).toBeVisible({ timeout: 5000 });
   });
 
   test('自由記述で見積もりを入力できる', async ({ page }) => {
@@ -114,11 +112,11 @@ test.describe('セッション作成・見積もりフロー', () => {
     // 自由記述ボタンをクリック
     await page.click('button:has-text("自由記述")');
 
-    // 入力フォームが表示されることを確認
-    await expect(page.locator('input[type="number"]')).toBeVisible();
+    // 入力フォームが表示されることを確認（placeholderで特定）
+    await expect(page.getByPlaceholder('日数を入力')).toBeVisible();
 
     // カスタム値を入力
-    await page.fill('input[type="number"]', '5');
+    await page.getByPlaceholder('日数を入力').fill('5');
     await page.click('button:has-text("決定")');
 
     // 提出状態になることを確認

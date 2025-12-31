@@ -44,14 +44,14 @@ test.describe('ゲストログインフロー', () => {
     // マイページに遷移
     await expect(page).toHaveURL(/\/mypage/);
 
-    // セッション作成リンクをクリック
-    await page.click('a:has-text("新規セッション")');
+    // セッション作成ボタンをクリック（セッション一覧の「新規作成」ボタン）
+    await page.click('button:has-text("新規作成")');
 
     // セッション作成ページに遷移
     await expect(page).toHaveURL(/\/sessions\/new/);
 
     // セッション作成ボタンをクリック
-    await page.click('button:has-text("セッション作成")');
+    await page.click('button:has-text("セッションを作成")');
 
     // セッションページに遷移
     await expect(page).toHaveURL(/\/estimate\//);

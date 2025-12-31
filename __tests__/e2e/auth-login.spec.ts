@@ -1,41 +1,48 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('認証ログインフロー', () => {
-  // テスト用のユーザー情報（各テストで一意になるようにする）
-  const uniqueId = Date.now();
-  const testUser = {
-    email: `e2etest-${uniqueId}@example.com`,
-    password: 'Test1234!',
-    confirmPassword: 'Test1234!',
-    nickname: 'E2E認証ユーザー',
-  };
-
   test('新規ユーザー登録ができる', async ({ page }) => {
-    // ステップ1: 登録ページにアクセス
+    // 各テストで一意のメールアドレスを生成（ランダム文字列追加で重複回避）
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const testUser = {
+      email: `e2etest-${uniqueId}@example.com`,
+      password: 'Test1234!',
+      confirmPassword: 'Test1234!',
+      nickname: 'E2E認証ユーザー',
+    };
+    // 登録ページにアクセス
     await page.goto('/register');
 
-    // ステップ2: 登録フォームに入力（id属性を使用）
+    // 登録フォームに入力（id属性を使用）
     await page.fill('#email', testUser.email);
     await page.fill('#nickname', testUser.nickname);
     await page.fill('#password', testUser.password);
     await page.fill('#confirmPassword', testUser.confirmPassword);
 
-    // ステップ3: 登録ボタンをクリック
+    // 登録ボタンをクリック
     await page.click('button:has-text("登録")');
 
-    // ステップ4: ログインページにリダイレクト（registered=trueで遷移）
+    // ログインページにリダイレクト（registered=trueで遷移）
     await expect(page).toHaveURL(/\/login.*registered=true/, { timeout: 10000 });
   });
 
   test('登録済みユーザーでログインできる', async ({ page, context }) => {
+    // 各テストで一意のメールアドレスを生成（ランダム文字列追加で重複回避）
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const testUser = {
+      email: `e2elogin-${uniqueId}@example.com`,
+      password: 'Test1234!',
+      nickname: 'E2Eログインユーザー',
+    };
+
     // まず登録する
     await page.goto('/register');
     await page.fill('#email', testUser.email);
     await page.fill('#nickname', testUser.nickname);
     await page.fill('#password', testUser.password);
-    await page.fill('#confirmPassword', testUser.confirmPassword);
+    await page.fill('#confirmPassword', testUser.password);
     await page.click('button:has-text("登録")');
-    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
 
     // クッキーをクリアしてログイン
     await context.clearCookies();
@@ -53,9 +60,10 @@ test.describe('認証ログインフロー', () => {
   });
 
   test('認証ユーザーはプロジェクトを作成できる', async ({ page }) => {
-    // まず登録してログイン
+    // まず登録してログイン（ランダム文字列追加で重複回避）
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     const projectTestUser = {
-      email: `e2eproject-${Date.now()}@example.com`,
+      email: `e2eproject-${uniqueId}@example.com`,
       password: 'Test1234!',
       nickname: 'プロジェクトテストユーザー',
     };
@@ -98,9 +106,10 @@ test.describe('認証ログインフロー', () => {
   });
 
   test('誤ったパスワードでログインできない', async ({ page }) => {
-    // まず登録
+    // まず登録（ランダム文字列追加で重複回避）
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     const wrongPwUser = {
-      email: `e2ewrongpw-${Date.now()}@example.com`,
+      email: `e2ewrongpw-${uniqueId}@example.com`,
       password: 'Test1234!',
       nickname: 'エラーテストユーザー',
     };
@@ -121,7 +130,7 @@ test.describe('認証ログインフロー', () => {
     // エラーメッセージが表示されることを確認
     await expect(page.locator('.bg-red-50')).toBeVisible({ timeout: 5000 });
 
-    // ログインページに留まることを確認
-    await expect(page).toHaveURL('/login');
+    // ログインページに留まることを確認（クエリパラメータは無視）
+    await expect(page).toHaveURL(/\/login/);
   });
 });
