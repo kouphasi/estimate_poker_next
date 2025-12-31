@@ -33,7 +33,7 @@ describe('SessionStatus Enum', () => {
 
   it('should be comparable with string values', () => {
     const status: SessionStatus = SessionStatus.ACTIVE;
-    expect(status === 'ACTIVE').toBe(true);
-    expect(status === 'FINALIZED').toBe(false);
+    expect(status === ('ACTIVE' as SessionStatus)).toBe(true);
+    expect(status === ('FINALIZED' as SessionStatus)).toBe(false);
   });
 });

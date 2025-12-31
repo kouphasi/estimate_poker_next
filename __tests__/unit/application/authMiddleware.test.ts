@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   isProtectedPath,
   checkAuthentication,
@@ -44,7 +44,7 @@ describe('authMiddleware', () => {
 
   describe('checkAuthentication', () => {
     it('should be authenticated with NextAuth token', () => {
-      const token: JWT = { sub: 'user-123', name: 'Test User' };
+      const token = { sub: 'user-123', name: 'Test User' } as JWT;
       const result = checkAuthentication(token, undefined, undefined, '/mypage');
 
       expect(result.isAuthenticated).toBe(true);
@@ -91,33 +91,33 @@ describe('authMiddleware', () => {
     });
 
     it('should detect nickname setup needed when nickname equals email', () => {
-      const token: JWT = {
+      const token = {
         sub: 'user-123',
         nickname: 'test@example.com',
         email: 'test@example.com',
-      };
+      } as JWT;
       const result = checkAuthentication(token, undefined, undefined, '/mypage');
 
       expect(result.needsNicknameSetup).toBe(true);
     });
 
     it('should not need nickname setup when nickname differs from email', () => {
-      const token: JWT = {
+      const token = {
         sub: 'user-123',
         nickname: 'My Nickname',
         email: 'test@example.com',
-      };
+      } as JWT;
       const result = checkAuthentication(token, undefined, undefined, '/mypage');
 
       expect(result.needsNicknameSetup).toBe(false);
     });
 
     it('should not need nickname setup on setup-nickname page', () => {
-      const token: JWT = {
+      const token = {
         sub: 'user-123',
         nickname: 'test@example.com',
         email: 'test@example.com',
-      };
+      } as JWT;
       const result = checkAuthentication(
         token,
         undefined,
@@ -135,7 +135,7 @@ describe('authMiddleware', () => {
     });
 
     it('should return the token in result', () => {
-      const token: JWT = { sub: 'user-123', name: 'Test' };
+      const token = { sub: 'user-123', name: 'Test' } as JWT;
       const result = checkAuthentication(token, undefined, undefined, '/mypage');
 
       expect(result.token).toBe(token);
@@ -171,7 +171,7 @@ describe('authMiddleware', () => {
         hasNextAuthToken: true,
         hasSimpleLoginCookie: false,
         hasNextAuthCookie: false,
-        token: { sub: 'user-123' },
+        token: { sub: 'user-123' } as JWT,
       };
 
       logAuthDebug('/mypage', [{ name: 'session', value: 'abc' }], result);
@@ -227,7 +227,7 @@ describe('authMiddleware', () => {
         hasNextAuthToken: true,
         hasSimpleLoginCookie: false,
         hasNextAuthCookie: false,
-        token: { sub: 'user-123', nickname: 'test@example.com', email: 'test@example.com' },
+        token: { sub: 'user-123', nickname: 'test@example.com', email: 'test@example.com' } as JWT,
       };
 
       logAuthDebug('/mypage', [], result);
