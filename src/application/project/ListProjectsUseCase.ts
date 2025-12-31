@@ -23,14 +23,21 @@ export class ListProjectsUseCase {
   async execute(ownerId: string): Promise<ProjectSummary[]> {
     const projects = await this.projectRepository.findByOwnerId(ownerId);
 
-    return projects.map((project) => ({
-      id: project.id,
-      name: project.name,
-      description: project.description,
-      ownerId: project.ownerId,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
-      sessionsCount: 0, // Note: This will need to be populated by repository or separate query
-    }));
+    const projectSummaries = await Promise.all(
+      projects.map(async (project) => {
+        const sessionsCount = await this.projectRepository.countSessions(project.id);
+        return {
+          id: project.id,
+          name: project.name,
+          description: project.description,
+          ownerId: project.ownerId,
+          createdAt: project.createdAt,
+          updatedAt: project.updatedAt,
+          sessionsCount,
+        };
+      })
+    );
+
+    return projectSummaries;
   }
 }

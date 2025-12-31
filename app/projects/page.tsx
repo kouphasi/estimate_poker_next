@@ -11,9 +11,7 @@ interface Project {
   name: string;
   description: string | null;
   createdAt: string;
-  _count: {
-    sessions: number;
-  };
+  sessionsCount: number;
 }
 
 export default function ProjectsPage() {
@@ -164,7 +162,7 @@ export default function ProjectsPage() {
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                       />
                     </svg>
-                    {project._count.sessions} セッション
+                    {project.sessionsCount} セッション
                   </div>
                   <div className="text-xs text-gray-400">
                     {new Date(project.createdAt).toLocaleDateString("ja-JP")}
