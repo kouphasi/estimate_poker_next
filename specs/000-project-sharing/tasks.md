@@ -97,13 +97,13 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Add GET method to /api/projects/[projectId]/join-requests/route.ts (リクエスト一覧取得)
-- [ ] T025 [US3] Create PATCH /api/projects/[projectId]/join-requests/[requestId]/route.ts (承認/拒否API)
-- [ ] T026 [US3] Add join request count badge to app/projects/[projectId]/page.tsx
-- [ ] T027 [US3] Create JoinRequestList component in app/components/JoinRequestList.tsx
-- [ ] T028 [US3] Add approve/reject buttons with confirmation to JoinRequestList component
-- [ ] T029 [US3] Create ProjectMember record on approval in join-requests/[requestId]/route.ts
-- [ ] T030 [US3] Delete JoinRequest record on rejection in join-requests/[requestId]/route.ts
+- [X] T024 [US3] Add GET method to /api/projects/[projectId]/join-requests/route.ts (リクエスト一覧取得)
+- [X] T025 [US3] Create PATCH /api/projects/[projectId]/join-requests/[requestId]/route.ts (承認/拒否API)
+- [X] T026 [US3] Add join request count badge to app/projects/[projectId]/page.tsx
+- [X] T027 [US3] Create JoinRequestList component in app/components/JoinRequestList.tsx
+- [X] T028 [US3] Add approve/reject buttons with confirmation to JoinRequestList component
+- [X] T029 [US3] Create ProjectMember record on approval in join-requests/[requestId]/route.ts
+- [X] T030 [US3] Delete JoinRequest record on rejection in join-requests/[requestId]/route.ts
 
 **Checkpoint**: User Story 3 complete - オーナーが参加リクエストを承認/拒否できる
 

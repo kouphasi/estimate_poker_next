@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { useToast } from "@/app/components/Toast";
+import JoinRequestList from "@/app/components/JoinRequestList";
 
 interface Session {
   id: string;
@@ -49,6 +50,9 @@ export default function ProjectDetailPage() {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [generatingInvite, setGeneratingInvite] = useState(false);
   const [showInviteSection, setShowInviteSection] = useState(false);
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
@@ -232,6 +236,33 @@ export default function ProjectDetailPage() {
     await handleGenerateInvite();
   };
 
+  const fetchJoinRequests = async () => {
+    setLoadingRequests(true);
+
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/join-requests?status=PENDING`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch join requests");
+      }
+
+      const data = await response.json();
+      setJoinRequests(data.requests);
+    } catch (err) {
+      console.error("Error fetching join requests:", err);
+      showToast("リクエスト一覧の取得に失敗しました", "error");
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleOpenRequestsModal = async () => {
+    await fetchJoinRequests();
+    setShowRequestsModal(true);
+  };
+
   const calculateStatistics = () => {
     if (!project) return { total: 0, finalized: 0, totalEffort: 0, completionRate: 0 };
 
@@ -400,7 +431,17 @@ export default function ProjectDetailPage() {
         {/* Invite URL Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">プロジェクト招待</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-bold text-gray-900">プロジェクト招待</h2>
+              {joinRequests.length > 0 && (
+                <button
+                  onClick={handleOpenRequestsModal}
+                  className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold hover:bg-red-200"
+                >
+                  参加リクエスト ({joinRequests.length})
+                </button>
+              )}
+            </div>
             {!showInviteSection && (
               <button
                 onClick={handleGenerateInvite}
@@ -580,6 +621,40 @@ export default function ProjectDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Join Requests Modal */}
+        {showRequestsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                参加リクエスト ({joinRequests.length})
+              </h3>
+
+              {loadingRequests ? (
+                <div className="text-center py-8">
+                  <LoadingSpinner size="small" />
+                </div>
+              ) : (
+                <JoinRequestList
+                  projectId={projectId}
+                  requests={joinRequests}
+                  onUpdate={() => {
+                    fetchJoinRequests();
+                  }}
+                />
+              )}
+
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowRequestsModal(false)}
+                  className="w-full px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  閉じる
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && project && (
