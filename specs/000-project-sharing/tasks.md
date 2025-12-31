@@ -76,14 +76,14 @@
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Create GET /api/invite/[token]/route.ts (招待トークン検証・プロジェクト情報取得API)
-- [ ] T017 [US2] Create POST /api/projects/[projectId]/join-requests/route.ts (参加申請API)
-- [ ] T018 [US2] Create app/invite/[inviteToken]/page.tsx (参加申請ページ)
-- [ ] T019 [US2] Add authentication check and redirect to login in app/invite/[inviteToken]/page.tsx
-- [ ] T020 [US2] Add callbackUrl parameter to login redirect for post-login return
-- [ ] T021 [US2] Display project info and "申請する" button in app/invite/[inviteToken]/page.tsx
-- [ ] T022 [US2] Handle status display (pending, already member, owner) in app/invite/[inviteToken]/page.tsx
-- [ ] T023 [US2] Handle error cases (invalid token, already applied) with proper error messages
+- [X] T016 [US2] Create GET /api/invite/[token]/route.ts (招待トークン検証・プロジェクト情報取得API)
+- [X] T017 [US2] Create POST /api/projects/[projectId]/join-requests/route.ts (参加申請API)
+- [X] T018 [US2] Create app/invite/[inviteToken]/page.tsx (参加申請ページ)
+- [X] T019 [US2] Add authentication check and redirect to login in app/invite/[inviteToken]/page.tsx
+- [X] T020 [US2] Add callbackUrl parameter to login redirect for post-login return
+- [X] T021 [US2] Display project info and "申請する" button in app/invite/[inviteToken]/page.tsx
+- [X] T022 [US2] Handle status display (pending, already member, owner) in app/invite/[inviteToken]/page.tsx
+- [X] T023 [US2] Handle error cases (invalid token, already applied) with proper error messages
 
 **Checkpoint**: User Story 2 complete - ユーザーが招待URLから参加申請できる
 
