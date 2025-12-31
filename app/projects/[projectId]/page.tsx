@@ -71,6 +71,7 @@ export default function ProjectDetailPage() {
 
     if (authStatus === "authenticated") {
       fetchProject();
+      fetchJoinRequests(); // Load join requests on page load
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authStatus, projectId]);

@@ -101,6 +101,11 @@ test.describe('プロジェクト共有フロー', () => {
       // === オーナーが参加リクエストを承認 ===
       // オーナーのプロジェクト詳細ページをリロード
       await ownerPage.reload();
+      await ownerPage.waitForLoadState('networkidle', { timeout: 15000 });
+
+      // デバッグ: ページの内容を確認
+      const pageContent = await ownerPage.content();
+      console.log('Page contains "参加リクエスト":', pageContent.includes('参加リクエスト'));
 
       // 参加リクエスト数のバッジが表示されることを確認
       const requestBadge = ownerPage.locator('text=/参加リクエスト.*1/');
