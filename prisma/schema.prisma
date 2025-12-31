@@ -28,6 +28,10 @@ model User {
   sessions      EstimationSession[]
   estimates     Estimate[]
 
+  // プロジェクト共有機能
+  joinRequests      JoinRequest[]
+  projectMemberships ProjectMember[]
+
   @@map("users")
 }
 
@@ -81,6 +85,11 @@ model Project {
 
   sessions      EstimationSession[]
 
+  // プロジェクト共有機能
+  invite       ProjectInvite?
+  joinRequests JoinRequest[]
+  members      ProjectMember[]
+
   @@map("projects")
 }
 
@@ -121,4 +130,55 @@ model Estimate {
 
   @@unique([sessionId, userId])
   @@map("estimates")
+}
+
+// プロジェクト共有機能のモデル
+
+model ProjectInvite {
+  id        String   @id @default(cuid())
+  projectId String   @unique @map("project_id")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("project_invites")
+}
+
+enum JoinRequestStatus {
+  PENDING   // 保留中（承認待ち）
+  APPROVED  // 承認済み
+  REJECTED  // 拒否
+}
+
+model JoinRequest {
+  id        String            @id @default(cuid())
+  projectId String            @map("project_id")
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String            @map("user_id")
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@unique([projectId, userId])
+  @@map("join_requests")
+}
+
+enum MemberRole {
+  OWNER   // プロジェクトオーナー
+  MEMBER  // 一般メンバー
+}
+
+model ProjectMember {
+  id        String     @id @default(cuid())
+  projectId String     @map("project_id")
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      MemberRole @default(MEMBER)
+  joinedAt  DateTime   @default(now()) @map("joined_at")
+
+  @@unique([projectId, userId])
+  @@map("project_members")
 }

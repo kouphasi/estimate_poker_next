@@ -9,6 +9,7 @@ export interface ProjectDetail {
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;
+  isOwner: boolean;
   sessions: Array<{
     id: string;
     name: string | null;
@@ -59,6 +60,7 @@ export class GetProjectUseCase {
       ownerId: project.ownerId,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
+      isOwner: project.isOwnedBy(requestUserId),
       sessions: sessions.map((session) => ({
         id: session.id,
         name: session.name,

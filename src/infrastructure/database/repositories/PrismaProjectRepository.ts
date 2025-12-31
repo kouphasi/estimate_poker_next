@@ -43,22 +43,49 @@ export class PrismaProjectRepository implements ProjectRepository {
   }
 
   async save(project: Project): Promise<Project> {
-    const data = await this.prisma.project.upsert({
+    // プロジェクトが既に存在するかチェック
+    const existingProject = await this.prisma.project.findUnique({
       where: { id: project.id },
-      update: {
-        name: project.name,
-        description: project.description,
-        updatedAt: new Date(),
-      },
-      create: {
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        ownerId: project.ownerId,
-      },
     });
 
-    return this.toDomain(data);
+    if (existingProject) {
+      // 更新の場合
+      const data = await this.prisma.project.update({
+        where: { id: project.id },
+        data: {
+          name: project.name,
+          description: project.description,
+          updatedAt: new Date(),
+        },
+      });
+      return this.toDomain(data);
+    } else {
+      // 新規作成の場合 - トランザクションでProjectとProjectMemberを同時作成
+      const data = await this.prisma.$transaction(async (tx) => {
+        // プロジェクトを作成
+        const newProject = await tx.project.create({
+          data: {
+            id: project.id,
+            name: project.name,
+            description: project.description,
+            ownerId: project.ownerId,
+          },
+        });
+
+        // オーナーをProjectMemberとして登録
+        await tx.projectMember.create({
+          data: {
+            projectId: newProject.id,
+            userId: newProject.ownerId,
+            role: 'OWNER',
+          },
+        });
+
+        return newProject;
+      });
+
+      return this.toDomain(data);
+    }
   }
 
   async delete(id: string): Promise<void> {
