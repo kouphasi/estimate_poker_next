@@ -26,8 +26,8 @@
 
 **Purpose**: Project initialization and shared type definitions
 
-- [ ] T001 Add project-sharing types in types/project-sharing.ts
-- [ ] T002 [P] Add generateInviteToken() function in lib/utils.ts
+- [X] T001 Add project-sharing types in types/project-sharing.ts
+- [X] T002 [P] Add InviteToken value object in src/domain/project/InviteToken.ts
 
 ---
 
@@ -37,14 +37,14 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Add JoinRequestStatus and MemberRole enums in prisma/schema.prisma
-- [ ] T004 Add ProjectInvite model in prisma/schema.prisma
-- [ ] T005 [P] Add JoinRequest model in prisma/schema.prisma
-- [ ] T006 [P] Add ProjectMember model in prisma/schema.prisma
-- [ ] T007 Add relations to Project model (invite, joinRequests, members) in prisma/schema.prisma
-- [ ] T008 Add relations to User model (joinRequests, projectMemberships) in prisma/schema.prisma
-- [ ] T009 Run Prisma migration: npx prisma migrate dev --name add_project_sharing
-- [ ] T010 Create data migration script for existing projects (add owner as ProjectMember) in prisma/migrations/
+- [X] T003 Add JoinRequestStatus and MemberRole enums in prisma/schema.prisma
+- [X] T004 Add ProjectInvite model in prisma/schema.prisma
+- [X] T005 [P] Add JoinRequest model in prisma/schema.prisma
+- [X] T006 [P] Add ProjectMember model in prisma/schema.prisma
+- [X] T007 Add relations to Project model (invite, joinRequests, members) in prisma/schema.prisma
+- [X] T008 Add relations to User model (joinRequests, projectMemberships) in prisma/schema.prisma
+- [X] T009 Run Prisma db push (schema sync)
+- [X] T010 Create data migration script for existing projects (add owner as ProjectMember) in prisma/migrations/
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -58,11 +58,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Create POST /api/projects/[projectId]/invite/route.ts (招待URL発行API)
-- [ ] T012 [US1] Add invite URL display section to app/projects/[projectId]/page.tsx
-- [ ] T013 [US1] Add "Copy to clipboard" button with feedback in app/projects/[projectId]/page.tsx
-- [ ] T014 [US1] Add invite URL regeneration confirmation dialog in app/projects/[projectId]/page.tsx
-- [ ] T015 [US1] Handle error cases (not owner, project not found) with proper error messages
+- [X] T011 [US1] Create POST /api/projects/[projectId]/invite/route.ts (招待URL発行API)
+- [X] T012 [US1] Add invite URL display section to app/projects/[projectId]/page.tsx
+- [X] T013 [US1] Add "Copy to clipboard" button with feedback in app/projects/[projectId]/page.tsx
+- [X] T014 [US1] Add invite URL regeneration confirmation dialog in app/projects/[projectId]/page.tsx
+- [X] T015 [US1] Handle error cases (not owner, project not found) with proper error messages
 
 **Checkpoint**: User Story 1 complete - オーナーが招待URLを発行・コピーできる
 
