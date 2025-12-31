@@ -15,7 +15,6 @@ interface Session {
 }
 
 export default function SessionsPage() {
-  useSession(); // セッション状態を確認するために使用
   const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
