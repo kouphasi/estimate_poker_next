@@ -52,6 +52,11 @@ describe('Token Generation', () => {
       expect(token1.equals(token2)).toBe(true);
       expect(token1.equals(token3)).toBe(false);
     });
+
+    it('should return string representation via toString', () => {
+      const token = ShareToken.fromString('ABCDabcd12340000');
+      expect(token.toString()).toBe('ABCDabcd12340000');
+    });
   });
 
   describe('OwnerToken', () => {
@@ -102,6 +107,11 @@ describe('Token Generation', () => {
 
       expect(token1.equals(token2)).toBe(true);
       expect(token1.equals(token3)).toBe(false);
+    });
+
+    it('should return string representation via toString', () => {
+      const token = OwnerToken.fromString('ABCDabcd1234567890123456789012ab');
+      expect(token.toString()).toBe('ABCDabcd1234567890123456789012ab');
     });
   });
 
