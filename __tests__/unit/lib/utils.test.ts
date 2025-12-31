@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { generateShareToken, generateOwnerToken } from '@/lib/utils';
+import { ShareToken } from '@/domain/session/ShareToken';
+import { OwnerToken } from '@/domain/session/OwnerToken';
 
 describe('Token Generation', () => {
-  describe('generateShareToken', () => {
+  describe('ShareToken', () => {
     it('should generate 16-character base64url token', () => {
-      const token = generateShareToken();
+      const token = ShareToken.generate();
 
       // Base64url形式（A-Z, a-z, 0-9, _, -）で16文字
-      expect(token).toMatch(/^[A-Za-z0-9_-]{16}$/);
+      expect(token.value).toMatch(/^[A-Za-z0-9_-]{16}$/);
     });
 
     it('should generate unique tokens on successive calls', () => {
@@ -15,8 +16,8 @@ describe('Token Generation', () => {
       const iterations = 100;
 
       for (let i = 0; i < iterations; i++) {
-        const token = generateShareToken();
-        tokens.add(token);
+        const token = ShareToken.generate();
+        tokens.add(token.value);
       }
 
       // すべてのトークンがユニークであることを確認
@@ -27,20 +28,38 @@ describe('Token Generation', () => {
       const iterations = 50;
 
       for (let i = 0; i < iterations; i++) {
-        const token = generateShareToken();
+        const token = ShareToken.generate();
 
         // Base64urlに含まれない文字が含まれていないことを確認
-        expect(token).not.toMatch(/[+\/=]/);
+        expect(token.value).not.toMatch(/[+\/=]/);
       }
+    });
+
+    it('should create from valid string', () => {
+      const token = ShareToken.fromString('ABCDabcd12340000');
+      expect(token.value).toBe('ABCDabcd12340000');
+    });
+
+    it('should throw error for invalid length', () => {
+      expect(() => ShareToken.fromString('short')).toThrow();
+    });
+
+    it('should compare equality correctly', () => {
+      const token1 = ShareToken.fromString('ABCDabcd12340000');
+      const token2 = ShareToken.fromString('ABCDabcd12340000');
+      const token3 = ShareToken.fromString('XYZWxyzw56780000');
+
+      expect(token1.equals(token2)).toBe(true);
+      expect(token1.equals(token3)).toBe(false);
     });
   });
 
-  describe('generateOwnerToken', () => {
-    it('should generate 43-character base64url token', () => {
-      const token = generateOwnerToken();
+  describe('OwnerToken', () => {
+    it('should generate 32-character base64url token', () => {
+      const token = OwnerToken.generate();
 
-      // Base64url形式（A-Z, a-z, 0-9, _, -）で43文字（32バイト → base64は43文字）
-      expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+      // Base64url形式（A-Z, a-z, 0-9, _, -）で32文字
+      expect(token.value).toMatch(/^[A-Za-z0-9_-]{32}$/);
     });
 
     it('should generate unique tokens on successive calls', () => {
@@ -48,8 +67,8 @@ describe('Token Generation', () => {
       const iterations = 100;
 
       for (let i = 0; i < iterations; i++) {
-        const token = generateOwnerToken();
-        tokens.add(token);
+        const token = OwnerToken.generate();
+        tokens.add(token.value);
       }
 
       // すべてのトークンがユニークであることを確認
@@ -60,23 +79,43 @@ describe('Token Generation', () => {
       const iterations = 50;
 
       for (let i = 0; i < iterations; i++) {
-        const token = generateOwnerToken();
+        const token = OwnerToken.generate();
 
         // Base64urlに含まれない文字が含まれていないことを確認
-        expect(token).not.toMatch(/[+\/=]/);
+        expect(token.value).not.toMatch(/[+\/=]/);
       }
     });
 
+    it('should create from valid string', () => {
+      const token = OwnerToken.fromString('ABCDabcd1234567890123456789012ab');
+      expect(token.value).toBe('ABCDabcd1234567890123456789012ab');
+    });
+
+    it('should throw error for invalid length', () => {
+      expect(() => OwnerToken.fromString('short')).toThrow();
+    });
+
+    it('should compare equality correctly', () => {
+      const token1 = OwnerToken.fromString('ABCDabcd1234567890123456789012ab');
+      const token2 = OwnerToken.fromString('ABCDabcd1234567890123456789012ab');
+      const token3 = OwnerToken.fromString('XYZWxyzw9876543210987654321098cd');
+
+      expect(token1.equals(token2)).toBe(true);
+      expect(token1.equals(token3)).toBe(false);
+    });
+  });
+
+  describe('Token Differentiation', () => {
     it('should be different from shareToken', () => {
-      const shareToken = generateShareToken();
-      const ownerToken = generateOwnerToken();
+      const shareToken = ShareToken.generate();
+      const ownerToken = OwnerToken.generate();
 
       // shareTokenとownerTokenは異なることを確認
-      expect(shareToken).not.toBe(ownerToken);
+      expect(shareToken.value).not.toBe(ownerToken.value);
 
       // 長さも異なることを確認
-      expect(shareToken.length).toBe(16);
-      expect(ownerToken.length).toBe(43); // 32バイト → base64で43文字
+      expect(shareToken.value.length).toBe(16);
+      expect(ownerToken.value.length).toBe(32);
     });
   });
 });
