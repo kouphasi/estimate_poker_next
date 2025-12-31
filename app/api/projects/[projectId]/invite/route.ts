@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
-import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/infrastructure/auth/nextAuthConfig';
+import { prisma } from '@/infrastructure/database/prisma';
 import { InviteToken } from '@/src/domain/project/InviteToken';
 
 /**

@@ -50,7 +50,16 @@ export default function ProjectDetailPage() {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [generatingInvite, setGeneratingInvite] = useState(false);
   const [showInviteSection, setShowInviteSection] = useState(false);
-  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [joinRequests, setJoinRequests] = useState<Array<{
+    id: string;
+    user: {
+      id: string;
+      nickname: string;
+      email: string | null;
+    };
+    status: string;
+    createdAt: string;
+  }>>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [showRequestsModal, setShowRequestsModal] = useState(false);
 

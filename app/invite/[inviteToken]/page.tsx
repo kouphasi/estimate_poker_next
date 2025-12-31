@@ -23,12 +23,11 @@ interface InviteData {
 }
 
 function InvitePageContent() {
-  const { status: authStatus, data: session } = useSession();
+  const { status: authStatus } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const callbackUrl = searchParams.get("callbackUrl");
-
   const [inviteToken, setInviteToken] = useState<string>("");
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
   const [loading, setLoading] = useState(true);

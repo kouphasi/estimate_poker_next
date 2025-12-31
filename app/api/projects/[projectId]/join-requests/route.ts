@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
-import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/infrastructure/auth/nextAuthConfig';
+import { prisma } from '@/infrastructure/database/prisma';
 
 /**
  * GET /api/projects/[projectId]/join-requests
@@ -49,7 +49,7 @@ export async function GET(
     const requests = await prisma.joinRequest.findMany({
       where: {
         projectId,
-        status: status as any,
+        status: status as 'PENDING' | 'APPROVED' | 'REJECTED',
       },
       select: {
         id: true,
