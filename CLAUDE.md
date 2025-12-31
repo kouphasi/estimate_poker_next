@@ -1006,7 +1006,8 @@ This is a **planning poker** application for collaborative effort estimation. Th
 ## Active Technologies
 - TypeScript 5.x (strict mode) + Next.js 16.x (App Router), React 19.x, NextAuth.js v4.x, Prisma 6.x (001-project-sharing)
 - PostgreSQL (via Prisma ORM) (001-project-sharing)
-- TypeScript 5.x (strict mode) + Next.js 16.x (App Router), React 19.x, Prisma 6.x, NextAuth.js v4.x (001-ddd-restructure)
+- TypeScript 5.9.3 (strict mode) (002-test-infrastructure)
+- PostgreSQL (テスト専用DB、Prisma経由) (002-test-infrastructure)
 
 ## Recent Changes
 - 001-project-sharing: Added TypeScript 5.x (strict mode) + Next.js 16.x (App Router), React 19.x, NextAuth.js v4.x, Prisma 6.x

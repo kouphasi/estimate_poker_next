@@ -67,6 +67,78 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Testing
+
+This project includes comprehensive testing infrastructure with unit tests and E2E tests.
+
+### Setup Local Test Database
+
+For running tests locally, you need a PostgreSQL database. The easiest way is using Docker:
+
+```bash
+# Start PostgreSQL in Docker
+docker compose up -d
+
+# Apply migrations to test database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/estimate_poker_test" \
+POSTGRES_URL_NON_POOLING="postgresql://postgres:postgres@localhost:5432/estimate_poker_test" \
+npx prisma migrate deploy
+
+# Stop database when done
+docker compose down
+```
+
+Alternatively, you can create a `.env.test.local` file based on `.env.test.local.example`:
+
+```bash
+cp .env.test.local.example .env.test.local
+# Edit .env.test.local with your database credentials
+```
+
+### Running Tests
+
+```bash
+# Run all unit tests (without database - skips migration tests)
+npm run test:unit
+
+# Run all unit tests with database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/estimate_poker_test" \
+POSTGRES_URL_NON_POOLING="postgresql://postgres:postgres@localhost:5432/estimate_poker_test" \
+npm run test:unit
+
+# Run unit tests with coverage
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/estimate_poker_test" \
+POSTGRES_URL_NON_POOLING="postgresql://postgres:postgres@localhost:5432/estimate_poker_test" \
+npm run test:unit -- --coverage
+
+# Run unit tests in watch mode
+npm run test:watch
+
+# Run E2E tests
+npm run test:e2e
+
+# Run E2E tests in UI mode (interactive)
+npx playwright test --ui
+```
+
+### Test Structure
+
+- **Unit Tests** (`__tests__/unit/`): Component and utility function tests using Vitest
+  - Component tests: React component rendering and behavior
+  - Migration tests: Database schema validation (requires DATABASE_URL)
+  - Utility tests: Pure function testing
+- **E2E Tests** (`__tests__/e2e/`): End-to-end user flow tests using Playwright
+- **Coverage Target**: 60% minimum (lines, functions, branches, statements) - only enforced in CI
+
+### CI/CD
+
+All tests run automatically on GitHub Actions:
+- **Lint & Type Check**: ESLint and TypeScript validation
+- **Unit Tests**: Vitest with coverage reporting (PostgreSQL service provided)
+- **E2E Tests**: Playwright tests with 4-shard parallel execution
+
+Coverage reports are automatically posted to pull requests.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

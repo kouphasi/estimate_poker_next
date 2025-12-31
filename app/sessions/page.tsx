@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useUser } from '@/contexts/UserContext';
 
 interface Session {
@@ -16,7 +15,6 @@ interface Session {
 }
 
 export default function SessionsPage() {
-  useSession(); // セッション状態を確認するために使用
   const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
