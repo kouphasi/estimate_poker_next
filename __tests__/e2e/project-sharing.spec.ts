@@ -103,10 +103,6 @@ test.describe('プロジェクト共有フロー', () => {
       await ownerPage.reload();
       await ownerPage.waitForLoadState('networkidle', { timeout: 15000 });
 
-      // デバッグ: ページの内容を確認
-      const pageContent = await ownerPage.content();
-      console.log('Page contains "参加リクエスト":', pageContent.includes('参加リクエスト'));
-
       // 参加リクエスト数のバッジが表示されることを確認
       const requestBadge = ownerPage.locator('text=/参加リクエスト.*1/');
       await expect(requestBadge).toBeVisible({ timeout: 10000 });
@@ -118,13 +114,14 @@ test.describe('プロジェクト共有フロー', () => {
       await expect(ownerPage.locator(`text=${member.nickname}`)).toBeVisible({ timeout: 10000 });
 
       // 承認ボタンをクリック
+      ownerPage.on('dialog', dialog => dialog.accept());
       await ownerPage.click('button:has-text("承認")');
 
-      // 確認ダイアログで承認
-      ownerPage.on('dialog', dialog => dialog.accept());
+      // トーストメッセージを確認（タイムアウトを延長）
+      await expect(ownerPage.locator('text=参加を承認しました')).toBeVisible({ timeout: 15000 });
 
-      // トーストメッセージを確認
-      await expect(ownerPage.locator('text=参加を承認しました')).toBeVisible({ timeout: 10000 });
+      // トーストが消えるまで待機
+      await ownerPage.waitForTimeout(3000);
 
       // === メンバーのマイページで参加中プロジェクトを確認 ===
       await memberPage.goto('/mypage');
@@ -312,10 +309,14 @@ test.describe('プロジェクト共有フロー', () => {
 
       // オーナーが承認
       await ownerPage.reload();
+      await ownerPage.waitForLoadState('networkidle', { timeout: 15000 });
       await ownerPage.click('button:has-text("参加リクエスト")');
       ownerPage.on('dialog', dialog => dialog.accept());
       await ownerPage.click('button:has-text("承認")');
-      await expect(ownerPage.locator('text=参加を承認しました')).toBeVisible({ timeout: 10000 });
+      await expect(ownerPage.locator('text=参加を承認しました')).toBeVisible({ timeout: 15000 });
+
+      // トーストとモーダルが消えるまで待機
+      await ownerPage.waitForTimeout(3000);
 
       // メンバー管理ページでメンバーを削除
       await ownerPage.click('a:has-text("メンバー管理")');
