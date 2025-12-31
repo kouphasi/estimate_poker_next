@@ -43,13 +43,6 @@ export default function NewProjectPage() {
       }
 
       const data = await response.json();
-      console.log('API Response:', JSON.stringify(data));
-      console.log('Project ID:', data.projectId);
-
-      if (!data.projectId) {
-        throw new Error('プロジェクトIDが取得できませんでした');
-      }
-
       router.push(`/projects/${data.projectId}`);
     } catch (err) {
       console.error("Error creating project:", err);
