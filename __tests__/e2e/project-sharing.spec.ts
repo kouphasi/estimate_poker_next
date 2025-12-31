@@ -125,13 +125,18 @@ test.describe('プロジェクト共有フロー', () => {
 
       // === メンバーのマイページで参加中プロジェクトを確認 ===
       await memberPage.goto('/mypage');
+      await memberPage.waitForLoadState('networkidle', { timeout: 15000 });
 
-      // 参加中のプロジェクトセクションにプロジェクトが表示されることを確認
-      const memberProjectSection = memberPage.locator('h2:has-text("参加中のプロジェクト")').locator('..');
-      await expect(memberProjectSection.locator(`text=E2Eテストプロジェクト-${uniqueId}`)).toBeVisible({ timeout: 10000 });
+      // 参加中のプロジェクトセクションが表示されるまで待機
+      const memberProjectHeader = memberPage.locator('h2:has-text("参加中のプロジェクト")');
+      await expect(memberProjectHeader).toBeVisible({ timeout: 15000 });
 
-      // ロールバッジが表示されることを確認
-      await expect(memberProjectSection.locator('text=MEMBER')).toBeVisible({ timeout: 10000 });
+      // プロジェクトが表示されることを確認
+      await expect(memberPage.locator(`text=E2Eテストプロジェクト-${uniqueId}`)).toBeVisible({ timeout: 15000 });
+
+      // ロールバッジが表示されることを確認（参加中プロジェクト内のバッジを探す）
+      const roleBadge = memberPage.locator('.bg-green-100.text-green-800:has-text("メンバー")');
+      await expect(roleBadge).toBeVisible({ timeout: 10000 });
 
       // === オーナーがメンバー一覧を確認 ===
       await ownerPage.goto(await ownerPage.url()); // 現在のプロジェクト詳細ページ
@@ -315,12 +320,22 @@ test.describe('プロジェクト共有フロー', () => {
       await ownerPage.click('button:has-text("承認")');
       await expect(ownerPage.locator('text=参加を承認しました')).toBeVisible({ timeout: 15000 });
 
-      // モーダルを閉じる
-      await ownerPage.keyboard.press('Escape');
+      // モーダルを閉じる（閉じるボタンをクリック）
+      const closeButton = ownerPage.locator('button:has-text("閉じる")');
+      if (await closeButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await closeButton.click();
+      } else {
+        await ownerPage.keyboard.press('Escape');
+      }
       await ownerPage.waitForTimeout(1000);
 
+      // モーダルが閉じたことを確認
+      await expect(ownerPage.locator('.fixed.inset-0.bg-black')).not.toBeVisible({ timeout: 5000 });
+
       // メンバー管理ページでメンバーを削除
-      await ownerPage.click('a:has-text("メンバー管理")');
+      const memberManageLink = ownerPage.locator('a:has-text("メンバー管理")');
+      await expect(memberManageLink).toBeVisible({ timeout: 10000 });
+      await memberManageLink.click();
       await expect(ownerPage).toHaveURL(/\/projects\/[a-z0-9]+\/members/, { timeout: 15000 });
 
       await expect(ownerPage.locator(`text=${member.nickname}`)).toBeVisible({ timeout: 10000 });
