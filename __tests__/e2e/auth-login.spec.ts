@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('認証ログインフロー', () => {
-  // テスト用のユーザー情報
+  // テスト用のユーザー情報（各テストで一意になるようにする）
+  const uniqueId = Date.now();
   const testUser = {
-    email: `e2etest-${Date.now()}@example.com`,
+    email: `e2etest-${uniqueId}@example.com`,
     password: 'Test1234!',
+    confirmPassword: 'Test1234!',
     nickname: 'E2E認証ユーザー',
   };
 
@@ -12,84 +14,112 @@ test.describe('認証ログインフロー', () => {
     // ステップ1: 登録ページにアクセス
     await page.goto('/register');
 
-    // ステップ2: 登録フォームに入力
-    await page.fill('input[name="email"]', testUser.email);
-    await page.fill('input[name="password"]', testUser.password);
-    await page.fill('input[name="nickname"]', testUser.nickname);
+    // ステップ2: 登録フォームに入力（id属性を使用）
+    await page.fill('#email', testUser.email);
+    await page.fill('#nickname', testUser.nickname);
+    await page.fill('#password', testUser.password);
+    await page.fill('#confirmPassword', testUser.confirmPassword);
 
     // ステップ3: 登録ボタンをクリック
-    await page.click('button[type="submit"]');
+    await page.click('button:has-text("登録")');
 
-    // ステップ4: マイページにリダイレクトされることを確認
-    await expect(page).toHaveURL('/mypage', { timeout: 10000 });
-
-    // ステップ5: ニックネームが表示されることを確認
-    await expect(page.locator(`text=${testUser.nickname}`)).toBeVisible();
+    // ステップ4: ログインページにリダイレクト（registered=trueで遷移）
+    await expect(page).toHaveURL(/\/login.*registered=true/, { timeout: 10000 });
   });
 
   test('登録済みユーザーでログインできる', async ({ page, context }) => {
-    // 前提: ユーザーが既に登録されている必要がある
-    // このテストは上記のテストの後に実行されることを想定
+    // まず登録する
+    await page.goto('/register');
+    await page.fill('#email', testUser.email);
+    await page.fill('#nickname', testUser.nickname);
+    await page.fill('#password', testUser.password);
+    await page.fill('#confirmPassword', testUser.confirmPassword);
+    await page.click('button:has-text("登録")');
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
-    // ステップ1: ログアウト（既にログイン済みの場合）
+    // クッキーをクリアしてログイン
     await context.clearCookies();
-
-    // ステップ2: ログインページにアクセス
     await page.goto('/login');
 
-    // ステップ3: ログインフォームに入力
-    await page.fill('input[name="email"]', testUser.email);
-    await page.fill('input[name="password"]', testUser.password);
+    // ログインフォームに入力
+    await page.fill('#email', testUser.email);
+    await page.fill('#password', testUser.password);
 
-    // ステップ4: ログインボタンをクリック
-    await page.click('button[type="submit"]:has-text("ログイン")');
+    // ログインボタンをクリック
+    await page.click('button:has-text("メールアドレスでログイン")');
 
-    // ステップ5: マイページにリダイレクトされることを確認
+    // マイページにリダイレクトされることを確認
     await expect(page).toHaveURL('/mypage', { timeout: 10000 });
   });
 
   test('認証ユーザーはプロジェクトを作成できる', async ({ page }) => {
-    // 前提: ログイン済み
+    // まず登録してログイン
+    const projectTestUser = {
+      email: `e2eproject-${Date.now()}@example.com`,
+      password: 'Test1234!',
+      nickname: 'プロジェクトテストユーザー',
+    };
 
-    // ステップ1: マイページにアクセス
-    await page.goto('/mypage');
+    await page.goto('/register');
+    await page.fill('#email', projectTestUser.email);
+    await page.fill('#nickname', projectTestUser.nickname);
+    await page.fill('#password', projectTestUser.password);
+    await page.fill('#confirmPassword', projectTestUser.password);
+    await page.click('button:has-text("登録")');
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
-    // ステップ2: 「新しいプロジェクト」ボタンをクリック
+    // ログイン
+    await page.fill('#email', projectTestUser.email);
+    await page.fill('#password', projectTestUser.password);
+    await page.click('button:has-text("メールアドレスでログイン")');
+    await expect(page).toHaveURL('/mypage', { timeout: 10000 });
+
+    // 「新しいプロジェクト」ボタンをクリック
     const newProjectButton = page.locator('a:has-text("新しいプロジェクト")');
     if (await newProjectButton.isVisible()) {
       await newProjectButton.click();
 
-      // ステップ3: プロジェクト作成ページに遷移
+      // プロジェクト作成ページに遷移
       await expect(page).toHaveURL('/projects/new');
 
-      // ステップ4: プロジェクト情報を入力
-      await page.fill('input[name="name"]', 'E2Eテストプロジェクト');
-      await page.fill('textarea[name="description"]', 'これはE2Eテスト用のプロジェクトです');
+      // プロジェクト情報を入力（id属性を使用）
+      await page.fill('#name', 'E2Eテストプロジェクト');
+      await page.fill('#description', 'これはE2Eテスト用のプロジェクトです');
 
-      // ステップ5: 作成ボタンをクリック
+      // 作成ボタンをクリック
       await page.click('button:has-text("作成")');
 
-      // ステップ6: プロジェクト詳細ページにリダイレクト
+      // プロジェクト詳細ページにリダイレクト
       await expect(page).toHaveURL(/\/projects\/[a-zA-Z0-9]+/, { timeout: 10000 });
 
-      // ステップ7: プロジェクト名が表示されることを確認
+      // プロジェクト名が表示されることを確認
       await expect(page.locator('text=E2Eテストプロジェクト')).toBeVisible();
     }
   });
 
-  test('誤ったパスワードでログインできない', async ({ page, context }) => {
-    // クッキーをクリア
-    await context.clearCookies();
+  test('誤ったパスワードでログインできない', async ({ page }) => {
+    // まず登録
+    const wrongPwUser = {
+      email: `e2ewrongpw-${Date.now()}@example.com`,
+      password: 'Test1234!',
+      nickname: 'エラーテストユーザー',
+    };
 
-    await page.goto('/login');
+    await page.goto('/register');
+    await page.fill('#email', wrongPwUser.email);
+    await page.fill('#nickname', wrongPwUser.nickname);
+    await page.fill('#password', wrongPwUser.password);
+    await page.fill('#confirmPassword', wrongPwUser.password);
+    await page.click('button:has-text("登録")');
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
     // 誤ったパスワードでログイン試行
-    await page.fill('input[name="email"]', testUser.email);
-    await page.fill('input[name="password"]', 'WrongPassword123');
-    await page.click('button[type="submit"]:has-text("ログイン")');
+    await page.fill('#email', wrongPwUser.email);
+    await page.fill('#password', 'WrongPassword123');
+    await page.click('button:has-text("メールアドレスでログイン")');
 
     // エラーメッセージが表示されることを確認
-    await expect(page.locator('text=/エラー|失敗|incorrect|invalid/i')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.bg-red-50')).toBeVisible({ timeout: 5000 });
 
     // ログインページに留まることを確認
     await expect(page).toHaveURL('/login');

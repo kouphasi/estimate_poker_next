@@ -1,22 +1,36 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('セッション作成・見積もりフロー', () => {
+  // ヘルパー関数: ゲストログインしてマイページに遷移
+  async function guestLogin(page: import('@playwright/test').Page, nickname: string) {
+    await page.goto('/simple-login');
+    await page.fill('#nickname', nickname);
+    await page.click('button:has-text("ログイン")');
+    await expect(page).toHaveURL(/\/mypage/);
+  }
+
+  // ヘルパー関数: セッションを作成
+  async function createSession(page: import('@playwright/test').Page) {
+    await page.click('a:has-text("新規セッション")');
+    await expect(page).toHaveURL(/\/sessions\/new/);
+    await page.click('button:has-text("セッション作成")');
+    await expect(page).toHaveURL(/\/estimate\/[a-zA-Z0-9_-]+/);
+  }
+
   test('ゲストユーザーがセッションを作成して見積もりを提出できる', async ({ page }) => {
     // ステップ1: ゲストログイン
-    await page.goto('/simple-login');
-    await page.fill('input[name="nickname"]', 'セッションオーナー');
-    await page.click('button:has-text("セッション作成")');
+    await guestLogin(page, 'セッションオーナー');
 
-    // セッションページに遷移
-    await expect(page).toHaveURL(/\/estimate\/[a-zA-Z0-9_-]+/);
+    // ステップ2: セッション作成
+    await createSession(page);
 
-    // ステップ2: 見積もりを選択
+    // ステップ3: 見積もりを選択
     await page.click('button:has-text("3d")');
 
-    // ステップ3: 参加者一覧に自分が表示されることを確認
+    // ステップ4: 参加者一覧に自分が表示されることを確認
     await expect(page.locator('text=セッションオーナー')).toBeVisible();
 
-    // ステップ4: 提出状態が表示されることを確認
+    // ステップ5: 提出状態が表示されることを確認
     await expect(page.locator('text=提出済み')).toBeVisible();
   });
 
@@ -25,12 +39,10 @@ test.describe('セッション作成・見積もりフロー', () => {
     const context1 = await browser.newContext();
     const page1 = await context1.newPage();
 
-    await page1.goto('/simple-login');
-    await page1.fill('input[name="nickname"]', 'ユーザー1');
-    await page1.click('button:has-text("セッション作成")');
+    await guestLogin(page1, 'ユーザー1');
+    await createSession(page1);
 
     // セッションURLを取得
-    await expect(page1).toHaveURL(/\/estimate\/[a-zA-Z0-9_-]+/);
     const sessionUrl = page1.url();
 
     // 見積もりを選択
@@ -40,21 +52,18 @@ test.describe('セッション作成・見積もりフロー', () => {
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
 
-    await page2.goto(sessionUrl);
+    // ユーザー2もまずゲストログインしてからセッションに参加
+    await guestLogin(page2, 'ユーザー2');
 
-    // ニックネーム入力（セッション参加時）
-    const nicknameInput = page2.locator('input[name="nickname"]');
-    if (await nicknameInput.isVisible()) {
-      await nicknameInput.fill('ユーザー2');
-      await page2.click('button:has-text("参加")');
-    }
+    // セッションURLに直接アクセス
+    await page2.goto(sessionUrl);
 
     // 見積もりを選択
     await page2.click('button:has-text("2d")');
 
     // 両方のユーザーが参加者一覧に表示されることを確認
     await expect(page1.locator('text=ユーザー1')).toBeVisible();
-    await expect(page1.locator('text=ユーザー2')).toBeVisible();
+    await expect(page1.locator('text=ユーザー2')).toBeVisible({ timeout: 10000 });
 
     // クリーンアップ
     await context1.close();
@@ -63,11 +72,8 @@ test.describe('セッション作成・見積もりフロー', () => {
 
   test('オーナーが見積もりを公開できる', async ({ page }) => {
     // セッション作成
-    await page.goto('/simple-login');
-    await page.fill('input[name="nickname"]', '公開テストユーザー');
-    await page.click('button:has-text("セッション作成")');
-
-    await expect(page).toHaveURL(/\/estimate\//);
+    await guestLogin(page, '公開テストユーザー');
+    await createSession(page);
 
     // 見積もりを選択
     await page.click('button:has-text("3d")');
@@ -83,11 +89,8 @@ test.describe('セッション作成・見積もりフロー', () => {
 
   test('オーナーが見積もりを確定できる', async ({ page }) => {
     // セッション作成と見積もり提出
-    await page.goto('/simple-login');
-    await page.fill('input[name="nickname"]', '確定テストユーザー');
-    await page.click('button:has-text("セッション作成")');
-
-    await expect(page).toHaveURL(/\/estimate\//);
+    await guestLogin(page, '確定テストユーザー');
+    await createSession(page);
     await page.click('button:has-text("2d")');
 
     // 公開
@@ -105,11 +108,8 @@ test.describe('セッション作成・見積もりフロー', () => {
   });
 
   test('自由記述で見積もりを入力できる', async ({ page }) => {
-    await page.goto('/simple-login');
-    await page.fill('input[name="nickname"]', '自由記述テスト');
-    await page.click('button:has-text("セッション作成")');
-
-    await expect(page).toHaveURL(/\/estimate\//);
+    await guestLogin(page, '自由記述テスト');
+    await createSession(page);
 
     // 自由記述ボタンをクリック
     await page.click('button:has-text("自由記述")');
@@ -130,10 +130,8 @@ test.describe('セッション作成・見積もりフロー', () => {
     const context1 = await browser.newContext();
     const page1 = await context1.newPage();
 
-    await page1.goto('/simple-login');
-    await page1.fill('input[name="nickname"]', '非公開テストオーナー');
-    await page1.click('button:has-text("セッション作成")');
-    await expect(page1).toHaveURL(/\/estimate\//);
+    await guestLogin(page1, '非公開テストオーナー');
+    await createSession(page1);
     const sessionUrl = page1.url();
 
     // オーナーが見積もりを提出
@@ -142,19 +140,15 @@ test.describe('セッション作成・見積もりフロー', () => {
     // 参加者: セッションに参加
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
-    await page2.goto(sessionUrl);
 
-    const nicknameInput = page2.locator('input[name="nickname"]');
-    if (await nicknameInput.isVisible()) {
-      await nicknameInput.fill('非公開テスト参加者');
-      await page2.click('button:has-text("参加")');
-    }
+    await guestLogin(page2, '非公開テスト参加者');
+    await page2.goto(sessionUrl);
 
     // 参加者側で具体的な値（「3日」など）が見えないことを確認
     await expect(page2.locator('text=3日')).not.toBeVisible();
 
     // 「提出済み」は見えるはず
-    await expect(page2.locator('text=提出済み')).toBeVisible();
+    await expect(page2.locator('text=提出済み')).toBeVisible({ timeout: 10000 });
 
     // クリーンアップ
     await context1.close();
