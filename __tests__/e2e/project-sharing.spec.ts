@@ -44,10 +44,31 @@ test.describe('プロジェクト共有フロー', () => {
 
       await ownerPage.fill('#name', `E2Eテストプロジェクト-${uniqueId}`);
       await ownerPage.fill('#description', 'E2Eテスト用のプロジェクトです');
+
+      // コンソールログをキャッチ
+      const consoleMessages: string[] = [];
+      ownerPage.on('console', msg => {
+        const text = msg.text();
+        consoleMessages.push(`[${msg.type()}] ${text}`);
+        if (msg.type() === 'error') {
+          console.log('Browser console error:', text);
+        } else {
+          console.log('Browser console log:', text);
+        }
+      });
+
       await ownerPage.click('button:has-text("プロジェクトを作成")');
 
-      // プロジェクト詳細ページにリダイレクト
-      await expect(ownerPage).toHaveURL(/\/projects\/[a-z0-9]+$/, { timeout: 15000 });
+      // ナビゲーション完了を待つ
+      await ownerPage.waitForURL(/\/projects/, { timeout: 15000 });
+
+      // 現在のURLをログ出力
+      const currentUrl = ownerPage.url();
+      console.log('Redirected to:', currentUrl);
+      console.log('Console messages:', consoleMessages);
+
+      // プロジェクト詳細ページへのリダイレクトを確認
+      await expect(ownerPage).toHaveURL(/\/projects\/[a-z0-9]+$/, { timeout: 5000 });
 
       // === 招待URLを発行 ===
       // ページが完全にロードされるまで待機
