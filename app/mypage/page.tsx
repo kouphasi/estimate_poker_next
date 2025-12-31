@@ -20,9 +20,7 @@ interface Project {
   name: string;
   description: string | null;
   createdAt: string;
-  _count: {
-    sessions: number;
-  };
+  sessionsCount: number;
 }
 
 interface MemberProject {
@@ -348,7 +346,7 @@ export default function MyPage() {
                           </p>
                         )}
                         <div className="flex items-center justify-between text-xs text-zinc-500">
-                          <span>{project._count.sessions} セッション</span>
+                          <span>{project.sessionsCount} セッション</span>
                           <span>
                             {new Date(project.createdAt).toLocaleDateString('ja-JP')}
                           </span>
