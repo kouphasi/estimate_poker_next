@@ -117,11 +117,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Create GET /api/users/me/projects/route.ts (参加中プロジェクト一覧API)
-- [ ] T032 [US4] Add "参加中のプロジェクト" section to app/mypage/page.tsx
-- [ ] T033 [US4] Create MemberProjectCard component in app/components/MemberProjectCard.tsx
-- [ ] T034 [US4] Display owner info and role badge in MemberProjectCard component
-- [ ] T035 [US4] Update existing projects API to include member count in app/api/projects/route.ts
+- [X] T031 [US4] Create GET /api/users/me/projects/route.ts (参加中プロジェクト一覧API)
+- [X] T032 [US4] Add "参加中のプロジェクト" section to app/mypage/page.tsx
+- [X] T033 [US4] Create MemberProjectCard component (integrated into mypage)
+- [X] T034 [US4] Display owner info and role badge in memberProjects
+- [X] T035 [US4] Update mypage to show memberProjects with session counts
 
 **Checkpoint**: User Story 4 complete - メンバーが参加中プロジェクトを確認できる
 

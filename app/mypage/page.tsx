@@ -25,12 +25,26 @@ interface Project {
   };
 }
 
+interface MemberProject {
+  id: string;
+  name: string;
+  description: string | null;
+  role: 'OWNER' | 'MEMBER';
+  owner: {
+    id: string;
+    nickname: string;
+  };
+  joinedAt: string;
+  sessionCount: number;
+}
+
 export default function MyPage() {
   const { data: session } = useSession();
   const { user, logout, updateNickname, isLoading: userLoading } = useUser();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [memberProjects, setMemberProjects] = useState<MemberProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditingNickname, setIsEditingNickname] = useState(false);
@@ -67,6 +81,13 @@ export default function MyPage() {
           if (projectsResponse.ok) {
             const projectsData = await projectsResponse.json();
             setProjects(projectsData.projects);
+          }
+
+          // 参加中プロジェクト一覧を取得
+          const memberProjectsResponse = await fetch('/api/users/me/projects');
+          if (memberProjectsResponse.ok) {
+            const memberProjectsData = await memberProjectsResponse.json();
+            setMemberProjects(memberProjectsData.projects);
           }
         }
       } catch (err) {
@@ -233,6 +254,52 @@ export default function MyPage() {
           <div className="text-center text-zinc-600">読み込み中...</div>
         ) : (
           <div className="space-y-8">
+            {/* 参加中プロジェクト（認証ユーザーのみ） */}
+            {isAuthenticatedUser && memberProjects.length > 0 && (
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-zinc-900">
+                    参加中のプロジェクト
+                  </h2>
+                  <button
+                    onClick={() => router.push('/mypage')}
+                    className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    すべて見る
+                  </button>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {memberProjects.slice(0, 3).map((project) => (
+                    <div
+                      key={project.id}
+                      onClick={() => router.push(`/projects/${project.id}`)}
+                      className="cursor-pointer rounded-lg border border-zinc-200 bg-white p-4 hover:border-green-300 hover:shadow-md transition"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-zinc-900 line-clamp-1 flex-1">
+                          {project.name}
+                        </h3>
+                        <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                          {project.role === 'OWNER' ? 'オーナー' : 'メンバー'}
+                        </span>
+                      </div>
+                      {project.description && (
+                        <p className="text-sm text-zinc-600 mb-3 line-clamp-2">
+                          {project.description}
+                        </p>
+                      )}
+                      <div className="text-xs text-zinc-500 space-y-1">
+                        <p>オーナー: {project.owner.nickname}</p>
+                        <p>{project.sessionCount} セッション</p>
+                        <p>参加日: {new Date(project.joinedAt).toLocaleDateString('ja-JP')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* プロジェクト一覧（認証ユーザーのみ） */}
             {isAuthenticatedUser && (
               <div>
