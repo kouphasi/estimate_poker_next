@@ -44,14 +44,17 @@ test.describe('プロジェクト共有フロー', () => {
 
       await ownerPage.fill('#name', `E2Eテストプロジェクト-${uniqueId}`);
       await ownerPage.fill('#description', 'E2Eテスト用のプロジェクトです');
-      await ownerPage.click('button:has-text("作成")');
+      await ownerPage.click('button:has-text("プロジェクトを作成")');
 
       // プロジェクト詳細ページにリダイレクト
       await expect(ownerPage).toHaveURL(/\/projects\/[a-z0-9]+$/, { timeout: 15000 });
 
       // === 招待URLを発行 ===
+      // ページが完全にロードされるまで待機
+      await ownerPage.waitForLoadState('networkidle', { timeout: 15000 });
+
       const inviteButton = ownerPage.locator('button:has-text("招待URLを発行")');
-      await expect(inviteButton).toBeVisible({ timeout: 10000 });
+      await expect(inviteButton).toBeVisible({ timeout: 15000 });
       await inviteButton.click();
 
       // 招待URLが表示されるまで待機
@@ -186,10 +189,11 @@ test.describe('プロジェクト共有フロー', () => {
       await ownerPage.click('button:has-text("新規作成")');
       await ownerPage.fill('#name', `拒否テストプロジェクト-${uniqueId}`);
       await ownerPage.fill('#description', '拒否テスト用');
-      await ownerPage.click('button:has-text("作成")');
+      await ownerPage.click('button:has-text("プロジェクトを作成")');
       await expect(ownerPage).toHaveURL(/\/projects\/[a-z0-9]+$/, { timeout: 15000 });
 
       // 招待URL発行
+      await ownerPage.waitForLoadState('networkidle', { timeout: 15000 });
       await ownerPage.click('button:has-text("招待URLを発行")');
       const inviteUrlInput = ownerPage.locator('input[readonly][value*="/invite/"]');
       await expect(inviteUrlInput).toBeVisible({ timeout: 10000 });
@@ -274,9 +278,10 @@ test.describe('プロジェクト共有フロー', () => {
       await ownerPage.click('button:has-text("新規作成")');
       await ownerPage.fill('#name', `削除テストプロジェクト-${uniqueId}`);
       await ownerPage.fill('#description', '削除テスト用');
-      await ownerPage.click('button:has-text("作成")');
+      await ownerPage.click('button:has-text("プロジェクトを作成")');
       await expect(ownerPage).toHaveURL(/\/projects\/[a-z0-9]+$/, { timeout: 15000 });
 
+      await ownerPage.waitForLoadState('networkidle', { timeout: 15000 });
       await ownerPage.click('button:has-text("招待URLを発行")');
       const inviteUrlInput = ownerPage.locator('input[readonly][value*="/invite/"]');
       await expect(inviteUrlInput).toBeVisible({ timeout: 10000 });
