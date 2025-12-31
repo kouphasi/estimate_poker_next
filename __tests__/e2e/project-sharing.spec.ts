@@ -120,8 +120,8 @@ test.describe('プロジェクト共有フロー', () => {
       // トーストメッセージを確認（タイムアウトを延長）
       await expect(ownerPage.locator('text=参加を承認しました')).toBeVisible({ timeout: 15000 });
 
-      // トーストが消えるまで待機
-      await ownerPage.waitForTimeout(3000);
+      // モーダルを閉じる（閉じるボタンまたはESCキー）
+      await ownerPage.keyboard.press('Escape');
 
       // === メンバーのマイページで参加中プロジェクトを確認 ===
       await memberPage.goto('/mypage');
@@ -315,8 +315,9 @@ test.describe('プロジェクト共有フロー', () => {
       await ownerPage.click('button:has-text("承認")');
       await expect(ownerPage.locator('text=参加を承認しました')).toBeVisible({ timeout: 15000 });
 
-      // トーストとモーダルが消えるまで待機
-      await ownerPage.waitForTimeout(3000);
+      // モーダルを閉じる
+      await ownerPage.keyboard.press('Escape');
+      await ownerPage.waitForTimeout(1000);
 
       // メンバー管理ページでメンバーを削除
       await ownerPage.click('a:has-text("メンバー管理")');
