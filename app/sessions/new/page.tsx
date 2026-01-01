@@ -63,18 +63,18 @@ export default function NewSessionPage() {
 
   if (userLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="text-lg text-zinc-600">読み込み中...</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-lg text-gray-600">読み込み中...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-zinc-900">新しいセッションを作成</h1>
-          <p className="mt-2 text-sm text-zinc-600">
+          <h1 className="text-3xl font-bold text-gray-900">新しいセッションを作成</h1>
+          <p className="mt-2 text-sm text-gray-600">
             見積もりセッションの名前を入力してください（任意）
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function NewSessionPage() {
           <div>
             <label
               htmlFor="sessionName"
-              className="block text-sm font-medium text-zinc-700"
+              className="block text-sm font-medium text-gray-700"
             >
               セッション名（任意）
             </label>
@@ -92,7 +92,7 @@ export default function NewSessionPage() {
               type="text"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="例: ユーザー認証機能の見積もり"
               disabled={isCreating}
             />
@@ -107,7 +107,7 @@ export default function NewSessionPage() {
           <button
             type="submit"
             disabled={isCreating}
-            className="cursor-pointer w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50"
+            className="cursor-pointer w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           >
             {isCreating ? 'セッション作成中...' : 'セッションを作成'}
           </button>
@@ -116,7 +116,7 @@ export default function NewSessionPage() {
         <div className="mt-4 text-center">
           <button
             onClick={() => router.push('/mypage')}
-            className="text-sm text-zinc-600 hover:text-zinc-900"
+            className="text-sm text-gray-600 hover:text-gray-900"
           >
             ← マイページに戻る
           </button>

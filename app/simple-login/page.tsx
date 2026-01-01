@@ -42,18 +42,18 @@ export default function SimpleLoginPage() {
 
   if (userLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="text-lg text-zinc-600">読み込み中...</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-lg text-gray-600">読み込み中...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-zinc-900">簡易ログイン</h1>
-          <p className="mt-2 text-sm text-zinc-600">
+          <h1 className="text-3xl font-bold text-gray-900">簡易ログイン</h1>
+          <p className="mt-2 text-sm text-gray-600">
             ニックネームのみで気軽にご利用いただけます
           </p>
         </div>
@@ -62,7 +62,7 @@ export default function SimpleLoginPage() {
           <div>
             <label
               htmlFor="nickname"
-              className="block text-sm font-medium text-zinc-700"
+              className="block text-sm font-medium text-gray-700"
             >
               ニックネーム
             </label>
@@ -71,7 +71,7 @@ export default function SimpleLoginPage() {
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="山田太郎"
               disabled={isLoading}
             />
@@ -86,7 +86,7 @@ export default function SimpleLoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="cursor-pointer w-full rounded-md bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50"
+            className="cursor-pointer w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           >
             {isLoading ? 'ログイン中...' : 'ログイン'}
           </button>
@@ -95,7 +95,7 @@ export default function SimpleLoginPage() {
         <div className="mt-4 text-center">
           <Link
             href="/"
-            className="text-sm text-zinc-600 hover:text-zinc-900"
+            className="text-sm text-gray-600 hover:text-gray-900"
           >
             ← ログイン方法選択に戻る
           </Link>

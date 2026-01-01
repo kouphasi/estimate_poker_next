@@ -13,7 +13,7 @@ describe('ListProjectsUseCase', () => {
       findByOwnerId: vi.fn(),
       save: vi.fn(),
       delete: vi.fn(),
-      countSessions: vi.fn(),
+      countSessions: vi.fn().mockResolvedValue(0),
       findByIdAndOwnerId: vi.fn(),
     };
 

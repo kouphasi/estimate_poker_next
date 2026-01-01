@@ -176,22 +176,22 @@ export default function MyPage() {
 
   if (userLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <div className="text-lg text-zinc-600">読み込み中...</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-lg text-gray-600">読み込み中...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <header className="border-b border-zinc-200 bg-white">
+    <div className="min-h-screen bg-gray-50">
+      <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-zinc-900">マイページ</h1>
+              <h1 className="text-2xl font-bold text-gray-900">マイページ</h1>
               {!isEditingNickname ? (
                 <div className="mt-1 flex items-center gap-2">
-                  <p className="text-sm text-zinc-600">
+                  <p className="text-sm text-gray-600">
                     ようこそ、{user.nickname}さん
                   </p>
                   <button
@@ -208,7 +208,7 @@ export default function MyPage() {
                       type="text"
                       value={newNickname}
                       onChange={(e) => setNewNickname(e.target.value)}
-                      className="rounded-md border border-zinc-300 px-3 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="rounded-md border border-gray-300 px-3 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       placeholder="新しいニックネーム"
                       maxLength={50}
                     />
@@ -220,7 +220,7 @@ export default function MyPage() {
                     </button>
                     <button
                       onClick={handleCancelEdit}
-                      className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-50"
+                      className="cursor-pointer rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       キャンセル
                     </button>
@@ -233,7 +233,7 @@ export default function MyPage() {
             </div>
             <button
               onClick={handleLogout}
-              className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+              className="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
               ログアウト
             </button>
@@ -249,14 +249,14 @@ export default function MyPage() {
         )}
 
         {isLoading ? (
-          <div className="text-center text-zinc-600">読み込み中...</div>
+          <div className="text-center text-gray-600">読み込み中...</div>
         ) : (
           <div className="space-y-8">
             {/* 参加中プロジェクト（認証ユーザーのみ） */}
             {isAuthenticatedUser && memberProjects.length > 0 && (
               <div>
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-zinc-900">
+                  <h2 className="text-xl font-semibold text-gray-900">
                     参加中のプロジェクト
                   </h2>
                   <button
@@ -272,10 +272,10 @@ export default function MyPage() {
                     <div
                       key={project.id}
                       onClick={() => router.push(`/projects/${project.id}`)}
-                      className="cursor-pointer rounded-lg border border-zinc-200 bg-white p-4 hover:border-green-300 hover:shadow-md transition"
+                      className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 hover:border-green-300 hover:shadow-md transition"
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-semibold text-zinc-900 line-clamp-1 flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 flex-1">
                           {project.name}
                         </h3>
                         <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
@@ -283,11 +283,11 @@ export default function MyPage() {
                         </span>
                       </div>
                       {project.description && (
-                        <p className="text-sm text-zinc-600 mb-3 line-clamp-2">
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                           {project.description}
                         </p>
                       )}
-                      <div className="text-xs text-zinc-500 space-y-1">
+                      <div className="text-xs text-gray-500 space-y-1">
                         <p>オーナー: {project.owner.nickname}</p>
                         <p>{project.sessionCount} セッション</p>
                         <p>参加日: {new Date(project.joinedAt).toLocaleDateString('ja-JP')}</p>
@@ -302,7 +302,7 @@ export default function MyPage() {
             {isAuthenticatedUser && (
               <div>
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-zinc-900">
+                  <h2 className="text-xl font-semibold text-gray-900">
                     プロジェクト
                   </h2>
                   <div className="flex gap-2">
@@ -322,8 +322,8 @@ export default function MyPage() {
                 </div>
 
                 {projects.length === 0 ? (
-                  <div className="rounded-lg border border-zinc-200 bg-white p-6 text-center">
-                    <p className="text-sm text-zinc-600">
+                  <div className="rounded-lg border border-gray-200 bg-white p-6 text-center">
+                    <p className="text-sm text-gray-600">
                       まだプロジェクトがありません。
                       <br />
                       プロジェクトを作成して、見積もりセッションを整理しましょう。
@@ -335,17 +335,17 @@ export default function MyPage() {
                       <div
                         key={project.id}
                         onClick={() => router.push(`/projects/${project.id}`)}
-                        className="cursor-pointer rounded-lg border border-zinc-200 bg-white p-4 hover:border-blue-300 hover:shadow-md transition"
+                        className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300 hover:shadow-md transition"
                       >
-                        <h3 className="text-lg font-semibold text-zinc-900 mb-2 line-clamp-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
                           {project.name}
                         </h3>
                         {project.description && (
-                          <p className="text-sm text-zinc-600 mb-3 line-clamp-2">
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                             {project.description}
                           </p>
                         )}
-                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                        <div className="flex items-center justify-between text-xs text-gray-500">
                           <span>{project.sessionsCount} セッション</span>
                           <span>
                             {new Date(project.createdAt).toLocaleDateString('ja-JP')}
@@ -361,7 +361,7 @@ export default function MyPage() {
             {/* セッション一覧 */}
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-zinc-900">
+                <h2 className="text-xl font-semibold text-gray-900">
                   最近のセッション
                 </h2>
                 <div className="flex gap-2">
@@ -373,7 +373,7 @@ export default function MyPage() {
                   </button>
                   <button
                     onClick={() => router.push('/sessions/new')}
-                    className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
+                    className="cursor-pointer rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
                   >
                     新規作成
                   </button>
@@ -381,8 +381,8 @@ export default function MyPage() {
               </div>
 
               {sessions.length === 0 ? (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 text-center">
-                  <p className="text-sm text-zinc-600">
+                <div className="rounded-lg border border-gray-200 bg-white p-6 text-center">
+                  <p className="text-sm text-gray-600">
                     まだセッションを作成していません。
                     <br />
                     新しいセッションを作成してみましょう！
@@ -393,34 +393,34 @@ export default function MyPage() {
                   {sessions.slice(0, 5).map((session) => (
                     <div
                       key={session.id}
-                      className="rounded-lg border border-zinc-200 bg-white p-6"
+                      className="rounded-lg border border-gray-200 bg-white p-6"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="mb-2 flex items-center gap-2">
-                            <h3 className="text-lg font-semibold text-zinc-900">
+                            <h3 className="text-lg font-semibold text-gray-900">
                               {session.name || `セッションID: ${session.shareToken}`}
                             </h3>
                             <span
                               className={`rounded-full px-2 py-1 text-xs font-medium ${
                                 session.status === 'ACTIVE'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-zinc-100 text-zinc-800'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-green-100 text-green-800'
                               }`}
                             >
                               {session.status === 'ACTIVE' ? 'アクティブ' : '確定済み'}
                             </span>
                           </div>
                           {session.name && (
-                            <p className="text-sm text-zinc-500">
+                            <p className="text-sm text-gray-500">
                               セッションID: {session.shareToken}
                             </p>
                           )}
-                          <p className="text-sm text-zinc-600">
+                          <p className="text-sm text-gray-600">
                             作成日時: {formatDate(session.createdAt)}
                           </p>
                           {session.finalEstimate && (
-                            <p className="mt-1 text-sm text-zinc-600">
+                            <p className="mt-1 text-sm text-gray-600">
                               確定工数: {session.finalEstimate}日
                             </p>
                           )}
@@ -428,7 +428,7 @@ export default function MyPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => router.push(`/estimate/${session.shareToken}`)}
-                            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                            className="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             開く
                           </button>

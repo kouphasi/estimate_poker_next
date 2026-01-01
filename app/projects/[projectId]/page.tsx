@@ -702,7 +702,7 @@ export default function ProjectDetailPage() {
                 <button
                   onClick={handleDeleteProject}
                   disabled={deleting}
-                  className="flex-1 px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-300"
+                  className="flex-1 px-4 py-2 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 disabled:bg-gray-100 disabled:text-gray-400"
                 >
                   {deleting ? "削除中..." : "削除する"}
                 </button>
