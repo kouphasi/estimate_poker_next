@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
 import { authOptions } from "@/infrastructure/auth/nextAuthConfig";
 import { prisma } from "@/infrastructure/database/prisma";
 import { GetProjectUseCase } from "@/application/project/GetProjectUseCase";
