@@ -14,35 +14,34 @@ interface ParticipantListProps {
 
 export default function ParticipantList({ estimates, isRevealed }: ParticipantListProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h2 className="text-xl font-bold mb-4">参加者一覧</h2>
+    <div className="bg-white rounded-lg shadow p-3 sm:p-4">
+      <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">参加者一覧</h2>
       <div className="space-y-2">
         {estimates.map((estimate) => (
           <div
             key={estimate.userId}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg"
           >
-            <span className="font-medium">{estimate.nickname}</span>
-            <span className={`px-3 py-1 rounded-full text-sm ${
-              estimate.value === 0
+            <span className="font-medium text-sm sm:text-base truncate mr-2">{estimate.nickname}</span>
+            <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm whitespace-nowrap ${estimate.value === 0
                 ? 'bg-gray-200 text-gray-600'
                 : estimate.value === -1
-                ? 'bg-green-200 text-green-800'
-                : 'bg-blue-200 text-blue-800'
-            }`}>
+                  ? 'bg-green-200 text-green-800'
+                  : 'bg-blue-200 text-blue-800'
+              }`}>
               {estimate.value === 0
                 ? '未提出'
                 : estimate.value === -1
-                ? '提出済み'
-                : isRevealed
-                ? `${estimate.value}日`
-                : '提出済み'
+                  ? '提出済み'
+                  : isRevealed
+                    ? `${estimate.value}日`
+                    : '提出済み'
               }
             </span>
           </div>
         ))}
         {estimates.length === 0 && (
-          <p className="text-gray-500 text-center py-4">参加者がいません</p>
+          <p className="text-gray-500 text-center py-4 text-sm">参加者がいません</p>
         )}
       </div>
     </div>
