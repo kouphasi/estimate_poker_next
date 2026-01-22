@@ -348,31 +348,33 @@ export default function EstimatePage() {
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex flex-col">
-              <Link href="/" className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors cursor-pointer">
+              <Link href="/" className="text-xl sm:text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors cursor-pointer">
                 見積もりポーカー
               </Link>
               {session?.name && (
-                <h2 className="text-lg text-gray-600 mt-1">{session.name}</h2>
+                <h2 className="text-sm sm:text-lg text-gray-600 mt-0.5 sm:mt-1">{session.name}</h2>
               )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               {isOwner && (
                 <Link
                   href="/mypage"
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                 >
                   ← セッション一覧に戻る
                 </Link>
               )}
-              <span className="text-sm text-gray-600">参加者: {nickname}</span>
-              {session?.status === 'FINALIZED' && (
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                  確定済み
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-gray-600">参加者: {nickname}</span>
+                {session?.status === 'FINALIZED' && (
+                  <span className="px-2 sm:px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs sm:text-sm font-medium">
+                    確定済み
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -381,27 +383,27 @@ export default function EstimatePage() {
       {/* メインコンテンツ */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* 共有URL */}
-        <div className="mb-6 p-4 bg-white rounded-lg shadow">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="mb-6 p-3 sm:p-4 bg-white rounded-lg shadow">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
             共有URL
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={shareUrl}
               readOnly
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+              className="flex-1 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-gray-50"
             />
             <button
               onClick={copyShareUrl}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
+              className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors cursor-pointer whitespace-nowrap"
             >
               コピー
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* 左サイド：参加者一覧 */}
           <div>
             <ParticipantList estimates={estimates} isRevealed={session?.isRevealed || false} />
@@ -409,16 +411,16 @@ export default function EstimatePage() {
 
           {/* 中央：カード選択 */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">カードを選択</h2>
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">カードを選択</h2>
               <CardSelector
                 selectedValue={selectedValue}
                 onSelect={handleCardSelect}
                 disabled={session?.status === 'FINALIZED'}
               />
               {selectedValue > 0 && (
-                <div className="mt-4 p-3 bg-green-100 rounded-lg text-center">
-                  <span className="text-green-800 font-medium">
+                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-green-100 rounded-lg text-center">
+                  <span className="text-green-800 font-medium text-sm sm:text-base">
                     選択中: {selectedValue}日
                   </span>
                 </div>
@@ -427,15 +429,15 @@ export default function EstimatePage() {
 
             {/* コントロールボタン（オーナーのみ） */}
             {isOwner && (
-              <div className="mt-6 space-y-3">
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
-                  <p className="text-sm text-blue-800 font-medium">あなたはこのセッションのオーナーです</p>
+              <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
+                <div className="p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs sm:text-sm text-blue-800 font-medium">あなたはこのセッションのオーナーです</p>
                 </div>
 
                 <button
                   onClick={handleToggleReveal}
                   disabled={session?.status === 'FINALIZED'}
-                  className="w-full py-3 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full py-2.5 sm:py-3 bg-purple-500 text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {session?.isRevealed ? 'カードを隠す' : 'カードを公開'}
                 </button>
@@ -450,11 +452,11 @@ export default function EstimatePage() {
                       value={finalEstimateInput}
                       onChange={(e) => setFinalEstimateInput(e.target.value)}
                       placeholder="確定工数を入力（日数）"
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
+                      className="w-full px-3 py-2 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
                     />
                     <button
                       type="submit"
-                      className="w-full py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors cursor-pointer"
+                      className="w-full py-2.5 sm:py-3 bg-green-500 text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-green-600 transition-colors cursor-pointer"
                     >
                       工数を確定
                     </button>

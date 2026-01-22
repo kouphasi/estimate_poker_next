@@ -38,52 +38,52 @@ export default function EstimateResult({ estimates, isRevealed, finalEstimate }:
     : 0
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h2 className="text-xl font-bold mb-4">見積もり結果</h2>
+    <div className="bg-white rounded-lg shadow p-3 sm:p-4">
+      <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">見積もり結果</h2>
 
       {finalEstimate !== null && (
-        <div className="mb-4 p-4 bg-green-100 rounded-lg border-2 border-green-500">
-          <p className="text-sm text-gray-600 mb-1">確定工数</p>
-          <p className="text-3xl font-bold text-green-800">{finalEstimate}日</p>
+        <div className="mb-4 p-3 sm:p-4 bg-green-100 rounded-lg border-2 border-green-500">
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">確定工数</p>
+          <p className="text-2xl sm:text-3xl font-bold text-green-800">{finalEstimate}日</p>
         </div>
       )}
 
       {isRevealed && validEstimates.length > 0 ? (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-600">平均値</p>
-              <p className="text-xl font-bold text-blue-800">{average.toFixed(2)}日</p>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="p-2 sm:p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600">平均値</p>
+              <p className="text-lg sm:text-xl font-bold text-blue-800">{average.toFixed(2)}日</p>
             </div>
-            <div className="p-3 bg-purple-50 rounded-lg">
-              <p className="text-sm text-gray-600">中央値</p>
-              <p className="text-xl font-bold text-purple-800">{median.toFixed(2)}日</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-red-50 rounded-lg">
-              <p className="text-sm text-gray-600">最大値</p>
-              <p className="text-xl font-bold text-red-800">{max.toFixed(2)}日</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <p className="text-sm text-gray-600">最小値</p>
-              <p className="text-xl font-bold text-green-800">{min.toFixed(2)}日</p>
+            <div className="p-2 sm:p-3 bg-purple-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600">中央値</p>
+              <p className="text-lg sm:text-xl font-bold text-purple-800">{median.toFixed(2)}日</p>
             </div>
           </div>
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">全員の見積もり</p>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="p-2 sm:p-3 bg-red-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600">最大値</p>
+              <p className="text-lg sm:text-xl font-bold text-red-800">{max.toFixed(2)}日</p>
+            </div>
+            <div className="p-2 sm:p-3 bg-green-50 rounded-lg">
+              <p className="text-xs sm:text-sm text-gray-600">最小値</p>
+              <p className="text-lg sm:text-xl font-bold text-green-800">{min.toFixed(2)}日</p>
+            </div>
+          </div>
+          <div className="p-2 sm:p-3 bg-gray-50 rounded-lg">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">全員の見積もり</p>
             <div className="space-y-1">
               {validEstimates.map((estimate) => (
-                <div key={estimate.userId} className="flex justify-between text-sm">
-                  <span>{estimate.nickname}</span>
-                  <span className="font-medium">{estimate.value}日</span>
+                <div key={estimate.userId} className="flex justify-between text-xs sm:text-sm">
+                  <span className="truncate mr-2">{estimate.nickname}</span>
+                  <span className="font-medium whitespace-nowrap">{estimate.value}日</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 text-sm">
           {isRevealed
             ? '見積もりが提出されていません'
             : 'カードが公開されていません'
