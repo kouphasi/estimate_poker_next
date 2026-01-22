@@ -157,7 +157,7 @@ jobs:
         run: npm run build
 
       - name: Run E2E tests
-        run: npx playwright test --reporter=github
+        run: npx playwright test --reporter=github,html,json
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
