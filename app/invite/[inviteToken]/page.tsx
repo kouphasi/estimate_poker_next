@@ -22,6 +22,8 @@ interface InviteData {
   userStatus: "none" | "pending" | "member" | "owner";
 }
 
+const reloginRequiredMessage = "ユーザー情報が見つからないため再ログインが必要です";
+
 function InvitePageContent() {
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -100,6 +102,16 @@ function InvitePageContent() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.message === reloginRequiredMessage) {
+          showToast(reloginRequiredMessage, "error");
+          const loginUrl = inviteToken
+            ? `/login?callbackUrl=${encodeURIComponent(`/invite/${inviteToken}`)}`
+            : "/login";
+          setTimeout(() => {
+            router.push(loginUrl);
+          }, 1500);
+          return;
+        }
         showToast(errorData.message || "参加申請に失敗しました", "error");
         return;
       }

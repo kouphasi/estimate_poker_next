@@ -103,6 +103,20 @@ export async function POST(
     const { projectId } = await params;
     const userId = session.user.id;
 
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return NextResponse.json(
+        {
+          error: 'Unauthorized',
+          message: 'ユーザー情報が見つからないため再ログインが必要です',
+        },
+        { status: 401 }
+      );
+    }
+
     // プロジェクトの存在を確認
     const project = await prisma.project.findUnique({
       where: { id: projectId },
