@@ -105,6 +105,45 @@ test.describe('認証ログインフロー', () => {
     }
   });
 
+  test('プロジェクト詳細ページの主要UIが表示される', async ({ page }) => {
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const projectTestUser = {
+      email: `e2eproject-ui-${uniqueId}@example.com`,
+      password: 'Test1234!',
+      nickname: 'プロジェクトUIユーザー',
+    };
+    const projectName = `E2E UIプロジェクト-${uniqueId}`;
+
+    await page.goto('/register');
+    await page.fill('#email', projectTestUser.email);
+    await page.fill('#nickname', projectTestUser.nickname);
+    await page.fill('#password', projectTestUser.password);
+    await page.fill('#confirmPassword', projectTestUser.password);
+    await page.click('button:has-text("登録")');
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+
+    await page.fill('#email', projectTestUser.email);
+    await page.fill('#password', projectTestUser.password);
+    await page.click('button:has-text("メールアドレスでログイン")');
+    await expect(page).toHaveURL('/mypage', { timeout: 10000 });
+
+    const newProjectButton = page.locator('a:has-text("新しいプロジェクト")');
+    if (await newProjectButton.isVisible()) {
+      await newProjectButton.click();
+      await expect(page).toHaveURL('/projects/new');
+
+      await page.fill('#name', projectName);
+      await page.fill('#description', 'プロジェクト詳細UI確認用');
+      await page.click('button:has-text("作成")');
+      await expect(page).toHaveURL(/\/projects\/[a-zA-Z0-9]+/, { timeout: 10000 });
+
+      await expect(page.getByText(projectName, { exact: true })).toBeVisible();
+      await expect(page.locator('button:has-text("招待URLを発行")')).toBeVisible();
+      await expect(page.locator('a:has-text("メンバー管理")')).toBeVisible();
+      await expect(page.locator('text=見積もりセッション')).toBeVisible();
+    }
+  });
+
   test('誤ったパスワードでログインできない', async ({ page }) => {
     // まず登録（ランダム文字列追加で重複回避）
     const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
