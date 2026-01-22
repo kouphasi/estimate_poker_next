@@ -130,6 +130,21 @@ npx playwright test --ui
 - **E2E Tests** (`__tests__/e2e/`): End-to-end user flow tests using Playwright
 - **Coverage Target**: 60% minimum (lines, functions, branches, statements) - only enforced in CI
 
+### E2E Flow Coverage Matrix
+
+| フロー | 対応テスト (spec / テスト名) |
+| --- | --- |
+| ログイン | `__tests__/e2e/auth-login.spec.ts` / 「登録済みユーザーでログインできる」 |
+| signup | `__tests__/e2e/auth-login.spec.ts` / 「新規ユーザー登録ができる」 |
+| セッション作成 | `__tests__/e2e/session-flow.spec.ts` / 「ゲストユーザーがセッションを作成して見積もりを提出できる」 |
+| セッション参加 | `__tests__/e2e/session-flow.spec.ts` / 「複数のユーザーが同じセッションに参加できる」 |
+| セッション投票 | `__tests__/e2e/session-flow.spec.ts` / 「ゲストユーザーがセッションを作成して見積もりを提出できる」 |
+| セッション確定 | `__tests__/e2e/session-flow.spec.ts` / 「オーナーが見積もりを確定できる」 |
+| プロジェクト作成 | `__tests__/e2e/auth-login.spec.ts` / 「認証ユーザーはプロジェクトを作成できる」 |
+| プロジェクトページ | `__tests__/e2e/auth-login.spec.ts` / 「プロジェクト詳細ページの主要UIが表示される」 |
+| プロジェクト招待 | `__tests__/e2e/project-sharing.spec.ts` / 「オーナーが招待URLを発行し、ユーザーが参加申請して承認される」 |
+| プロジェクト参加 | `__tests__/e2e/project-sharing.spec.ts` / 「オーナーが招待URLを発行し、ユーザーが参加申請して承認される」 |
+
 ### CI/CD
 
 All tests run automatically on GitHub Actions:
