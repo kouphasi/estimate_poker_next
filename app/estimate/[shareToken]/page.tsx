@@ -26,6 +26,11 @@ interface Estimate {
   userId: string
 }
 
+interface TimerState {
+  endAt: number | null
+  isRunning: boolean
+}
+
 export default function EstimatePage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -64,6 +69,13 @@ export default function EstimatePage() {
   const [shareUrl, setShareUrl] = useState('')
   const [ownerToken, setOwnerToken] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
+  const [timerMinutes, setTimerMinutes] = useState('5')
+  const [timerSeconds, setTimerSeconds] = useState('0')
+  const [timerEndAt, setTimerEndAt] = useState<number | null>(null)
+  const [timerIsRunning, setTimerIsRunning] = useState(false)
+  const [timerRemainingSeconds, setTimerRemainingSeconds] = useState(0)
+  const [timerNotified, setTimerNotified] = useState(false)
+  const [timerTick, setTimerTick] = useState(0)
 
   // ログインユーザーのニックネームとユーザーIDを自動的に設定
   useEffect(() => {
@@ -83,6 +95,11 @@ export default function EstimatePage() {
     setEstimates([])
     setLoading(true)
     setError('')
+    setTimerEndAt(null)
+    setTimerIsRunning(false)
+    setTimerRemainingSeconds(0)
+    setTimerNotified(false)
+    setTimerTick(0)
 
     // ニックネームとuserIdもリセット（localStorageから再取得）
     if (typeof window !== 'undefined') {
@@ -95,6 +112,20 @@ export default function EstimatePage() {
         setShowNicknameForm(!storedNickname)
       }
       setUserId(storedUserId)
+
+      const storedTimerEndAt = localStorage.getItem(`timerEndAt_${shareToken}`)
+      const storedTimerIsRunning = localStorage.getItem(`timerIsRunning_${shareToken}`)
+      const storedTimerNotified = localStorage.getItem(`timerNotified_${shareToken}`)
+
+      if (storedTimerEndAt) {
+        setTimerEndAt(Number(storedTimerEndAt))
+      }
+      if (storedTimerIsRunning) {
+        setTimerIsRunning(storedTimerIsRunning === 'true')
+      }
+      if (storedTimerNotified) {
+        setTimerNotified(storedTimerNotified === 'true')
+      }
     }
   }, [shareToken, user?.nickname])
 
@@ -111,6 +142,23 @@ export default function EstimatePage() {
         const data = await response.json()
         setSession(data.session)
         setEstimates(data.estimates)
+
+        if (data.timer) {
+          const timerData: TimerState = data.timer
+          setTimerEndAt(timerData.endAt)
+          setTimerIsRunning(timerData.isRunning)
+          if (timerData.isRunning) {
+            setTimerNotified(false)
+          }
+          if (typeof window !== 'undefined') {
+            if (timerData.endAt) {
+              localStorage.setItem(`timerEndAt_${shareToken}`, timerData.endAt.toString())
+            } else {
+              localStorage.removeItem(`timerEndAt_${shareToken}`)
+            }
+            localStorage.setItem(`timerIsRunning_${shareToken}`, timerData.isRunning.toString())
+          }
+        }
 
         // 自分の見積もりがあればselectedValueを復元
         if (nickname) {
@@ -144,6 +192,82 @@ export default function EstimatePage() {
       }
     }
   }, [shareToken])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    if (timerEndAt) {
+      localStorage.setItem(`timerEndAt_${shareToken}`, timerEndAt.toString())
+    } else {
+      localStorage.removeItem(`timerEndAt_${shareToken}`)
+    }
+
+    localStorage.setItem(`timerIsRunning_${shareToken}`, timerIsRunning.toString())
+    localStorage.setItem(`timerNotified_${shareToken}`, timerNotified.toString())
+  }, [shareToken, timerEndAt, timerIsRunning, timerNotified])
+
+  const requestNotificationPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    if (Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission()
+      } catch {
+        // no-op
+      }
+    }
+  }
+
+  const showTimerNotification = () => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('タイマー終了', {
+        body: '設定した時間になりました。',
+      })
+      return
+    }
+
+    showToast('タイマーが終了しました', 'info')
+  }
+
+  const updateTimerState = async (nextState: TimerState) => {
+    try {
+      await fetch(`/api/sessions/${shareToken}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(nextState),
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'エラーが発生しました'
+      showToast(message, 'error')
+    }
+  }
+
+  useEffect(() => {
+    if (!timerIsRunning || !timerEndAt) {
+      setTimerRemainingSeconds(0)
+      return
+    }
+
+    const remaining = Math.max(0, Math.ceil((timerEndAt - Date.now()) / 1000))
+    setTimerRemainingSeconds(remaining)
+
+    if (remaining === 0) {
+      if (!timerNotified) {
+        setTimerNotified(true)
+        showTimerNotification()
+      }
+      setTimerIsRunning(false)
+      updateTimerState({ endAt: timerEndAt, isRunning: false })
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setTimerTick((prev) => prev + 1)
+    }, 1000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [timerEndAt, timerIsRunning, timerNotified, timerTick, shareToken])
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -254,6 +378,35 @@ export default function EstimatePage() {
       const message = err instanceof Error ? err.message : 'エラーが発生しました'
       showToast(message, 'error')
     }
+  }
+
+  const handleStartTimer = async () => {
+    const minutes = Number(timerMinutes)
+    const seconds = Number(timerSeconds)
+    const totalSeconds = minutes * 60 + seconds
+
+    if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+      showToast('タイマー時間を入力してください', 'warning')
+      return
+    }
+
+    await requestNotificationPermission()
+
+    const nextEndAt = Date.now() + totalSeconds * 1000
+    setTimerEndAt(nextEndAt)
+    setTimerIsRunning(true)
+    setTimerNotified(false)
+    setTimerTick((prev) => prev + 1)
+    updateTimerState({ endAt: nextEndAt, isRunning: true })
+  }
+
+  const handleStopTimer = () => {
+    setTimerIsRunning(false)
+    setTimerEndAt(null)
+    setTimerRemainingSeconds(0)
+    setTimerNotified(false)
+    setTimerTick((prev) => prev + 1)
+    updateTimerState({ endAt: null, isRunning: false })
   }
 
   const copyShareUrl = () => {
@@ -432,6 +585,63 @@ export default function EstimatePage() {
               <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
                 <div className="p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-xs sm:text-sm text-blue-800 font-medium">あなたはこのセッションのオーナーです</p>
+                </div>
+
+                <div className="p-3 sm:p-4 bg-white border border-gray-200 rounded-lg space-y-3">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-800">タイマー設定</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">分</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={timerMinutes}
+                        onChange={(e) => setTimerMinutes(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        disabled={timerIsRunning}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">秒</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={timerSeconds}
+                        onChange={(e) => setTimerSeconds(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        disabled={timerIsRunning}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleStartTimer}
+                      disabled={timerIsRunning}
+                      className="flex-1 py-2 bg-indigo-500 text-white text-sm font-semibold rounded-lg hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      開始
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleStopTimer}
+                      disabled={!timerIsRunning && !timerEndAt}
+                      className="flex-1 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      停止
+                    </button>
+                  </div>
+                  <div className="text-sm text-gray-700">
+                    残り時間:{' '}
+                    <span className="font-semibold">
+                      {Math.floor(timerRemainingSeconds / 60)
+                        .toString()
+                        .padStart(2, '0')}
+                      :
+                      {(timerRemainingSeconds % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
                 </div>
 
                 <button
